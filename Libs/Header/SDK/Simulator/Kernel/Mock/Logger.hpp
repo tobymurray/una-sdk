@@ -68,7 +68,13 @@ private:
     {
         OS::MutexCS cs(mMutexLog);
 
+#ifdef _WIN32
         uint32_t time = static_cast<uint32_t>(GetTickCount64());
+#else
+        struct timespec _ts;
+        clock_gettime(CLOCK_MONOTONIC, &_ts);
+        uint32_t time = static_cast<uint32_t>(static_cast<uint64_t>(_ts.tv_sec) * 1000u + static_cast<uint64_t>(_ts.tv_nsec) / 1000000u);
+#endif
 
         char timeBuff[16] = { 0 };
         sprintf(timeBuff, "%10u ", time);
