@@ -11,9 +11,9 @@
 
 #if defined(SIMULATOR)
     #include "touchgfx/canvas_widget_renderer/CanvasWidgetRenderer.hpp"
-    #ifdef _WIN32
+#if defined(_WIN32)
     #include "Windows.h"
-    #endif
+#endif
     #include <chrono>
     #include <ctime>
 #endif
