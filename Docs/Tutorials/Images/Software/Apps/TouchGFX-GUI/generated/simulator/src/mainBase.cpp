@@ -14,6 +14,8 @@ touchgfx::LCD8bpp_ABGR2222 lcd;
 
 void setupSimulator(int argc, char** argv, touchgfx::HAL& hal)
 {
+    lcd.enableTextureMapperABGR2222_BilinearInterpolation();
+
     // Simulate hardware running at 60Hz generating a vsync every 16.6667 ms
     static_cast<touchgfx::HALSDL2&>(hal).setVsyncInterval(16.6667f);
     static_cast<touchgfx::HALSDL2&>(hal).setWindowTitle("Images");
