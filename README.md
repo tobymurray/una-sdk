@@ -2,9 +2,9 @@
 
 This branch (`linux-simulator`) patches the UNA Watch SDK to build and run the GCC-based simulator on Linux x86-64.
 
-| HelloWorld tutorial | Sensors tutorial |
-|---|---|
-| ![HelloWorld simulator](Docs/assets/screenshots/simulator-helloworld.png) | ![Sensors simulator](Docs/assets/screenshots/simulator-sensors.png) |
+| HelloWorld | Sensors | Buttons | ScrollMenu | Files | Images |
+|---|---|---|---|---|---|
+| ![HelloWorld](Docs/assets/screenshots/simulator-helloworld.png) | ![Sensors](Docs/assets/screenshots/simulator-sensors.png) | ![Buttons](Docs/assets/screenshots/simulator-buttons.png) | ![ScrollMenu](Docs/assets/screenshots/simulator-scrollmenu.png) | ![Files](Docs/assets/screenshots/simulator-files.png) | ![Images](Docs/assets/screenshots/simulator-images.png) |
 
 For general project documentation — overview, architecture, tutorials, and Windows build instructions — see the **[canonical upstream README](https://github.com/UNAWatch/una-sdk/blob/main/README.md)**.
 
