@@ -15,6 +15,7 @@
 #include "SDK/Simulator/Components/ISensorsSim/IStepCounter.hpp"
 #include "SDK/Simulator/Components/SensorDataSample.hpp"
 #include "SDK/Simulator/OS/SwTimer.hpp"
+#include <array>
 #include <cstdint>
 #include <chrono>
 #include <random>
@@ -73,7 +74,8 @@ namespace Simulator
 
         void updateLocation();
 
-        /// Calculates the speed factor based on the current segment of the track
+        void buildHeartTable();
+
         float getSpeedFactor(float distanceAlongLap);
 
         /// Updates the current speed considering the track segment and random jitter
@@ -96,13 +98,15 @@ namespace Simulator
         uint32_t mTotalSteps = 0;
         float mStepAccumulator = 0.0f;
 
-        // Track geometry
-        const float mCenterLat = 49.2331f; ///< Track center latitude
-        const float mCenterLon = 28.4682f; ///< Track center longitude
-        const float mStraight = 84.39f;    ///< Length of a straight segment (meters)
-        const float mRadius = 36.5f;       ///< Radius of curved segment (meters)
-        const float mCurveLen = 3.14159265f * mRadius; ///< Length of a semicircle (meters)
-        const float mLapLength = 2 * mStraight + 2 * mCurveLen; ///< Total lap length (meters)
+        // Track geometry — heart-shaped, ~1.35 km lap
+        const float mCenterLat = 49.2331f; ///< Track centre latitude
+        const float mCenterLon = 28.4682f; ///< Track centre longitude
+        static constexpr float kHeartScale   = 20.0f;  ///< Metres per unit (perimeter ≈ 67.7 × 20 = 1354 m)
+        static constexpr int   kHeartSamples = 2000;   ///< Arc-length lookup-table resolution
+
+        struct HeartPoint { float x, y, arcLen; };
+        std::array<HeartPoint, kHeartSamples + 1> mHeartTable{};
+        float mLapLength;
 
         // Speed
         float mBaseSpeed = 25.0f / 3.6f; ///< Middlle speep (m/s)
