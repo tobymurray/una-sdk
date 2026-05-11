@@ -34,10 +34,12 @@ namespace Simulator {
         mRunning(false),
         mPeriodSendGpsData(990),
         mTrackPosition(0.0),
+        mLapLength(0.0f),
         mLoc{}
     {
         mStart = std::chrono::steady_clock::now();
         mLastTime = mStart;
+        buildHeartTable();
         mTimerGpsFix.start(5000);
         mTimer.start(mPeriodSendGpsData);
         mThread = std::thread(&GpsStepCounterSimulator::task, this);
@@ -134,38 +136,20 @@ namespace Simulator {
         if (mTrackPosition > mLapLength)
             mTrackPosition = std::fmod(mTrackPosition, mLapLength);
 
-        float distance = mTrackPosition;
+        // Look up (x, y) in the pre-built heart arc-length table
+        float pos = std::fmod(mTrackPosition, mLapLength);
 
-        // Compute X/Y coordinates on track
-        float x = 0.0f;
-        float y = 0.0f;
-
-        if (distance < mStraight) // first straight
-        {
-            x = distance;
-            y = mRadius;
+        int lo = 0, hi = kHeartSamples - 1;
+        while (lo < hi) {
+            int mid = (lo + hi + 1) / 2;
+            if (mHeartTable[mid].arcLen <= pos) lo = mid;
+            else hi = mid - 1;
         }
-        else if (distance < mStraight + mCurveLen) // first curve
-        {
-            float d = distance - mStraight;
-            float angle = d / mRadius;
-
-            x = mStraight + mRadius * std::sin(angle);
-            y = mRadius * std::cos(angle);
-        }
-        else if (distance < 2 * mStraight + mCurveLen) // second straight
-        {
-            float d = distance - (mStraight + mCurveLen);
-            x = mStraight - d;
-            y = -mRadius;
-        }
-        else // second curve
-        {
-            float d = distance - (2 * mStraight + mCurveLen);
-            float angle = d / mRadius;
-            x = -mRadius * std::sin(angle);
-            y = -mRadius * std::cos(angle);
-        }
+        float a0    = mHeartTable[lo].arcLen;
+        float a1    = mHeartTable[lo + 1].arcLen;
+        float alpha = (a1 > a0) ? (pos - a0) / (a1 - a0) : 0.0f;
+        float x = mHeartTable[lo].x + alpha * (mHeartTable[lo + 1].x - mHeartTable[lo].x);
+        float y = mHeartTable[lo].y + alpha * (mHeartTable[lo + 1].y - mHeartTable[lo].y);
 
         // Add GPS drift and noise
         mDriftX += mGpsNoise(mGen) * 0.05f;
@@ -277,12 +261,34 @@ namespace Simulator {
         return mTotalSteps;
     }
 
-    float GpsStepCounterSimulator::getSpeedFactor(float distanceAlongLap)
+    void GpsStepCounterSimulator::buildHeartTable()
     {
-        if (distanceAlongLap < mStraight) return 1.0f;
-        else if (distanceAlongLap < mStraight + mCurveLen) return 0.75f;
-        else if (distanceAlongLap < 2 * mStraight + mCurveLen) return 1.0f;
-        else return 0.75f;
+        float arc = 0.0f;
+        float prevX = 0.0f, prevY = 0.0f;
+
+        for (int i = 0; i <= kHeartSamples; i++) {
+            float t  = static_cast<float>(i) / kHeartSamples * 2.0f * static_cast<float>(M_PI);
+            float st = std::sin(t);
+            float x  = kHeartScale * 16.0f * st * st * st;
+            float y  = kHeartScale * (13.0f * std::cos(t)
+                                     - 5.0f * std::cos(2.0f * t)
+                                     - 2.0f * std::cos(3.0f * t)
+                                     -        std::cos(4.0f * t));
+            if (i > 0) {
+                float dx = x - prevX;
+                float dy = y - prevY;
+                arc += std::sqrt(dx * dx + dy * dy);
+            }
+            mHeartTable[i] = {x, y, arc};
+            prevX = x;
+            prevY = y;
+        }
+        mLapLength = arc;
+    }
+
+    float GpsStepCounterSimulator::getSpeedFactor(float /*distanceAlongLap*/)
+    {
+        return 1.0f;
     }
 
     void GpsStepCounterSimulator::updateSpeed(float factor)
