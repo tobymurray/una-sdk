@@ -115,7 +115,13 @@ bool Model::customMessageHandler(SDK::MessageBase *msg)
         case CustomMessage::LOCATION_VALUES:  {
             auto* m = static_cast<CustomMessage::LocationValues*>(msg);
             LOG_DEBUG("GPS: %.6f, %.6f, %.1f\n", m->latitude, m->longitude, m->altitude);
+            mTrackBuf[mTrackHead] = {m->latitude, m->longitude};
+            mTrackHead = (mTrackHead + 1) % kMaxTrackPoints;
+            if (mTrackCount < kMaxTrackPoints) mTrackCount++;
+            mCurLat = m->latitude;
+            mCurLon = m->longitude;
             modelListener->updateGPS(m->latitude, m->longitude, m->altitude);
+            modelListener->updateTrack(mTrackBuf, mTrackCount, mCurLat, mCurLon);
         } break;
 
         case CustomMessage::ELEVATION_VALUES:  {

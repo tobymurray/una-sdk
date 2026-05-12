@@ -26,8 +26,8 @@ void MainView::setupScreen()
 {
     MainViewBase::setupScreen();
 
-    buttons.setL1(ButtonsSet::NONE);
-    buttons.setL2(ButtonsSet::NONE);
+    buttons.setL1(ButtonsSet::WHITE);
+    buttons.setL2(ButtonsSet::WHITE);
     buttons.setR1(ButtonsSet::NONE);
     buttons.setR2(ButtonsSet::AMBER);
 }
@@ -112,14 +112,8 @@ void MainView::updatePressure(float pressure)
 
 void MainView::handleKeyEvent(uint8_t key)
 {
-    if (key == Gui::Config::Button::L1) {
-        verbosity = static_cast<VerbosityLevel>((verbosity + 1) % VERB_LEVEL_MAX);
-        LOG_DEBUG("Verbosity changed to %d\n", (int)verbosity);
-    }
-
-    if (key == Gui::Config::Button::L2) {
-        verbosity = static_cast<VerbosityLevel>((verbosity - 1 + VERB_LEVEL_MAX) % VERB_LEVEL_MAX);
-        LOG_DEBUG("Verbosity changed to %d\n", (int)verbosity);
+    if (key == Gui::Config::Button::L1 || key == Gui::Config::Button::L2) {
+        application().gotoTrackScreenNoTransition();
     }
 
     if (key == Gui::Config::Button::R1) {

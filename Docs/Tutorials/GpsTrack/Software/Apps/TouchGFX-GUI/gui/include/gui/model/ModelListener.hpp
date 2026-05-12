@@ -30,6 +30,8 @@ public:
     virtual void updateStats(float serviceCpu, float guiCpu, float txMsgPerSec, float rxMsgPerSec, float txBytesPerSec, float rxBytesPerSec) {}
     virtual void updateBattery(float level) {}
     virtual void updatePressure(float pressure) {}
+    virtual void updateTrack(const Model::GpsPoint* buf, uint16_t count,
+                              float curLat, float curLon) {}
 
 protected:
     Model* model;
