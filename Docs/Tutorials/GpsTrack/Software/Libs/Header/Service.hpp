@@ -5,6 +5,7 @@
 #include "ActivityWriter.hpp"
 #include "SDK/Kernel/KernelProviderService.hpp"
 #include "SDK/Interfaces/ISensorDataListener.hpp"
+#include "SDK/Metrics/ThrottledSample.hpp"
 #include "SDK/SensorLayer/SensorConnection.hpp"
 #include "SDK/SensorLayer/SensorDataBatch.hpp"
 
@@ -20,6 +21,18 @@ public:
     void run();
 
 private:
+    struct AccelSample {
+        uint64_t timestamp;
+        float    x;
+        float    y;
+        float    z;
+    };
+
+    struct CompassSample {
+        uint64_t timestamp;
+        float    heading;
+    };
+
     SDK::Kernel&             mKernel;
     ActivityWriter           mWriter;
     CustomMessage::GUISender mSender;
@@ -66,9 +79,10 @@ private:
     uint32_t                 mRxMessages;
     uint32_t                 mTxBytes;
     uint32_t                 mRxBytes;
-    uint32_t                 mLastStatsTimeMs;
-    uint32_t                 mLastAccTimeMs;
-    uint32_t                 mLastMagTimeMs;
+    // Throttled emit timers: cache latest sample, emit at most once per period.
+    SDK::Metric::ThrottledSample<AccelSample,   SDK::Interface::ISystem> mAccThrottle;
+    SDK::Metric::ThrottledSample<CompassSample, SDK::Interface::ISystem> mMagThrottle;
+    SDK::Metric::ThrottledSample<uint8_t,       SDK::Interface::ISystem> mStatsTicker;
 
     void onStartGUI();
     void onStopGUI();

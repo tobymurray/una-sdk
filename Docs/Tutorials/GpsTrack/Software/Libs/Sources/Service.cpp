@@ -66,9 +66,9 @@ Service::Service(SDK::Kernel& kernel)
     , mRxMessages(0)
     , mTxBytes(0)
     , mRxBytes(0)
-    , mLastStatsTimeMs(0)
-    , mLastAccTimeMs(0)
-    , mLastMagTimeMs(0)
+    , mAccThrottle(mKernel.sys)
+    , mMagThrottle(mKernel.sys)
+    , mStatsTicker(mKernel.sys)
 {}
 
 void Service::run()
@@ -107,8 +107,14 @@ void Service::run()
     mSensorTouchDetect.connect();
     LOG_INFO("Note: No BLE calibration at the moment. BLE calibration is required for proper sensor operation, especially for HR.\n");
 
-
-    mLastStatsTimeMs = mKernel.sys.getTimeMs();
+    mAccThrottle.reset(100);
+    mMagThrottle.reset(100);
+    mStatsTicker.reset(1000);
+    // reset() preloads the pending flag so the first valid sample fires
+    // immediately; set+consume marks the ticker valid without emitting at
+    // t=0, so the first stats line lands ~1s after the service starts.
+    mStatsTicker.set(0);
+    mStatsTicker.consume();
 
     uint32_t startTimeMs = mKernel.sys.getTimeMs();
 
@@ -192,8 +198,9 @@ void Service::run()
 
         if (mGUIStarted) {
             // Update CPU time and message rates every second
-            uint32_t currentTimeMs = mKernel.sys.getTimeMs();
-            if (currentTimeMs - mLastStatsTimeMs >= 1000) {
+            if (mStatsTicker.isDue()) {
+                mStatsTicker.consume();
+
                 // Calculate service CPU time (active processing time, excluding wait time)
                 mServiceCpuTimeMs = mActiveTimeMs;
                 // GUI CPU time would need to be tracked separately, for now set to 0
@@ -223,7 +230,6 @@ void Service::run()
                 mTxBytes = 0;
                 mRxBytes = 0;
                 mActiveTimeMs = 0;
-                mLastStatsTimeMs = currentTimeMs;
             }
         } else {
             // Just wait some time to see if GUI starts
@@ -350,16 +356,13 @@ void Service::onSdlNewData(uint16_t handle, SDK::Sensor::DataBatch& data)
         } else if (mSensorAccelerometer.matchesDriver(handle)) {
             SDK::SensorDataParser::Accelerometer parser(data[0]);
             if (parser.isDataValid()) {
-                uint64_t timestamp = parser.getTimestamp();
-                float x = parser.getX();
-                float y = parser.getY();
-                float z = parser.getZ();
-                uint64_t nowMs = mKernel.sys.getTimeMs();
-                if (nowMs - mLastAccTimeMs >= 100) {
-                    // LOG_DEBUG("Acc: %.2f, %.2f, %.2f, now: %u, last: %u, timestamp: %llu\n", x, y, z, nowMs, mLastAccTimeMs, timestamp);
-                    mLastAccTimeMs = nowMs;
+                mAccThrottle.set({parser.getTimestamp(),
+                                  parser.getX(), parser.getY(), parser.getZ()});
+                if (mAccThrottle.isDue()) {
+                    mAccThrottle.consume();
+                    auto s = mAccThrottle.get();
                     mTxMessages++;
-                    mSender.updateAccelerometer(timestamp, x, y, z);
+                    mSender.updateAccelerometer(s.timestamp, s.x, s.y, s.z);
                     mTxBytes += sizeof(CustomMessage::AccelerometerValues);
                 }
             }
@@ -389,13 +392,13 @@ void Service::onSdlNewData(uint16_t handle, SDK::Sensor::DataBatch& data)
             float y = view.f[1];
             float heading = atan2f(y, x) * (180.0f / M_PI);
             if (heading < 0.0f) heading += 360.0f;
-            auto nowMs = mKernel.sys.getTimeMs();
-            if (nowMs - mLastMagTimeMs >= 100) {
-                // LOG_DEBUG("Compass: %.1f deg (X:%.2f Y:%.2f)\n", heading, x, y);
+            mMagThrottle.set({mKernel.sys.getTimeMs(), heading});
+            if (mMagThrottle.isDue()) {
+                mMagThrottle.consume();
+                auto s = mMagThrottle.get();
                 mTxMessages++;
-                mSender.updateCompass(nowMs, heading);
+                mSender.updateCompass(s.timestamp, s.heading);
                 mTxBytes += sizeof(CustomMessage::CompassValues);
-                mLastMagTimeMs = nowMs;
             }
         } else if (mSensorBattery.matchesDriver(handle)) {
             SDK::SensorDataParser::BatteryLevel parser(data[0]);
