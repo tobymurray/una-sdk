@@ -11,6 +11,8 @@
 #include <platform/driver/lcd/LCD8bpp_ABGR2222.hpp>
 #include <gui/main_screen/MainView.hpp>
 #include <gui/main_screen/MainPresenter.hpp>
+#include <gui/track_screen/TrackView.hpp>
+#include <gui/track_screen/TrackPresenter.hpp>
 
 using namespace touchgfx;
 
@@ -40,4 +42,17 @@ void FrontendApplicationBase::gotoMainScreenNoTransition()
 void FrontendApplicationBase::gotoMainScreenNoTransitionImpl()
 {
     touchgfx::makeTransition<MainView, MainPresenter, touchgfx::NoTransition, Model >(&currentScreen, &currentPresenter, frontendHeap, &currentTransition, &model);
+}
+
+// Track
+
+void FrontendApplicationBase::gotoTrackScreenNoTransition()
+{
+    transitionCallback = touchgfx::Callback<FrontendApplicationBase>(this, &FrontendApplicationBase::gotoTrackScreenNoTransitionImpl);
+    pendingScreenTransitionCallback = &transitionCallback;
+}
+
+void FrontendApplicationBase::gotoTrackScreenNoTransitionImpl()
+{
+    touchgfx::makeTransition<TrackView, TrackPresenter, touchgfx::NoTransition, Model >(&currentScreen, &currentPresenter, frontendHeap, &currentTransition, &model);
 }

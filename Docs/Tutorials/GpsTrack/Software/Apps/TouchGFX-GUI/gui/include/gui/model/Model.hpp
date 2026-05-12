@@ -21,6 +21,9 @@ class Model : public touchgfx::UIEventListener,
               public SDK::Interface::ICustomMessageHandler
 {
 public:
+    struct GpsPoint { float lat, lon; };
+    static constexpr uint16_t kMaxTrackPoints = 500;
+
     Model();
 
     void bind(ModelListener *listener)
@@ -38,6 +41,11 @@ public:
      */
     void exitApp();
 
+    const GpsPoint* getTrackBuf()   const { return mTrackBuf; }
+    uint16_t        getTrackCount() const { return mTrackCount; }
+    float           getCurLat()     const { return mCurLat; }
+    float           getCurLon()     const { return mCurLon; }
+
 protected:
     ModelListener* modelListener;           ///< Pointer to model listener
 
@@ -45,6 +53,12 @@ protected:
     const SDK::Kernel& mKernel;             ///< Reference to kernel interface
 
     bool mInvalidate = false;               ///< Request to redraw current screen
+
+    GpsPoint mTrackBuf[kMaxTrackPoints]{};
+    uint16_t mTrackCount = 0;
+    uint16_t mTrackHead  = 0;
+    float    mCurLat     = 0.0f;
+    float    mCurLon     = 0.0f;
 
     // IUserApp implementation
     virtual void onStart()   override;
