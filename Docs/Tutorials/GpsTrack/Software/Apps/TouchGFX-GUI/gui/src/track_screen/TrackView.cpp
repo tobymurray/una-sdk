@@ -38,10 +38,10 @@ void TrackView::tearDownScreen()
 
 void TrackView::handleKeyEvent(uint8_t key)
 {
-    if (key == Gui::Config::Button::L1 || key == Gui::Config::Button::L2) {
+    if (key == SDK::GUI::Button::L1 || key == SDK::GUI::Button::L2) {
         application().gotoMainScreenNoTransition();
     }
-    if (key == Gui::Config::Button::R2) {
+    if (key == SDK::GUI::Button::R2) {
         presenter->exit();
     }
 }
