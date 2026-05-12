@@ -6,6 +6,10 @@ This branch (`linux-simulator`) patches the UNA Watch SDK to build and run the G
 |---|---|---|---|---|---|
 | ![HelloWorld](Docs/assets/screenshots/simulator-helloworld.png) | ![Sensors](Docs/assets/screenshots/simulator-sensors.png) | ![Buttons](Docs/assets/screenshots/simulator-buttons.png) | ![ScrollMenu](Docs/assets/screenshots/simulator-scrollmenu.png) | ![Files](Docs/assets/screenshots/simulator-files.png) | ![Images](Docs/assets/screenshots/simulator-images.png) |
 
+| GpsTrack — live trace | GpsTrack — FIT file on map |
+|---|---|
+| ![GpsTrack trace](Docs/assets/screenshots/simulator-gpstrack.png) | ![GpsTrack FIT on map](Docs/assets/screenshots/gpstrack-fit-map.png) |
+
 For general project documentation — overview, architecture, tutorials, and Windows build instructions — see the **[canonical upstream README](https://github.com/UNAWatch/una-sdk/blob/main/README.md)**.
 
 ---
