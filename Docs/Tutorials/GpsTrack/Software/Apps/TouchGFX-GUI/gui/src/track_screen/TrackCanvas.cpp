@@ -5,22 +5,24 @@
 using namespace touchgfx;
 
 TrackCanvas::TrackCanvas()
-    : mBuf(nullptr), mCount(0),
-      mCurLat(0.0f), mCurLon(0.0f), mHasCurrent(false)
+    : mHasCurrent(false)
 {
 }
 
-void TrackCanvas::setTrack(const Model::GpsPoint* buf, uint16_t count)
+void TrackCanvas::setTrack(const Model::GpsPoint* buf, uint16_t count,
+                           float curLat, float curLon)
 {
-    mBuf   = buf;
-    mCount = count;
-}
-
-void TrackCanvas::setCurrentPos(float lat, float lon)
-{
-    mCurLat     = lat;
-    mCurLon     = lon;
-    mHasCurrent = true;
+    mBuilder.reset();
+    for (uint16_t i = 0; i < count; ++i) {
+        mBuilder.addPoint(buf[i]);
+    }
+    mHasCurrent = (count > 0);
+    if (mHasCurrent) {
+        // Appending curPos last guarantees the head marker tracks Model's
+        // recorded current position even after the ring buffer wraps.
+        mBuilder.addPoint({curLat, curLon});
+    }
+    mScreen = mBuilder.build(kRadiusPx);
 }
 
 void TrackCanvas::dot(int16_t px, int16_t py, int16_t r,
@@ -40,20 +42,18 @@ void TrackCanvas::draw(const Rect& area) const
     translateRectToAbsolute(bg);
     HAL::lcd().fillRect(bg, Color::getColorFromRGB(0, 0, 0), 255);
 
-    if (!mBuf) return;
+    if (mScreen.points.empty()) return;
 
     const colortype teal  = Color::getColorFromRGB(0, 128, 128);
     const colortype white = Color::getColorFromRGB(192, 192, 192);
 
-    for (uint16_t i = 0; i < mCount; i++) {
-        auto px = static_cast<int16_t>(kOriginX + (mBuf[i].lon - kCenterLon) * kLonToPixel + 0.5f);
-        auto py = static_cast<int16_t>(kOriginY - (mBuf[i].lat - kCenterLat) * kLatToPixel + 0.5f);
-        dot(px, py, 1, teal, area);
-    }
+    const size_t n = mScreen.points.size();
+    const size_t headIdx = (mHasCurrent && n > 0) ? n - 1 : n;
 
-    if (mHasCurrent) {
-        auto px = static_cast<int16_t>(kOriginX + (mCurLon - kCenterLon) * kLonToPixel + 0.5f);
-        auto py = static_cast<int16_t>(kOriginY - (mCurLat - kCenterLat) * kLatToPixel + 0.5f);
-        dot(px, py, 3, white, area);
+    for (size_t i = 0; i < headIdx; ++i) {
+        dot(mScreen.points[i].x, mScreen.points[i].y, 1, teal, area);
+    }
+    if (headIdx < n) {
+        dot(mScreen.points[headIdx].x, mScreen.points[headIdx].y, 3, white, area);
     }
 }

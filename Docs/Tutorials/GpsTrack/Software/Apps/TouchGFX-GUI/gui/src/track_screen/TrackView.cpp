@@ -57,9 +57,6 @@ void TrackView::updateHR(float hr, float /*tl*/)
 void TrackView::updateTrack(const Model::GpsPoint* buf, uint16_t count,
                              float curLat, float curLon)
 {
-    trackCanvas.setTrack(buf, count);
-    if (count > 0) {
-        trackCanvas.setCurrentPos(curLat, curLon);
-    }
+    trackCanvas.setTrack(buf, count, curLat, curLon);
     trackCanvas.invalidate();
 }

@@ -4,31 +4,27 @@
 #include <touchgfx/widgets/Widget.hpp>
 #include <touchgfx/hal/Types.hpp>
 #include <gui/model/Model.hpp>
+#include "SDK/TrackMap/TrackMapBuilder.hpp"
+#include "SDK/TrackMap/TrackMapScreen.hpp"
 
 class TrackCanvas : public touchgfx::Widget
 {
 public:
     TrackCanvas();
 
-    void setTrack(const Model::GpsPoint* buf, uint16_t count);
-    void setCurrentPos(float lat, float lon);
+    void setTrack(const Model::GpsPoint* buf, uint16_t count,
+                  float curLat, float curLon);
 
     virtual void draw(const touchgfx::Rect& area) const override;
     virtual touchgfx::Rect getSolidRect() const override { return getRect(); }
 
 private:
-    static constexpr float   kCenterLat  = 49.2331f;
-    static constexpr float   kCenterLon  = 28.4682f;
-    static constexpr float   kLatToPixel = 38071.0f;
-    static constexpr float   kLonToPixel = 24877.0f;
-    static constexpr int16_t kOriginX    = 120;
-    static constexpr int16_t kOriginY    = 103;
+    // Map output points span [0, 2*kRadiusPx]; 120 fits a 240×240 canvas.
+    static constexpr uint8_t kRadiusPx = 120;
 
-    const Model::GpsPoint* mBuf;
-    uint16_t               mCount;
-    float                  mCurLat;
-    float                  mCurLon;
-    bool                   mHasCurrent;
+    SDK::TrackMapBuilder mBuilder;
+    SDK::TrackMapScreen  mScreen;
+    bool                 mHasCurrent;
 
     void dot(int16_t px, int16_t py, int16_t r,
              touchgfx::colortype c, const touchgfx::Rect& clip) const;

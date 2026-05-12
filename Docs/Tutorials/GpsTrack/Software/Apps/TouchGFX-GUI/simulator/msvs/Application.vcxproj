@@ -26,6 +26,7 @@
     <ClCompile Include="$(SdkPath)\ThirdParty\FitSDKRelease_21.171.00\c\fit_product.c"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\Kernel\KernelBuilder.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\FitHelper\FitHelper.cpp"/>
+    <ClCompile Include="$(SdkPath)\Libs\Source\TrackMap\TrackMapBuilder.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\Port\TouchGFX\TouchGFXCommandProcessor.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\SensorLayer\SensorConnection.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\App\DualAppComm.cpp"/>

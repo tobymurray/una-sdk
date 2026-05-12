@@ -286,6 +286,9 @@
     <Filter Include="SDK\Libs\Source\FitHelper">
       <UniqueIdentifier>{f16d3529-9d58-4f99-a8f6-90a9ffe31594}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SDK\Libs\Source\TrackMap">
+      <UniqueIdentifier>{a3e1c5b0-2f17-4d18-9c5a-7e1d6e8b7a01}</UniqueIdentifier>
+    </Filter>
     <Filter Include="SDK\Libs\Source\Simulator\OS">
       <UniqueIdentifier>{3ede9f1b-089b-4e59-b311-bb9fa33f7e37}</UniqueIdentifier>
     </Filter>
@@ -386,6 +389,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\..\SDK\Libs\Source\FitHelper\FitHelper.cpp">
       <Filter>SDK\Libs\Source\FitHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\..\SDK\Libs\Source\TrackMap\TrackMapBuilder.cpp">
+      <Filter>SDK\Libs\Source\TrackMap</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\..\SDK\Libs\Source\Simulator\OS\OS.cpp">
       <Filter>SDK\Libs\Source\Simulator\OS</Filter>

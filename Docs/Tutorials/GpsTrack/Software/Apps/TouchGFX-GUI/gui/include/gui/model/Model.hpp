@@ -6,6 +6,7 @@
 #include "SDK/Kernel/Kernel.hpp"
 #include "SDK/Interfaces/IGuiLifeCycleCallback.hpp"
 #include "SDK/Interfaces/ICustomMessageHandler.hpp"
+#include "SDK/TrackMap/TrackMapBuilder.hpp"
 
 #include "gui/common/GuiConfig.hpp"
 #include "Commands.hpp"
@@ -21,7 +22,7 @@ class Model : public touchgfx::UIEventListener,
               public SDK::Interface::ICustomMessageHandler
 {
 public:
-    struct GpsPoint { float lat, lon; };
+    using GpsPoint = SDK::TrackMapBuilder::GpsPoint;
     static constexpr uint16_t kMaxTrackPoints = 500;
 
     Model();
