@@ -74,8 +74,6 @@ private:
     void onStopGUI();
 
     void onSdlNewData(uint16_t handle, SDK::Sensor::DataBatch& data);
-
-    static uint32_t ParseVersion(const char* str);
 };
 
 #endif

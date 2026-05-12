@@ -674,31 +674,3 @@ void Service::onSdlNewData(uint16_t handle, SDK::Sensor::DataBatch& data)
     }
 }
 
-uint32_t Service::ParseVersion(const char* str)
-{
-    if (str == nullptr) {
-        return 0;
-    }
-
-    typedef union {
-        struct {
-            uint8_t patch;
-            uint8_t minor;
-            uint8_t major;
-        };
-        uint32_t u32;
-    } FirmwareVersion_t;
-
-    FirmwareVersion_t v{};
-
-    int major, minor, patch;
-
-    if (sscanf(str, "%d.%d.%d", &major, &minor, &patch) == 3) {
-        v.major = static_cast<uint8_t>(major);
-        v.minor = static_cast<uint8_t>(minor);
-        v.patch = static_cast<uint8_t>(patch);
-        return v.u32;
-    }
-
-    return 0;
-}
