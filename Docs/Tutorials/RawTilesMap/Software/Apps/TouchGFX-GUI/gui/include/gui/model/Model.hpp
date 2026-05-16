@@ -47,17 +47,25 @@ public:
     const SDK::RawTiles::Container& tiles() const { return mTiles; }
 
     /**
-     * @brief The TouchGFX dynamic-bitmap ID holding the currently-displayed
-     *        tile, or @c BITMAP_INVALID if no tile has been blitted yet.
+     * @brief Static-sized window of pre-loaded tiles ready for rendering.
+     *
+     * Cells are addressed @c [row * kGrid + col]. Cell @c (1, 1) is the centre.
+     * A cell's @c id is @c BITMAP_INVALID when the pack has no tile at that
+     * (z, x, y) — callers MUST render a sentinel for those cells.
      */
-    touchgfx::BitmapId tileBitmapId() const { return mTileBitmapId; }
+    struct TileViewport {
+        static constexpr int kGrid = 3;
+        touchgfx::BitmapId ids[kGrid * kGrid];
+        uint16_t           tileDimPx;
 
-    /**
-     * @brief Width/height of the currently-displayed tile in pixels (always
-     *        square; matches the pack's @c tile_dim_px). Zero when no tile
-     *        has been blitted yet.
-     */
-    uint16_t tileDimPx() const { return mTileDimPx; }
+        TileViewport() : tileDimPx(0) {
+            for (auto& id : ids) {
+                id = touchgfx::BITMAP_INVALID;
+            }
+        }
+    };
+
+    const TileViewport& viewport() const { return mViewport; }
 
 protected:
     ModelListener* modelListener;           ///< Pointer to model listener
@@ -68,8 +76,7 @@ protected:
     bool mInvalidate = false;               ///< Request to redraw current screen
 
     SDK::RawTiles::Container mTiles;        ///< Pack opened from Resources/stanley.rawtiles at boot
-    touchgfx::BitmapId       mTileBitmapId = touchgfx::BITMAP_INVALID;
-    uint16_t                 mTileDimPx    = 0;
+    TileViewport             mViewport { };
 
     // IUserApp implementation
     virtual void onStart()   override;

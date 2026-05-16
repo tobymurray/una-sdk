@@ -6,6 +6,7 @@
 #include <gui/map_screen/TileCanvas.hpp>
 #include <gui/containers/ButtonsSet.hpp>
 #include <gui/common/FrontendApplication.hpp>
+#include <gui/model/Model.hpp>
 
 class MapView : public touchgfx::View<MapPresenter>
 {
@@ -16,7 +17,7 @@ public:
     virtual void setupScreen();
     virtual void tearDownScreen();
 
-    void setTileBitmap(touchgfx::BitmapId id);
+    void setViewport(const Model::TileViewport& viewport);
 
 protected:
     virtual void handleKeyEvent(uint8_t key) override;

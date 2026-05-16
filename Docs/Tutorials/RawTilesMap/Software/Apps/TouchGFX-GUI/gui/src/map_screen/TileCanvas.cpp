@@ -2,44 +2,63 @@
 #include <touchgfx/hal/HAL.hpp>
 #include <touchgfx/Color.hpp>
 
+#include <cstring>
+
 using namespace touchgfx;
 
 TileCanvas::TileCanvas()
 {
+    for (int i = 0; i < kCells; ++i) {
+        mIds[i] = BITMAP_INVALID;
+    }
 }
 
-void TileCanvas::setBitmap(BitmapId id)
+void TileCanvas::setViewport(const BitmapId* ids, uint16_t tileDimPx)
 {
-    mBitmapId = id;
+    std::memcpy(mIds, ids, sizeof(mIds));
+    mTileDimPx = tileDimPx;
 }
 
 void TileCanvas::draw(const Rect& area) const
 {
-    if (mBitmapId == BITMAP_INVALID) {
-        // Boot-time placeholder while Model is still wiring up the dynamic
-        // bitmap. Lets us tell "screen reached" from "draw call missed."
-        Rect bg = area;
-        translateRectToAbsolute(bg);
-        HAL::lcd().fillRect(bg, Color::getColorFromRGB(0, 96, 96), 255);
+    // Sentinel slate background — every pixel must be covered, and any cell
+    // the pack doesn't have a tile for ends up showing this colour. That
+    // makes the pack's bbox visible on screen instead of leaving a hole.
+    Rect bg = area;
+    translateRectToAbsolute(bg);
+    HAL::lcd().fillRect(bg, Color::getColorFromRGB(24, 32, 40), 255);
+
+    if (mTileDimPx == 0) {
         return;
     }
 
-    Bitmap        bmp(mBitmapId);
-    const int16_t bw = static_cast<int16_t>(bmp.getWidth());
-    const int16_t bh = static_cast<int16_t>(bmp.getHeight());
-
-    // Center the tile inside the widget. For a 256-px tile on a 240-px screen
-    // we draw negative offsets — drawPartialBitmap clips against the widget
-    // bounds for us via the supplied area rect.
-    const int16_t offsetX = static_cast<int16_t>((getWidth()  - bw) / 2);
-    const int16_t offsetY = static_cast<int16_t>((getHeight() - bh) / 2);
-
+    // Widget-local → absolute translation. Constant across this draw call.
     Rect absRect = area;
     translateRectToAbsolute(absRect);
-    const int16_t absX = static_cast<int16_t>(absRect.x - area.x + offsetX);
-    const int16_t absY = static_cast<int16_t>(absRect.y - area.y + offsetY);
+    const int16_t absDX = static_cast<int16_t>(absRect.x - area.x);
+    const int16_t absDY = static_cast<int16_t>(absRect.y - area.y);
 
-    // The bitmap source rect describes the portion of the bitmap to draw.
-    Rect src(0, 0, bw, bh);
-    HAL::lcd().drawPartialBitmap(bmp, absX, absY, src, 255, true);
+    // Anchor the canvas so the corner shared by the four centre cells
+    // ((1,1), (2,1), (1,2), (2,2)) lands at the widget centre. With 256-px
+    // tiles on a 240-px widget each of those four cells exposes one quadrant.
+    const int16_t halfW = static_cast<int16_t>(getWidth()  / 2);
+    const int16_t halfH = static_cast<int16_t>(getHeight() / 2);
+
+    for (int row = 0; row < kGrid; ++row) {
+        for (int col = 0; col < kGrid; ++col) {
+            const BitmapId id = mIds[row * kGrid + col];
+            if (id == BITMAP_INVALID) {
+                continue;
+            }
+            const int16_t cellLocalX = static_cast<int16_t>((col - 2) * mTileDimPx + halfW);
+            const int16_t cellLocalY = static_cast<int16_t>((row - 2) * mTileDimPx + halfH);
+
+            Bitmap        bmp(id);
+            const Rect    src(0, 0, static_cast<int16_t>(bmp.getWidth()),
+                                    static_cast<int16_t>(bmp.getHeight()));
+            const int16_t drawX = static_cast<int16_t>(absDX + cellLocalX);
+            const int16_t drawY = static_cast<int16_t>(absDY + cellLocalY);
+            HAL::lcd().drawPartialBitmap(bmp, drawX, drawY, src, 255, true);
+        }
+    }
 }

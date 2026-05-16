@@ -1,7 +1,13 @@
 #include <gui/map_screen/MapView.hpp>
 #include <gui/common/GuiConfig.hpp>
 
+#include <cstddef>
+
 using namespace touchgfx;
+
+static_assert(static_cast<int>(Model::TileViewport::kGrid) ==
+              static_cast<int>(TileCanvas::kGrid),
+              "Viewport grid size must match canvas grid size");
 
 MapView::MapView()
 {
@@ -25,9 +31,9 @@ void MapView::tearDownScreen()
 {
 }
 
-void MapView::setTileBitmap(BitmapId id)
+void MapView::setViewport(const Model::TileViewport& viewport)
 {
-    tileCanvas.setBitmap(id);
+    tileCanvas.setViewport(viewport.ids, viewport.tileDimPx);
     tileCanvas.invalidate();
 }
 
