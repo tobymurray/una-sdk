@@ -22,7 +22,11 @@ FrontendApplicationBase::FrontendApplicationBase(Model& m, FrontendHeap& heap)
       frontendHeap(heap),
       model(m)
 {
-    touchgfx::HAL::getInstance()->setDisplayOrientation(touchgfx::ORIENTATION_PORTRAIT);
+    // Diagnostic for the dynamic-bitmap rotation. Static bitmaps go through
+    // imageconvert which pre-rotates them to match ORIENTATION_PORTRAIT;
+    // dynamic bitmaps don't, so the framework's portrait rotation appeared as
+    // a 90° CW rotation of our tile data. Test whether LANDSCAPE removes it.
+    touchgfx::HAL::getInstance()->setDisplayOrientation(touchgfx::ORIENTATION_LANDSCAPE);
     touchgfx::Texts::setLanguage(GB);
     reinterpret_cast<touchgfx::LCD8bpp_ABGR2222&>(touchgfx::HAL::lcd()).enableTextureMapperABGR2222_NearestNeighbor();
 }
