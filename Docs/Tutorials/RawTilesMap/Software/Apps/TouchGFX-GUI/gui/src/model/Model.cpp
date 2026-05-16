@@ -58,7 +58,7 @@ Model::Model()
 
     // Open the rawtiles pack. RAWTILES_PATH env var overrides; otherwise walk
     // the candidate list until one resolves.
-    SDK::RawTiles::Container::OpenResult openResult = SDK::RawTiles::Container::OpenResult::FileNotFound;
+    SDK::RawTiles::OpenResult openResult = SDK::RawTiles::OpenResult::FileNotFound;
     if (const char* envPath = std::getenv("RAWTILES_PATH")) {
         openResult = mTiles.openFromFile(envPath);
         LOG_INFO("rawtiles: opening %s -> %s\n",
@@ -66,12 +66,12 @@ Model::Model()
     } else {
         for (const char* candidate : kPackCandidates) {
             openResult = mTiles.openFromFile(candidate);
-            if (openResult == SDK::RawTiles::Container::OpenResult::Ok) {
+            if (openResult == SDK::RawTiles::OpenResult::Ok) {
                 LOG_INFO("rawtiles: opened %s\n", candidate);
                 break;
             }
         }
-        if (openResult != SDK::RawTiles::Container::OpenResult::Ok) {
+        if (openResult != SDK::RawTiles::OpenResult::Ok) {
             LOG_INFO("rawtiles: pack not found in any candidate path; set RAWTILES_PATH to override\n");
         }
     }
