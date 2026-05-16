@@ -16,7 +16,6 @@
     #endif
     #include <chrono>
     #include <cstdlib>
-    #include <cstring>
     #include <ctime>
 
 namespace {
@@ -96,17 +95,11 @@ Model::Model()
 
         // Pick the centre tile for the 3×3 viewport: the median tile at the
         // pack's highest zoom level. ABGR2222 in the pack matches TouchGFX's
-        // Bitmap::ABGR2222 byte-for-byte, so each cell is just a memcpy.
+        // Bitmap::ABGR2222 byte-for-byte, so tile bytes are referenced in-place
+        // via dynamicBitmapCreateExternal — no pixel copy, no large BSS pool.
         //
-        // Pool sizing: 9 × 65 536 px-bytes + TouchGFX's per-bitmap header
-        // overhead. 640 KB carries comfortable slack; the budget would scale
-        // linearly with a larger viewport and is the headline RAM number to
-        // worry about for the embedded target.
-        static constexpr uint32_t kCachePoolBytes = 640u * 1024u;
-        static uint16_t           sBitmapCachePool[kCachePoolBytes / sizeof(uint16_t)];
-        touchgfx::Bitmap::setCache(sBitmapCachePool, kCachePoolBytes,
-                                   TileViewport::kGrid * TileViewport::kGrid);
-
+        // Pool sizing: only DynamicBitmapData metadata is stored in the cache
+        // pool (~16 bytes per slot). 4 KB is generous headroom for 9 entries.
         mViewport.tileDimPx = h.tileDimPx;
 
         // Find median z = zoom_max entry to use as centre. Falls back to the
@@ -142,6 +135,24 @@ Model::Model()
         LOG_INFO("rawtiles: viewport centre = z=%u x=%u y=%u\n", cz, cx, cy);
 
         if (centreFound) {
+            // Pre-pass: count tiles that actually exist before calling setCache.
+            // Passing numberOfDynamicBitmaps > bitmaps ever created leaves
+            // uninitialized metadata slots that corrupt the rendering pipeline.
+            int validCount = 0;
+            for (int row = 0; row < TileViewport::kGrid; ++row) {
+                for (int col = 0; col < TileViewport::kGrid; ++col) {
+                    if (mTiles.getTile(cz, cx + uint32_t(col - 1),
+                                           cy + uint32_t(row - 1)).valid()) {
+                        ++validCount;
+                    }
+                }
+            }
+            LOG_INFO("rawtiles: %d/9 viewport tiles found in pack\n", validCount);
+
+            static constexpr uint32_t kCachePoolBytes = 4u * 1024u;
+            static uint16_t           sBitmapCachePool[kCachePoolBytes / sizeof(uint16_t)];
+            touchgfx::Bitmap::setCache(sBitmapCachePool, kCachePoolBytes, validCount);
+
             int filled = 0;
             for (int row = 0; row < TileViewport::kGrid; ++row) {
                 for (int col = 0; col < TileViewport::kGrid; ++col) {
@@ -152,16 +163,14 @@ Model::Model()
                     if (!tile.valid()) {
                         continue;
                     }
-                    touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreate(
+                    touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreateExternal(
                             mViewport.tileDimPx, mViewport.tileDimPx,
-                            touchgfx::Bitmap::ABGR2222);
+                            tile.data, touchgfx::Bitmap::ABGR2222);
                     if (id == touchgfx::BITMAP_INVALID) {
-                        LOG_INFO("rawtiles: dynamicBitmapCreate failed for cell (%d,%d) — pool exhausted\n",
+                        LOG_INFO("rawtiles: dynamicBitmapCreateExternal failed for cell (%d,%d)\n",
                                  col, row);
                         continue;
                     }
-                    uint8_t* dst = touchgfx::Bitmap::dynamicBitmapGetAddress(id);
-                    std::memcpy(dst, tile.data, tile.length);
                     mViewport.ids[slot] = id;
                     ++filled;
                 }

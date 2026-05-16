@@ -53,12 +53,26 @@ void TileCanvas::draw(const Rect& area) const
             const int16_t cellLocalX = static_cast<int16_t>((col - 2) * mTileDimPx + halfW);
             const int16_t cellLocalY = static_cast<int16_t>((row - 2) * mTileDimPx + halfH);
 
-            Bitmap        bmp(id);
-            const Rect    src(0, 0, static_cast<int16_t>(bmp.getWidth()),
-                                    static_cast<int16_t>(bmp.getHeight()));
-            const int16_t drawX = static_cast<int16_t>(absDX + cellLocalX);
-            const int16_t drawY = static_cast<int16_t>(absDY + cellLocalY);
-            HAL::lcd().drawPartialBitmap(bmp, drawX, drawY, src, 255, true);
+            // Clip cell against the dirty rect (widget-local coords).
+            // Cells that extend off-screen (negative cellLocalX/Y) must not be
+            // passed to drawPartialBitmap with negative draw coordinates — the
+            // LCD renderer does not clip and would write outside the framebuffer.
+            Rect clip(cellLocalX, cellLocalY,
+                      static_cast<int16_t>(mTileDimPx),
+                      static_cast<int16_t>(mTileDimPx));
+            if (!clip.intersect(area)) {
+                continue;
+            }
+            clip &= area;
+
+            // src: the portion of the bitmap that falls in the clipped region.
+            const Rect src(static_cast<int16_t>(clip.x - cellLocalX),
+                           static_cast<int16_t>(clip.y - cellLocalY),
+                           clip.width, clip.height);
+
+            const int16_t drawX = static_cast<int16_t>(absDX + clip.x);
+            const int16_t drawY = static_cast<int16_t>(absDY + clip.y);
+            HAL::lcd().drawPartialBitmap(Bitmap(id), drawX, drawY, src, 255, true);
         }
     }
 }
