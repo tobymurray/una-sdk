@@ -206,17 +206,12 @@ Model::Model()
 
         LOG_INFO("rawtiles: viewport centre = z=%u x=%u y=%u\n", cz, cx, cy);
 
-        // Optional: replace ONLY the top-left visible cell's bitmap with a
-        // synthetic orientation marker; other cells keep their real tile bytes.
-        // See debugFillPattern's docs above for the expected on-screen layout.
-        // Enable by exporting RAWTILES_DEBUG_PATTERN=1 before launching.
-        const bool useDebugPattern = std::getenv("RAWTILES_DEBUG_PATTERN") != nullptr;
+        // DIAG: unconditionally replace the top-left visible cell's bitmap with
+        // a synthetic orientation marker (debugFillPattern). Other cells keep
+        // their real tile bytes. Revert before moving past the rotation debug.
         static uint8_t sDebugPattern[1024 * 1024]; // generous; uses dim*dim bytes
-        if (useDebugPattern) {
-            debugFillPattern(sDebugPattern, h.tileDimPx);
-            LOG_INFO("rawtiles: RAWTILES_DEBUG_PATTERN active — slot (col=1,row=1) "
-                     "swapped for orientation marker\n");
-        }
+        debugFillPattern(sDebugPattern, h.tileDimPx);
+        LOG_INFO("rawtiles: DIAG active — slot (col=1,row=1) carries orientation marker\n");
 
         if (centreFound) {
             // Pre-pass: count tiles that actually exist before calling setCache.
@@ -248,8 +243,7 @@ Model::Model()
                         continue;
                     }
                     const bool isTopLeftSlot = (col == 1 && row == 1);
-                    const void* pixelData = (useDebugPattern && isTopLeftSlot)
-                                                ? sDebugPattern : tile.data;
+                    const void* pixelData = isTopLeftSlot ? sDebugPattern : tile.data;
                     touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreateExternal(
                             mViewport.tileDimPx, mViewport.tileDimPx,
                             pixelData, touchgfx::Bitmap::ABGR2222);
