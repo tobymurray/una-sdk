@@ -44,40 +44,34 @@ void TileCanvas::draw(const Rect& area) const
     const int16_t halfW = static_cast<int16_t>(getWidth()  / 2);
     const int16_t halfH = static_cast<int16_t>(getHeight() / 2);
 
+    // Diagnostic shape: pass the full bitmap as src and rely on TouchGFX to
+    // clip the off-screen portion. Mirrors step 5's working call site (which
+    // had a -8 anchor and full src). If this composes the mosaic correctly,
+    // the bug was in our explicit clip-rect math; if it crashes, the framework
+    // doesn't clip far-negative anchors and we need a different primitive
+    // (LCD::blitCopy).
     for (int row = 0; row < kGrid; ++row) {
         for (int col = 0; col < kGrid; ++col) {
             const BitmapId id = mIds[row * kGrid + col];
             if (id == BITMAP_INVALID) {
                 continue;
             }
+            // Skip cells that are entirely off-screen so we don't ask the
+            // renderer about anchors like (-392, -392).
             const int16_t cellLocalX = static_cast<int16_t>((col - 2) * mTileDimPx + halfW);
             const int16_t cellLocalY = static_cast<int16_t>((row - 2) * mTileDimPx + halfH);
-
-            // Clip cell against the dirty rect (widget-local coords).
-            // Cells that extend off-screen (negative cellLocalX/Y) must not be
-            // passed to drawPartialBitmap with negative draw coordinates — the
-            // LCD renderer does not clip and would write outside the framebuffer.
-            Rect clip(cellLocalX, cellLocalY,
-                      static_cast<int16_t>(mTileDimPx),
-                      static_cast<int16_t>(mTileDimPx));
-            if (!clip.intersect(area)) {
+            if (cellLocalX + mTileDimPx <= 0 || cellLocalY + mTileDimPx <= 0
+                    || cellLocalX >= getWidth() || cellLocalY >= getHeight()) {
                 continue;
             }
-            clip &= area;
 
-            // src: the portion of the bitmap that falls in the clipped region.
-            const Rect src(static_cast<int16_t>(clip.x - cellLocalX),
-                           static_cast<int16_t>(clip.y - cellLocalY),
-                           clip.width, clip.height);
-
-            // drawPartialBitmap's (x, y) is where bitmap (0, 0) lands on screen;
-            // src then selects a sub-region whose pixels appear at (x + src.x,
-            // y + src.y). For off-screen-anchored cells this anchor is
-            // negative — clip ensures we only ever issue draws whose src
-            // region is fully inside the dirty rect, so no out-of-bounds writes.
+            Bitmap     bmp(id);
+            const Rect src(0, 0,
+                           static_cast<int16_t>(bmp.getWidth()),
+                           static_cast<int16_t>(bmp.getHeight()));
             const int16_t drawX = static_cast<int16_t>(absDX + cellLocalX);
             const int16_t drawY = static_cast<int16_t>(absDY + cellLocalY);
-            HAL::lcd().drawPartialBitmap(Bitmap(id), drawX, drawY, src, 255, true);
+            HAL::lcd().drawPartialBitmap(bmp, drawX, drawY, src, 255, true);
         }
     }
 }
