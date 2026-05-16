@@ -75,12 +75,12 @@ void debugFillRect(uint8_t* buf, uint16_t dim, int x, int y, int w, int h, uint8
 // (the 4 rotations × 2 chiralities).
 void debugFillPattern(uint8_t* buf, uint16_t dim)
 {
-    debugFillRect(buf, dim, 0, 0, dim, dim, kABGR_Gray);
-
-    const int half = dim / 2;
-    debugFillRect(buf, dim, half,      half,      half, half, kABGR_Yellow);
-    debugFillRect(buf, dim, half,      half,      32,   32,   kABGR_Red);
-    debugFillRect(buf, dim, dim - 32,  half,      32,   32,   kABGR_Green);
+    // Solid red across the entire bitmap. Whichever quadrant of this bitmap is
+    // visible (cell (1,1) shows the BR quadrant at widget TL = widget 0..120),
+    // the user should see a bright red 120x120 block in the widget's top-left
+    // corner instead of map tile content. If the user still sees a real tile
+    // there, the substitution isn't taking effect at all.
+    debugFillRect(buf, dim, 0, 0, dim, dim, kABGR_Red);
 }
 
 } // namespace
@@ -244,6 +244,9 @@ Model::Model()
                     }
                     const bool isTopLeftSlot = (col == 1 && row == 1);
                     const void* pixelData = isTopLeftSlot ? sDebugPattern : tile.data;
+                    if (isTopLeftSlot) {
+                        LOG_INFO("rawtiles: DIAG registering solid-RED bitmap for slot (col=1,row=1)\n");
+                    }
                     touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreateExternal(
                             mViewport.tileDimPx, mViewport.tileDimPx,
                             pixelData, touchgfx::Bitmap::ABGR2222);
