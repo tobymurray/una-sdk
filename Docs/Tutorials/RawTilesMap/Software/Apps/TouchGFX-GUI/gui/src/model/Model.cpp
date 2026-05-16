@@ -110,16 +110,21 @@ Model::Model()
         uint32_t cy = 0;
         bool     centreFound = false;
         if (mTiles.tileCountAtZoom(h.zoomMax) > 0) {
-            // Walk linearly to find the first index entry at zoom_max, then
-            // jump to the median entry within that zoom's run.
+            // Pick the first index entry at zoom_max as the seam centre. For a
+            // tile-rectangular pack that's (cx_min, cy_min), so the four
+            // visible viewport quadrants extend right + down into existing
+            // pack tiles: (cx, cy), (cx+1, cy), (cx, cy+1), (cx+1, cy+1) all
+            // fall inside the pack's bbox by construction.
+            //
+            // Earlier code used the median index, which for an even number of
+            // tile-columns selected (cx_max, cy_min) and pushed the right two
+            // quadrants outside the pack.
             for (uint32_t i = 0; i < h.tileCount; ++i) {
                 auto entry = mTiles.getTileByIndex(i);
                 if (entry.z == h.zoomMax) {
-                    const uint32_t median = i + (mTiles.tileCountAtZoom(h.zoomMax) / 2);
-                    auto mid = mTiles.getTileByIndex(median);
-                    cz = mid.z;
-                    cx = mid.x;
-                    cy = mid.y;
+                    cz = entry.z;
+                    cx = entry.x;
+                    cy = entry.y;
                     centreFound = true;
                     break;
                 }
