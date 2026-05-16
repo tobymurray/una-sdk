@@ -22,10 +22,10 @@ FrontendApplicationBase::FrontendApplicationBase(Model& m, FrontendHeap& heap)
       frontendHeap(heap),
       model(m)
 {
-    // Diagnostic for the dynamic-bitmap rotation. Static bitmaps go through
-    // imageconvert which pre-rotates them to match ORIENTATION_PORTRAIT;
-    // dynamic bitmaps don't, so the framework's portrait rotation appeared as
-    // a 90° CW rotation of our tile data. Test whether LANDSCAPE removes it.
+    // This tutorial runs in LANDSCAPE so runtime-registered tile bitmaps
+    // render without TouchGFX's portrait rotation. Static bitmaps come out of
+    // imageconvert unrotated (application.config layout_rotation = 0) to
+    // match; both pipelines stay consistent with the framework setting here.
     touchgfx::HAL::getInstance()->setDisplayOrientation(touchgfx::ORIENTATION_LANDSCAPE);
     touchgfx::Texts::setLanguage(GB);
     reinterpret_cast<touchgfx::LCD8bpp_ABGR2222&>(touchgfx::HAL::lcd()).enableTextureMapperABGR2222_NearestNeighbor();
