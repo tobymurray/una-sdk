@@ -36,6 +36,10 @@ set(UNA_SDK_SOURCES_TRACKMAP
     "$ENV{UNA_SDK}/Libs/Source/TrackMap/TrackMapBuilder.cpp"
 )
 
+set(UNA_SDK_SOURCES_RAWTILES
+    "$ENV{UNA_SDK}/Libs/Source/RawTiles/Container.cpp"
+)
+
 # Variant-alias config reader (SDK::Variant). Needs UNA_SDK_SOURCES_JSON in
 # the same link (the GUI process must add both to read the config directly).
 set(UNA_SDK_SOURCES_VARIANT
