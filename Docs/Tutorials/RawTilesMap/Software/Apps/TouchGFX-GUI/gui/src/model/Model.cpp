@@ -15,7 +15,21 @@
     #include "Windows.h"
     #endif
     #include <chrono>
+    #include <cstdlib>
     #include <ctime>
+
+namespace {
+// The simulator binary can be launched from several working directories
+// (build/bin/, simulator/gcc/, TouchGFX-GUI/, …); try each candidate path
+// until one resolves. RAWTILES_PATH env var wins if set.
+const char* kPackCandidates[] = {
+    "../Resources/stanley.rawtiles",
+    "../../Resources/stanley.rawtiles",
+    "../../../../Resources/stanley.rawtiles",
+    "Resources/stanley.rawtiles",
+    "Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles",
+};
+} // namespace
 #endif
 
 Model::Model()
@@ -41,6 +55,38 @@ Model::Model()
         "       4   R2,                     \n"
         "       z   L1+R2                   \n"
     );
+
+    // Open the rawtiles pack. RAWTILES_PATH env var overrides; otherwise walk
+    // the candidate list until one resolves.
+    SDK::RawTiles::Container::OpenResult openResult = SDK::RawTiles::Container::OpenResult::FileNotFound;
+    if (const char* envPath = std::getenv("RAWTILES_PATH")) {
+        openResult = mTiles.openFromFile(envPath);
+        LOG_INFO("rawtiles: opening %s -> %s\n",
+                 envPath, SDK::RawTiles::Container::describeResult(openResult));
+    } else {
+        for (const char* candidate : kPackCandidates) {
+            openResult = mTiles.openFromFile(candidate);
+            if (openResult == SDK::RawTiles::Container::OpenResult::Ok) {
+                LOG_INFO("rawtiles: opened %s\n", candidate);
+                break;
+            }
+        }
+        if (openResult != SDK::RawTiles::Container::OpenResult::Ok) {
+            LOG_INFO("rawtiles: pack not found in any candidate path; set RAWTILES_PATH to override\n");
+        }
+    }
+
+    if (mTiles.isOpen()) {
+        const auto& h = mTiles.header();
+        LOG_INFO("rawtiles header:\n"
+                 "       tile_dim_px      %u\n"
+                 "       zoom_range       [%u, %u]\n"
+                 "       tile_count       %u\n"
+                 "       bbox (deg)       lon [%.6f, %.6f] lat [%.6f, %.6f]\n",
+                 h.tileDimPx, h.zoomMin, h.zoomMax, h.tileCount,
+                 h.bboxMinLonUDeg / 1e6, h.bboxMaxLonUDeg / 1e6,
+                 h.bboxMinLatUDeg / 1e6, h.bboxMaxLatUDeg / 1e6);
+    }
 #endif
 }
 

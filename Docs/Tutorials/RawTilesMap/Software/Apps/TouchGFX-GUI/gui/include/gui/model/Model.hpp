@@ -6,6 +6,7 @@
 #include "SDK/Kernel/Kernel.hpp"
 #include "SDK/Interfaces/IGuiLifeCycleCallback.hpp"
 #include "SDK/Interfaces/ICustomMessageHandler.hpp"
+#include "SDK/RawTiles/Container.hpp"
 
 #include "gui/common/GuiConfig.hpp"
 #include "Commands.hpp"
@@ -38,6 +39,12 @@ public:
      */
     void exitApp();
 
+    /**
+     * @brief Access the loaded rawtiles pack. @c isOpen() is false if the
+     *        pack failed to open (path not found, CRC mismatch, etc.).
+     */
+    const SDK::RawTiles::Container& tiles() const { return mTiles; }
+
 protected:
     ModelListener* modelListener;           ///< Pointer to model listener
 
@@ -45,6 +52,8 @@ protected:
     const SDK::Kernel& mKernel;             ///< Reference to kernel interface
 
     bool mInvalidate = false;               ///< Request to redraw current screen
+
+    SDK::RawTiles::Container mTiles;        ///< Pack opened from Resources/stanley.rawtiles at boot
 
     // IUserApp implementation
     virtual void onStart()   override;
