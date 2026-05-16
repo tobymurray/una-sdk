@@ -54,40 +54,33 @@ void debugFillRect(uint8_t* buf, uint16_t dim, int x, int y, int w, int h, uint8
     }
 }
 
-// Fill @p buf (dim×dim ABGR2222) with a self-describing pattern that exposes
-// orientation and seam-alignment bugs at a glance. Interpreting the rendered
-// mosaic with the seam-centred viewport from TileCanvas:
+// Fill @p buf (dim×dim ABGR2222) with a minimal orientation marker, designed
+// for the single bitmap registered to slot (col=1, row=1) of the 3×3 viewport.
+// That slot's BR quadrant is what's visible at widget top-left (widget rect
+// 0..120 × 0..120 for dim=256 on a 240-px widget).
 //
-//   - 16-px edge stripes show which edge ends up where:
-//       top  = RED, bottom = BLUE, left  = GREEN, right = YELLOW.
-//     A correct 4-quadrant mosaic shows a RED+BLUE horizontal cross and
-//     GREEN+YELLOW vertical cross meeting at the widget centre (each stripe
-//     16 px wide on either side of the seam).
+// Layout:
+//   - whole bitmap: GRAY
+//   - BR quadrant of bitmap (cols 128..256, rows 128..256): YELLOW fill
+//   - 32×32 RED square at bitmap (128..160, 128..160) — TL of BR quadrant
+//   - 32×32 GREEN square at bitmap (224..256, 128..160) — TR of BR quadrant
 //
-//   - 32-px corner dots show which bitmap corner ends up where:
-//       TL = BLACK, TR = WHITE, BL = MAGENTA, BR = CYAN.
-//     In the four visible quadrants the user expects: CYAN at widget top-left
-//     (cell (1,1) shows its SE corner), MAGENTA at widget top-right,
-//     WHITE at widget bottom-left, BLACK at widget bottom-right. Anything
-//     else means rotation or transposition.
+// Correct rendering puts:
+//   - widget TL quadrant solid YELLOW
+//   - RED square at widget (0..24, 0..24) (widget TL corner)
+//   - GREEN square at widget (88..120, 0..24) (widget TR-of-TL-quadrant)
 //
-//   - Background is a uniform gray so seam alignment of bg-coloured regions
-//     is visible too (tiles drift → gray bands offset across seams).
+// Any rotation/flip moves the two squares to a different combination of cell
+// corners. The two-marker layout uniquely identifies all eight orientations
+// (the 4 rotations × 2 chiralities).
 void debugFillPattern(uint8_t* buf, uint16_t dim)
 {
     debugFillRect(buf, dim, 0, 0, dim, dim, kABGR_Gray);
 
-    // Edge stripes.
-    debugFillRect(buf, dim, 0,         0,         dim, 16,  kABGR_Red);
-    debugFillRect(buf, dim, 0,         dim - 16,  dim, 16,  kABGR_Blue);
-    debugFillRect(buf, dim, 0,         0,         16,  dim, kABGR_Green);
-    debugFillRect(buf, dim, dim - 16,  0,         16,  dim, kABGR_Yellow);
-
-    // Corner dots — drawn last so they win over edge stripes at the corners.
-    debugFillRect(buf, dim, 0,         0,         32, 32, kABGR_Black);
-    debugFillRect(buf, dim, dim - 32,  0,         32, 32, kABGR_White);
-    debugFillRect(buf, dim, 0,         dim - 32,  32, 32, kABGR_Magenta);
-    debugFillRect(buf, dim, dim - 32,  dim - 32,  32, 32, kABGR_Cyan);
+    const int half = dim / 2;
+    debugFillRect(buf, dim, half,      half,      half, half, kABGR_Yellow);
+    debugFillRect(buf, dim, half,      half,      32,   32,   kABGR_Red);
+    debugFillRect(buf, dim, dim - 32,  half,      32,   32,   kABGR_Green);
 }
 
 } // namespace
@@ -213,15 +206,16 @@ Model::Model()
 
         LOG_INFO("rawtiles: viewport centre = z=%u x=%u y=%u\n", cz, cx, cy);
 
-        // Optional: replace real tile bytes with a self-describing test pattern
-        // (see debugFillPattern docs above for what the colours mean). Enable
-        // by exporting RAWTILES_DEBUG_PATTERN=1 before launching the simulator.
+        // Optional: replace ONLY the top-left visible cell's bitmap with a
+        // synthetic orientation marker; other cells keep their real tile bytes.
+        // See debugFillPattern's docs above for the expected on-screen layout.
+        // Enable by exporting RAWTILES_DEBUG_PATTERN=1 before launching.
         const bool useDebugPattern = std::getenv("RAWTILES_DEBUG_PATTERN") != nullptr;
         static uint8_t sDebugPattern[1024 * 1024]; // generous; uses dim*dim bytes
         if (useDebugPattern) {
             debugFillPattern(sDebugPattern, h.tileDimPx);
-            LOG_INFO("rawtiles: RAWTILES_DEBUG_PATTERN active — viewport cells "
-                     "carry a synthetic test image instead of real tile bytes\n");
+            LOG_INFO("rawtiles: RAWTILES_DEBUG_PATTERN active — slot (col=1,row=1) "
+                     "swapped for orientation marker\n");
         }
 
         if (centreFound) {
@@ -253,7 +247,9 @@ Model::Model()
                     if (!tile.valid()) {
                         continue;
                     }
-                    const void* pixelData = useDebugPattern ? sDebugPattern : tile.data;
+                    const bool isTopLeftSlot = (col == 1 && row == 1);
+                    const void* pixelData = (useDebugPattern && isTopLeftSlot)
+                                                ? sDebugPattern : tile.data;
                     touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreateExternal(
                             mViewport.tileDimPx, mViewport.tileDimPx,
                             pixelData, touchgfx::Bitmap::ABGR2222);
