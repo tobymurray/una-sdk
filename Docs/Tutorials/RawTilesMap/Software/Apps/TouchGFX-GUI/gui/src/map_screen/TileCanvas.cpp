@@ -70,8 +70,13 @@ void TileCanvas::draw(const Rect& area) const
                            static_cast<int16_t>(clip.y - cellLocalY),
                            clip.width, clip.height);
 
-            const int16_t drawX = static_cast<int16_t>(absDX + clip.x);
-            const int16_t drawY = static_cast<int16_t>(absDY + clip.y);
+            // drawPartialBitmap's (x, y) is where bitmap (0, 0) lands on screen;
+            // src then selects a sub-region whose pixels appear at (x + src.x,
+            // y + src.y). For off-screen-anchored cells this anchor is
+            // negative — clip ensures we only ever issue draws whose src
+            // region is fully inside the dirty rect, so no out-of-bounds writes.
+            const int16_t drawX = static_cast<int16_t>(absDX + cellLocalX);
+            const int16_t drawY = static_cast<int16_t>(absDY + cellLocalY);
             HAL::lcd().drawPartialBitmap(Bitmap(id), drawX, drawY, src, 255, true);
         }
     }
