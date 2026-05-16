@@ -233,6 +233,15 @@ void Model::onSuspend()
 
 bool Model::customMessageHandler(SDK::MessageBase *msg)
 {
+    // Model::Model() registers itself as the custom-message handler before
+    // FrontendHeap binds a presenter, so the Service thread can deliver
+    // sensor messages while modelListener is still null. Drop those rather
+    // than dereferencing — by the time the user is looking at the UI, the
+    // presenter is bound and updates resume.
+    if (modelListener == nullptr) {
+        return true;
+    }
+
     switch (msg->getType()) {
         case CustomMessage::HR_VALUES:  {
             auto* m = static_cast<CustomMessage::HRValues*>(msg);
