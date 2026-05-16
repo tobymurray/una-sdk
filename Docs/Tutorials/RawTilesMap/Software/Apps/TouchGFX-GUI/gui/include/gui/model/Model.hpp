@@ -7,6 +7,7 @@
 #include "SDK/Interfaces/IGuiLifeCycleCallback.hpp"
 #include "SDK/Interfaces/ICustomMessageHandler.hpp"
 #include "SDK/RawTiles/Container.hpp"
+#include "touchgfx/Bitmap.hpp"
 
 #include "gui/common/GuiConfig.hpp"
 #include "Commands.hpp"
@@ -45,6 +46,19 @@ public:
      */
     const SDK::RawTiles::Container& tiles() const { return mTiles; }
 
+    /**
+     * @brief The TouchGFX dynamic-bitmap ID holding the currently-displayed
+     *        tile, or @c BITMAP_INVALID if no tile has been blitted yet.
+     */
+    touchgfx::BitmapId tileBitmapId() const { return mTileBitmapId; }
+
+    /**
+     * @brief Width/height of the currently-displayed tile in pixels (always
+     *        square; matches the pack's @c tile_dim_px). Zero when no tile
+     *        has been blitted yet.
+     */
+    uint16_t tileDimPx() const { return mTileDimPx; }
+
 protected:
     ModelListener* modelListener;           ///< Pointer to model listener
 
@@ -54,6 +68,8 @@ protected:
     bool mInvalidate = false;               ///< Request to redraw current screen
 
     SDK::RawTiles::Container mTiles;        ///< Pack opened from Resources/stanley.rawtiles at boot
+    touchgfx::BitmapId       mTileBitmapId = touchgfx::BITMAP_INVALID;
+    uint16_t                 mTileDimPx    = 0;
 
     // IUserApp implementation
     virtual void onStart()   override;

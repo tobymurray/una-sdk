@@ -16,6 +16,8 @@ public:
     virtual void setupScreen();
     virtual void tearDownScreen();
 
+    void setTileBitmap(touchgfx::BitmapId id);
+
 protected:
     virtual void handleKeyEvent(uint8_t key) override;
 

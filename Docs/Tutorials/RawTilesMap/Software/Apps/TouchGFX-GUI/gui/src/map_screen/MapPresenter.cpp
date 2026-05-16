@@ -8,6 +8,7 @@ MapPresenter::MapPresenter(MapView& v)
 
 void MapPresenter::activate()
 {
+    view.setTileBitmap(model->tileBitmapId());
 }
 
 void MapPresenter::deactivate()

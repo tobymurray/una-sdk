@@ -16,6 +16,7 @@
     #endif
     #include <chrono>
     #include <cstdlib>
+    #include <cstring>
     #include <ctime>
 
 namespace {
@@ -86,6 +87,40 @@ Model::Model()
                  h.tileDimPx, h.zoomMin, h.zoomMax, h.tileCount,
                  h.bboxMinLonUDeg / 1e6, h.bboxMaxLonUDeg / 1e6,
                  h.bboxMinLatUDeg / 1e6, h.bboxMaxLatUDeg / 1e6);
+
+        for (uint32_t i = 0; i < h.tileCount; ++i) {
+            auto entry = mTiles.getTileByIndex(i);
+            LOG_DEBUG("       tile[%u]  z=%u x=%u y=%u  %u B\n",
+                      i, entry.z, entry.x, entry.y, entry.tile.length);
+        }
+
+        // Allocate one dynamic bitmap, blit the first tile of the pack into
+        // it. ABGR2222 in the pack matches TouchGFX's Bitmap::ABGR2222 byte
+        // layout, so the tile bytes copy in with no decode step.
+        //
+        // Sizing: one 256×256 ABGR2222 tile is 65,536 bytes of pixels plus
+        // TouchGFX's per-bitmap header overhead. 96 KB is comfortably more
+        // than enough for one tile; budget grows linearly when we add more.
+        static constexpr uint32_t kCachePoolBytes  = 96u * 1024u;
+        static uint16_t           sBitmapCachePool[kCachePoolBytes / sizeof(uint16_t)];
+
+        touchgfx::Bitmap::setCache(sBitmapCachePool, kCachePoolBytes, 1);
+
+        mTileDimPx    = h.tileDimPx;
+        mTileBitmapId = touchgfx::Bitmap::dynamicBitmapCreate(
+                            mTileDimPx, mTileDimPx, touchgfx::Bitmap::ABGR2222);
+
+        if (mTileBitmapId == touchgfx::BITMAP_INVALID) {
+            LOG_INFO("rawtiles: dynamicBitmapCreate failed (pool too small?)\n");
+        } else {
+            auto first = mTiles.getTileByIndex(0);
+            if (first.tile.valid()) {
+                uint8_t* dst = touchgfx::Bitmap::dynamicBitmapGetAddress(mTileBitmapId);
+                std::memcpy(dst, first.tile.data, first.tile.length);
+                LOG_INFO("rawtiles: blitted tile z=%u x=%u y=%u into BitmapId=%u\n",
+                         first.z, first.x, first.y, mTileBitmapId);
+            }
+        }
     }
 #endif
 }

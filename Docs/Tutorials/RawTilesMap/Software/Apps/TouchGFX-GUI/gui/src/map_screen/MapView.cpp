@@ -25,6 +25,12 @@ void MapView::tearDownScreen()
 {
 }
 
+void MapView::setTileBitmap(BitmapId id)
+{
+    tileCanvas.setBitmap(id);
+    tileCanvas.invalidate();
+}
+
 void MapView::handleKeyEvent(uint8_t key)
 {
     if (key == SDK::GUI::Button::L1 || key == SDK::GUI::Button::L2) {
