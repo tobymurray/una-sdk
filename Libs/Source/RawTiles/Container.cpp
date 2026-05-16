@@ -569,6 +569,23 @@ TileRef Container::getTile(uint8_t z, uint32_t x, uint32_t y) const
     return TileRef { nullptr, 0 };
 }
 
+TileEntry Container::getTileByIndex(uint32_t i) const
+{
+    TileEntry out { 0, 0, 0, TileRef { nullptr, 0 } };
+    if (!isOpen() || i >= mHeader.tileCount) {
+        return out;
+    }
+    const uint8_t *e = mBytes.data() + mHeader.indexOffset + (i * kIndexEntrySize);
+    out.z         = e[0];
+    out.x         = readU32LE(e + 4);
+    out.y         = readU32LE(e + 8);
+    const uint32_t off = readU32LE(e + 12);
+    const uint32_t len = readU32LE(e + 16);
+    out.tile.data   = mBytes.data() + off;
+    out.tile.length = len;
+    return out;
+}
+
 uint32_t Container::tileCountAtZoom(uint8_t z) const
 {
     if (!isOpen() || z >= kZoomDirCount) {

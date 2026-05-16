@@ -108,6 +108,18 @@ struct TileRef {
 };
 
 /**
+ * @brief A tile-index entry plus a view of its bytes. Returned by enumeration
+ *        APIs that walk the pack without requiring the caller to know the
+ *        (z, x, y) ahead of time.
+ */
+struct TileEntry {
+    uint8_t  z;
+    uint32_t x;
+    uint32_t y;
+    TileRef  tile;
+};
+
+/**
  * @brief Result codes for Container::open*. Anything other than @c Ok means
  *        the container is not safe to query.
  */
@@ -200,6 +212,18 @@ public:
      *         @c false when the tile is absent or @p z is out of range.
      */
     TileRef getTile(uint8_t z, uint32_t x, uint32_t y) const;
+
+    /**
+     * @brief Fetches the @p i-th tile-index entry (0-based, file order).
+     *
+     * Useful for callers that want to iterate the pack without knowing the
+     * coordinates in advance — picking a centre tile, building previews, etc.
+     *
+     * @param i: index in @c [0, header().tileCount).
+     * @return A populated @c TileEntry; the @c tile field is @c invalid() when
+     *         @p i is out of range.
+     */
+    TileEntry getTileByIndex(uint32_t i) const;
 
     /**
      * @brief Number of tile-index entries at zoom @p z (0 if z ≥ 24).
