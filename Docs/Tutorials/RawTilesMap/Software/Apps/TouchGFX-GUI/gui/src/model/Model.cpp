@@ -15,6 +15,7 @@
     #include "Windows.h"
     #endif
     #include <chrono>
+    #include <cstdio>
     #include <cstdlib>
     #include <ctime>
 
@@ -29,6 +30,66 @@ const char* kPackCandidates[] = {
     "Resources/stanley.rawtiles",
     "Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles",
 };
+
+// ABGR2222 byte encoding: A[7:6] B[5:4] G[3:2] R[1:0], each channel
+// 0..3 maps to displayed 0/85/170/255. Alpha must be 3 (opaque) per spec.
+constexpr uint8_t kABGR_Black   = 0xC0; // A=3, B=0, G=0, R=0
+constexpr uint8_t kABGR_White   = 0xFF; // A=B=G=R=3
+constexpr uint8_t kABGR_Red     = 0xC3; // A=3, R=3
+constexpr uint8_t kABGR_Green   = 0xCC; // A=3, G=3
+constexpr uint8_t kABGR_Blue    = 0xF0; // A=3, B=3
+constexpr uint8_t kABGR_Yellow  = 0xCF; // A=3, G=3, R=3
+constexpr uint8_t kABGR_Cyan    = 0xFC; // A=3, B=3, G=3
+constexpr uint8_t kABGR_Magenta = 0xF3; // A=3, B=3, R=3
+constexpr uint8_t kABGR_Gray    = 0xEA; // A=3, B=G=R=2
+
+void debugFillRect(uint8_t* buf, uint16_t dim, int x, int y, int w, int h, uint8_t color)
+{
+    for (int j = y; j < y + h; ++j) {
+        if (j < 0 || j >= dim) continue;
+        for (int i = x; i < x + w; ++i) {
+            if (i < 0 || i >= dim) continue;
+            buf[j * dim + i] = color;
+        }
+    }
+}
+
+// Fill @p buf (dim×dim ABGR2222) with a self-describing pattern that exposes
+// orientation and seam-alignment bugs at a glance. Interpreting the rendered
+// mosaic with the seam-centred viewport from TileCanvas:
+//
+//   - 16-px edge stripes show which edge ends up where:
+//       top  = RED, bottom = BLUE, left  = GREEN, right = YELLOW.
+//     A correct 4-quadrant mosaic shows a RED+BLUE horizontal cross and
+//     GREEN+YELLOW vertical cross meeting at the widget centre (each stripe
+//     16 px wide on either side of the seam).
+//
+//   - 32-px corner dots show which bitmap corner ends up where:
+//       TL = BLACK, TR = WHITE, BL = MAGENTA, BR = CYAN.
+//     In the four visible quadrants the user expects: CYAN at widget top-left
+//     (cell (1,1) shows its SE corner), MAGENTA at widget top-right,
+//     WHITE at widget bottom-left, BLACK at widget bottom-right. Anything
+//     else means rotation or transposition.
+//
+//   - Background is a uniform gray so seam alignment of bg-coloured regions
+//     is visible too (tiles drift → gray bands offset across seams).
+void debugFillPattern(uint8_t* buf, uint16_t dim)
+{
+    debugFillRect(buf, dim, 0, 0, dim, dim, kABGR_Gray);
+
+    // Edge stripes.
+    debugFillRect(buf, dim, 0,         0,         dim, 16,  kABGR_Red);
+    debugFillRect(buf, dim, 0,         dim - 16,  dim, 16,  kABGR_Blue);
+    debugFillRect(buf, dim, 0,         0,         16,  dim, kABGR_Green);
+    debugFillRect(buf, dim, dim - 16,  0,         16,  dim, kABGR_Yellow);
+
+    // Corner dots — drawn last so they win over edge stripes at the corners.
+    debugFillRect(buf, dim, 0,         0,         32, 32, kABGR_Black);
+    debugFillRect(buf, dim, dim - 32,  0,         32, 32, kABGR_White);
+    debugFillRect(buf, dim, 0,         dim - 32,  32, 32, kABGR_Magenta);
+    debugFillRect(buf, dim, dim - 32,  dim - 32,  32, 32, kABGR_Cyan);
+}
+
 } // namespace
 #endif
 
@@ -93,6 +154,19 @@ Model::Model()
                       i, entry.z, entry.x, entry.y, entry.tile.length);
         }
 
+        // Hex-dump the leading 32 bytes of tile[0] for byte-level sanity
+        // checking against the host driver. These are the top-left 32 pixels
+        // of the first index entry's bitmap, ABGR2222.
+        if (h.tileCount > 0) {
+            auto t0 = mTiles.getTileByIndex(0);
+            char hex[3 * 32 + 1];
+            int  pos = 0;
+            for (int i = 0; i < 32 && i < int(t0.tile.length); ++i) {
+                pos += snprintf(hex + pos, sizeof(hex) - pos, "%02x ", t0.tile.data[i]);
+            }
+            LOG_INFO("rawtiles: tile[0] first 32 bytes: %s\n", hex);
+        }
+
         // Pick the centre tile for the 3×3 viewport: the median tile at the
         // pack's highest zoom level. ABGR2222 in the pack matches TouchGFX's
         // Bitmap::ABGR2222 byte-for-byte, so tile bytes are referenced in-place
@@ -139,6 +213,17 @@ Model::Model()
 
         LOG_INFO("rawtiles: viewport centre = z=%u x=%u y=%u\n", cz, cx, cy);
 
+        // Optional: replace real tile bytes with a self-describing test pattern
+        // (see debugFillPattern docs above for what the colours mean). Enable
+        // by exporting RAWTILES_DEBUG_PATTERN=1 before launching the simulator.
+        const bool useDebugPattern = std::getenv("RAWTILES_DEBUG_PATTERN") != nullptr;
+        static uint8_t sDebugPattern[1024 * 1024]; // generous; uses dim*dim bytes
+        if (useDebugPattern) {
+            debugFillPattern(sDebugPattern, h.tileDimPx);
+            LOG_INFO("rawtiles: RAWTILES_DEBUG_PATTERN active — viewport cells "
+                     "carry a synthetic test image instead of real tile bytes\n");
+        }
+
         if (centreFound) {
             // Pre-pass: count tiles that actually exist before calling setCache.
             // Passing numberOfDynamicBitmaps > bitmaps ever created leaves
@@ -168,9 +253,10 @@ Model::Model()
                     if (!tile.valid()) {
                         continue;
                     }
+                    const void* pixelData = useDebugPattern ? sDebugPattern : tile.data;
                     touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreateExternal(
                             mViewport.tileDimPx, mViewport.tileDimPx,
-                            tile.data, touchgfx::Bitmap::ABGR2222);
+                            pixelData, touchgfx::Bitmap::ABGR2222);
                     if (id == touchgfx::BITMAP_INVALID) {
                         LOG_INFO("rawtiles: dynamicBitmapCreateExternal failed for cell (%d,%d)\n",
                                  col, row);
