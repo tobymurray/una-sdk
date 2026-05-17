@@ -166,6 +166,29 @@ The HelloWorld `una/Makefile` is already patched. Apply the same change to any o
 
 ---
 
+## Capturing a simulator screenshot
+
+The simulator opens an SDL2 window with a title matching the app folder (e.g. `RawTilesMap`, `HelloWorld`). To capture its contents from a non-interactive shell:
+
+```bash
+# 1. Launch the simulator (background) and let SDL settle
+DISPLAY=:0.0 ./build/bin/simulator.out &
+sleep 1
+
+# 2. Resolve the X11 window id (either by name or process)
+WID=$(DISPLAY=:0.0 xdotool search --name "<AppName>" | head -1)
+# fallback: WID=$(DISPLAY=:0.0 xdotool search --pid $(pgrep -f simulator.out) | head -1)
+
+# 3. Capture just that window
+DISPLAY=:0.0 import -window "$WID" /tmp/sim.png
+```
+
+Required tools: `xdotool` (window lookup) and ImageMagick's `import` (capture). Both are in the base Arch / Ubuntu repos.
+
+Use `xdotool getwindowgeometry "$WID"` to verify the window size; the SDL2 simulator uses the screen dimensions configured in `gui/include/.../SimConstants.hpp` (typically 240×240 or 240×320).
+
+---
+
 ## How the build system works
 
 The GCC Makefile (`simulator/gcc/Makefile`) delegates to `una/Makefile`, which auto-detects the platform via `uname -s`:
