@@ -1,10 +1,18 @@
 # RawTilesMap — cell (1,1) substitution doesn't render (investigation, 2026-05-16)
 
-## TL;DR
+> **Status: RESOLVED** (Experiment C2). The bug is in TouchGFX's prebuilt `ThirdParty/touchgfx/lib/linux/libtouchgfx.a` — specifically `LCD8bpp_ABGR2222::drawPartialBitmap` mishandling external dynamic bitmaps with negative target X (and possibly sub-rectangle src). The workaround is to use `LCD::blitCopy` with a correctly source-relative `blitRect`. Verified working in [`experiment-C2-blitCopy-corrected/`](experiment-C2-blitCopy-corrected/) — four distinct colored quadrants render exactly where positioned. The fix has been applied to `TileCanvas::draw`; see the commit log for "fix(rawtilesmap): use blitCopy instead of drawPartialBitmap."
+>
+> **Where the bug lives:** TouchGFX, not the UNA SDK. The Linux prebuilt `libtouchgfx.a` is community-maintained (per [`Docs/Simulator-Linux.md`](../../../Simulator-Linux.md)). It is unknown whether the same bug affects the Windows MinGW build or the on-device ARM Cortex-M33 builds — those are separate library files we did not exercise in this investigation.
+>
+> The narrative below is left in place because it documents the dead-ends; jump to [Experiment A](experiment-A-four-distinct-colors/), [Experiment C](experiment-C-blitCopy/) (flawed test) and [Experiment C2](experiment-C2-blitCopy-corrected/) (working fix) for the resolution path.
+
+## TL;DR (original, captured before resolution)
 
 When a single viewport cell's `dynamicBitmapCreateExternal` bitmap points at a buffer that no other cell shares, the renderer silently ignores it and that cell's widget region appears empty (the slate background or stale content shows through). When ≥2 cells share the same pixel pointer, the substitution becomes visible — but at unexpected widget positions (see screenshot 02). When all 4 cells share the same pointer, the substitution renders correctly everywhere (screenshot 03).
 
 The framework's metadata is internally consistent: `dynamicBitmapGetAddress(id)` returns the exact pointer we passed at both registration time and draw time, and the bytes at that address remain the pattern bytes throughout. So the bug appears to be inside `LCD8bpp_ABGR2222::drawPartialBitmap` (or one of its callees) in the prebuilt `libtouchgfx.a` — not in our model or canvas code.
+
+**(Refined by experiments A–C2)**: The "shared-pointer-count" pattern above was a red herring. The actual rule is "cells with negative target X are dropped silently by `drawPartialBitmap`, cells with positive target X stretch their source across the widget width." With OSM map tiles in adjacent cells the X-stretch looked like coherent neighboring tiles; only fabricated solid colors per cell (Experiment A) made the mis-positioning visible.
 
 This bundle exists so the next session can pick up without re-running every experiment.
 

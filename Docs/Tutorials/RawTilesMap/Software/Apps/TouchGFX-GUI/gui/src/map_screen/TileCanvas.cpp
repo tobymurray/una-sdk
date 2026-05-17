@@ -2,6 +2,7 @@
 #include <touchgfx/hal/HAL.hpp>
 #include <touchgfx/Color.hpp>
 
+#include <algorithm>
 #include <cstring>
 
 using namespace touchgfx;
@@ -44,34 +45,47 @@ void TileCanvas::draw(const Rect& area) const
     const int16_t halfW = static_cast<int16_t>(getWidth()  / 2);
     const int16_t halfH = static_cast<int16_t>(getHeight() / 2);
 
-    // Diagnostic shape: pass the full bitmap as src and rely on TouchGFX to
-    // clip the off-screen portion. Mirrors step 5's working call site (which
-    // had a -8 anchor and full src). If this composes the mosaic correctly,
-    // the bug was in our explicit clip-rect math; if it crashes, the framework
-    // doesn't clip far-negative anchors and we need a different primitive
-    // (LCD::blitCopy).
+    // Use LCD::blitCopy directly rather than drawPartialBitmap: the prebuilt
+    // ThirdParty/touchgfx/lib/linux/libtouchgfx.a has a bug in
+    // LCD8bpp_ABGR2222::drawPartialBitmap where negative target X drops the
+    // draw silently and positive target X stretches the source across the
+    // widget width. blitCopy with a source-relative blitRect honors the
+    // bitmap position correctly. See Investigations/2026-05-16-cell-render-bug/
+    // for the full investigation and Experiment C2 for the verification.
     for (int row = 0; row < kGrid; ++row) {
         for (int col = 0; col < kGrid; ++col) {
             const BitmapId id = mIds[row * kGrid + col];
             if (id == BITMAP_INVALID) {
                 continue;
             }
-            // Skip cells that are entirely off-screen so we don't ask the
-            // renderer about anchors like (-392, -392).
             const int16_t cellLocalX = static_cast<int16_t>((col - 2) * mTileDimPx + halfW);
             const int16_t cellLocalY = static_cast<int16_t>((row - 2) * mTileDimPx + halfH);
-            if (cellLocalX + mTileDimPx <= 0 || cellLocalY + mTileDimPx <= 0
-                    || cellLocalX >= getWidth() || cellLocalY >= getHeight()) {
+
+            // `source` is the bitmap's absolute screen rect (origin may be
+            // negative when the cell extends off-screen). `blitRect` is the
+            // intersection of `source` with the dirty rect, translated to
+            // coords relative to source.x/y.
+            Bitmap         bmp(id);
+            const uint8_t* pixels = Bitmap::dynamicBitmapGetAddress(id);
+            const Rect     source(static_cast<int16_t>(absDX + cellLocalX),
+                                  static_cast<int16_t>(absDY + cellLocalY),
+                                  static_cast<int16_t>(bmp.getWidth()),
+                                  static_cast<int16_t>(bmp.getHeight()));
+
+            const int16_t ix0 = std::max(source.x, absRect.x);
+            const int16_t iy0 = std::max(source.y, absRect.y);
+            const int16_t ix1 = std::min(static_cast<int16_t>(source.x + source.width),
+                                         static_cast<int16_t>(absRect.x + absRect.width));
+            const int16_t iy1 = std::min(static_cast<int16_t>(source.y + source.height),
+                                         static_cast<int16_t>(absRect.y + absRect.height));
+            if (ix1 <= ix0 || iy1 <= iy0) {
                 continue;
             }
-
-            Bitmap     bmp(id);
-            const Rect src(0, 0,
-                           static_cast<int16_t>(bmp.getWidth()),
-                           static_cast<int16_t>(bmp.getHeight()));
-            const int16_t drawX = static_cast<int16_t>(absDX + cellLocalX);
-            const int16_t drawY = static_cast<int16_t>(absDY + cellLocalY);
-            HAL::lcd().drawPartialBitmap(bmp, drawX, drawY, src, 255, true);
+            const Rect blitRect(static_cast<int16_t>(ix0 - source.x),
+                                static_cast<int16_t>(iy0 - source.y),
+                                static_cast<int16_t>(ix1 - ix0),
+                                static_cast<int16_t>(iy1 - iy0));
+            HAL::lcd().blitCopy(pixels, Bitmap::ABGR2222, source, blitRect, 255, false);
         }
     }
 }
