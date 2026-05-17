@@ -1,0 +1,112 @@
+diff --git a/Docs/Tutorials/RawTilesMap/Software/Apps/TouchGFX-GUI/gui/src/model/Model.cpp b/Docs/Tutorials/RawTilesMap/Software/Apps/TouchGFX-GUI/gui/src/model/Model.cpp
+index 2ff6f77..70ed5ec 100644
+--- a/Docs/Tutorials/RawTilesMap/Software/Apps/TouchGFX-GUI/gui/src/model/Model.cpp
++++ b/Docs/Tutorials/RawTilesMap/Software/Apps/TouchGFX-GUI/gui/src/model/Model.cpp
+@@ -17,6 +17,7 @@
+     #include <chrono>
+     #include <cstdio>
+     #include <cstdlib>
++    #include <cstring>
+     #include <ctime>
+ 
+ namespace {
+@@ -207,60 +208,46 @@ Model::Model()
+ 
+         LOG_INFO("rawtiles: viewport centre = z=%u x=%u y=%u\n", cz, cx, cy);
+ 
+-        // DIAG: unconditionally replace the top-left visible cell's bitmap with
+-        // a synthetic orientation marker (debugFillPattern). Other cells keep
+-        // their real tile bytes. Revert before moving past the rotation debug.
+-        static uint8_t sDebugPattern[1024 * 1024]; // generous; uses dim*dim bytes
+-        debugFillPattern(sDebugPattern, h.tileDimPx);
+-        LOG_INFO("rawtiles: DIAG active — slot (col=1,row=1) carries orientation marker\n");
+-
+-        if (centreFound) {
+-            // Pre-pass: count tiles that actually exist before calling setCache.
+-            // Passing numberOfDynamicBitmaps > bitmaps ever created leaves
+-            // uninitialized metadata slots that corrupt the rendering pipeline.
+-            int validCount = 0;
+-            for (int row = 0; row < TileViewport::kGrid; ++row) {
+-                for (int col = 0; col < TileViewport::kGrid; ++col) {
+-                    if (mTiles.getTile(cz, cx + uint32_t(col - 1),
+-                                           cy + uint32_t(row - 1)).valid()) {
+-                        ++validCount;
+-                    }
+-                }
+-            }
+-            LOG_INFO("rawtiles: %d/9 viewport tiles found in pack\n", validCount);
+-
+-            static constexpr uint32_t kCachePoolBytes = 4u * 1024u;
+-            static uint16_t           sBitmapCachePool[kCachePoolBytes / sizeof(uint16_t)];
+-            touchgfx::Bitmap::setCache(sBitmapCachePool, kCachePoolBytes, validCount);
+-
+-            int filled = 0;
+-            for (int row = 0; row < TileViewport::kGrid; ++row) {
+-                for (int col = 0; col < TileViewport::kGrid; ++col) {
+-                    const int      slot = row * TileViewport::kGrid + col;
+-                    const uint32_t tx   = cx + uint32_t(col - 1);
+-                    const uint32_t ty   = cy + uint32_t(row - 1);
+-                    auto tile = mTiles.getTile(cz, tx, ty);
+-                    if (!tile.valid()) {
+-                        continue;
+-                    }
+-                    const bool isTopLeftSlot = (col == 1 && row == 1);
+-                    const void* pixelData = isTopLeftSlot ? sDebugPattern : tile.data;
+-                    if (isTopLeftSlot) {
+-                        LOG_INFO("rawtiles: DIAG registering solid-RED bitmap for slot (col=1,row=1)\n");
+-                    }
+-                    touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreateExternal(
+-                            mViewport.tileDimPx, mViewport.tileDimPx,
+-                            pixelData, touchgfx::Bitmap::ABGR2222);
+-                    if (id == touchgfx::BITMAP_INVALID) {
+-                        LOG_INFO("rawtiles: dynamicBitmapCreateExternal failed for cell (%d,%d)\n",
+-                                 col, row);
+-                        continue;
+-                    }
+-                    mViewport.ids[slot] = id;
+-                    ++filled;
+-                }
++        // EXPERIMENT A (Investigations/2026-05-16-cell-render-bug/experiment-A-four-distinct-colors):
++        // Bypass the pack entirely and register 4 fabricated solid-color
++        // buffers, one per visible viewport slot. Distinct colors per cell
++        // let the screenshot directly report which BitmapId lands in which
++        // widget quadrant. Goal: settle whether the bug is mixed-source,
++        // shared-pointer count, slot indexing, or coordinate transform.
++        static uint8_t sExpA_Red   [256 * 256];
++        static uint8_t sExpA_Green [256 * 256];
++        static uint8_t sExpA_Blue  [256 * 256];
++        static uint8_t sExpA_Yellow[256 * 256];
++        std::memset(sExpA_Red,    kABGR_Red,    sizeof(sExpA_Red));
++        std::memset(sExpA_Green,  kABGR_Green,  sizeof(sExpA_Green));
++        std::memset(sExpA_Blue,   kABGR_Blue,   sizeof(sExpA_Blue));
++        std::memset(sExpA_Yellow, kABGR_Yellow, sizeof(sExpA_Yellow));
++
++        static constexpr uint32_t kCachePoolBytes = 4u * 1024u;
++        static uint16_t           sBitmapCachePool[kCachePoolBytes / sizeof(uint16_t)];
++        touchgfx::Bitmap::setCache(sBitmapCachePool, kCachePoolBytes, 4);
++
++        struct ExpACell {
++            int      col, row;
++            uint8_t* buf;
++            const char* name;
++            uint8_t  byte;
++        } expACells[] = {
++            {1, 1, sExpA_Red,    "RED",    kABGR_Red},     // expected widget TL
++            {2, 1, sExpA_Green,  "GREEN",  kABGR_Green},   // expected widget TR
++            {1, 2, sExpA_Blue,   "BLUE",   kABGR_Blue},    // expected widget BL
++            {2, 2, sExpA_Yellow, "YELLOW", kABGR_Yellow},  // expected widget BR
++        };
++        for (const auto& c : expACells) {
++            touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreateExternal(
++                    256, 256, c.buf, touchgfx::Bitmap::ABGR2222);
++            const uint8_t* stored = touchgfx::Bitmap::dynamicBitmapGetAddress(id);
++            LOG_INFO("EXP-A: slot (col=%d,row=%d) %s id=%u buf=%p stored=%p first_byte=0x%02x expected=0x%02x\n",
++                     c.col, c.row, c.name, unsigned(id), (void*)c.buf, (const void*)stored,
++                     stored ? unsigned(stored[0]) : 0u, c.byte);
++            if (id != touchgfx::BITMAP_INVALID) {
++                mViewport.ids[c.row * TileViewport::kGrid + c.col] = id;
+             }
+-            LOG_INFO("rawtiles: viewport filled %d/9 cells\n", filled);
+         }
+     }
+ #endif
