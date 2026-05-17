@@ -15,7 +15,6 @@
     #include "Windows.h"
     #endif
     #include <chrono>
-    #include <cstdio>
     #include <cstdlib>
     #include <ctime>
 
@@ -31,58 +30,6 @@ const char* kPackCandidates[] = {
     "Resources/stanley.rawtiles",
     "Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles",
 };
-
-// ABGR2222 byte encoding: A[7:6] B[5:4] G[3:2] R[1:0], each channel
-// 0..3 maps to displayed 0/85/170/255. Alpha must be 3 (opaque) per spec.
-constexpr uint8_t kABGR_Black   = 0xC0; // A=3, B=0, G=0, R=0
-constexpr uint8_t kABGR_White   = 0xFF; // A=B=G=R=3
-constexpr uint8_t kABGR_Red     = 0xC3; // A=3, R=3
-constexpr uint8_t kABGR_Green   = 0xCC; // A=3, G=3
-constexpr uint8_t kABGR_Blue    = 0xF0; // A=3, B=3
-constexpr uint8_t kABGR_Yellow  = 0xCF; // A=3, G=3, R=3
-constexpr uint8_t kABGR_Cyan    = 0xFC; // A=3, B=3, G=3
-constexpr uint8_t kABGR_Magenta = 0xF3; // A=3, B=3, R=3
-constexpr uint8_t kABGR_Gray    = 0xEA; // A=3, B=G=R=2
-
-void debugFillRect(uint8_t* buf, uint16_t dim, int x, int y, int w, int h, uint8_t color)
-{
-    for (int j = y; j < y + h; ++j) {
-        if (j < 0 || j >= dim) continue;
-        for (int i = x; i < x + w; ++i) {
-            if (i < 0 || i >= dim) continue;
-            buf[j * dim + i] = color;
-        }
-    }
-}
-
-// Fill @p buf (dim×dim ABGR2222) with a minimal orientation marker, designed
-// for the single bitmap registered to slot (col=1, row=1) of the 3×3 viewport.
-// That slot's BR quadrant is what's visible at widget top-left (widget rect
-// 0..120 × 0..120 for dim=256 on a 240-px widget).
-//
-// Layout:
-//   - whole bitmap: GRAY
-//   - BR quadrant of bitmap (cols 128..256, rows 128..256): YELLOW fill
-//   - 32×32 RED square at bitmap (128..160, 128..160) — TL of BR quadrant
-//   - 32×32 GREEN square at bitmap (224..256, 128..160) — TR of BR quadrant
-//
-// Correct rendering puts:
-//   - widget TL quadrant solid YELLOW
-//   - RED square at widget (0..24, 0..24) (widget TL corner)
-//   - GREEN square at widget (88..120, 0..24) (widget TR-of-TL-quadrant)
-//
-// Any rotation/flip moves the two squares to a different combination of cell
-// corners. The two-marker layout uniquely identifies all eight orientations
-// (the 4 rotations × 2 chiralities).
-void debugFillPattern(uint8_t* buf, uint16_t dim)
-{
-    // Solid red across the entire bitmap. Whichever quadrant of this bitmap is
-    // visible (cell (1,1) shows the BR quadrant at widget TL = widget 0..120),
-    // the user should see a bright red 120x120 block in the widget's top-left
-    // corner instead of map tile content. If the user still sees a real tile
-    // there, the substitution isn't taking effect at all.
-    debugFillRect(buf, dim, 0, 0, dim, dim, kABGR_Red);
-}
 
 } // namespace
 #endif
@@ -148,19 +95,6 @@ Model::Model()
                       i, entry.z, entry.x, entry.y, entry.tile.length);
         }
 
-        // Hex-dump the leading 32 bytes of tile[0] for byte-level sanity
-        // checking against the host driver. These are the top-left 32 pixels
-        // of the first index entry's bitmap, ABGR2222.
-        if (h.tileCount > 0) {
-            auto t0 = mTiles.getTileByIndex(0);
-            char hex[3 * 32 + 1];
-            int  pos = 0;
-            for (int i = 0; i < 32 && i < int(t0.tile.length); ++i) {
-                pos += snprintf(hex + pos, sizeof(hex) - pos, "%02x ", t0.tile.data[i]);
-            }
-            LOG_INFO("rawtiles: tile[0] first 32 bytes: %s\n", hex);
-        }
-
         // Pick the centre tile for the 3×3 viewport: the median tile at the
         // pack's highest zoom level. ABGR2222 in the pack matches TouchGFX's
         // Bitmap::ABGR2222 byte-for-byte, so tile bytes are referenced in-place
@@ -207,13 +141,6 @@ Model::Model()
 
         LOG_INFO("rawtiles: viewport centre = z=%u x=%u y=%u\n", cz, cx, cy);
 
-        // DIAG: unconditionally replace the top-left visible cell's bitmap with
-        // a synthetic orientation marker (debugFillPattern). Other cells keep
-        // their real tile bytes. Revert before moving past the rotation debug.
-        static uint8_t sDebugPattern[1024 * 1024]; // generous; uses dim*dim bytes
-        debugFillPattern(sDebugPattern, h.tileDimPx);
-        LOG_INFO("rawtiles: DIAG active — slot (col=1,row=1) carries orientation marker\n");
-
         if (centreFound) {
             // Pre-pass: count tiles that actually exist before calling setCache.
             // Passing numberOfDynamicBitmaps > bitmaps ever created leaves
@@ -243,14 +170,9 @@ Model::Model()
                     if (!tile.valid()) {
                         continue;
                     }
-                    const bool isTopLeftSlot = (col == 1 && row == 1);
-                    const void* pixelData = isTopLeftSlot ? sDebugPattern : tile.data;
-                    if (isTopLeftSlot) {
-                        LOG_INFO("rawtiles: DIAG registering solid-RED bitmap for slot (col=1,row=1)\n");
-                    }
                     touchgfx::BitmapId id = touchgfx::Bitmap::dynamicBitmapCreateExternal(
                             mViewport.tileDimPx, mViewport.tileDimPx,
-                            pixelData, touchgfx::Bitmap::ABGR2222);
+                            tile.data, touchgfx::Bitmap::ABGR2222);
                     if (id == touchgfx::BITMAP_INVALID) {
                         LOG_INFO("rawtiles: dynamicBitmapCreateExternal failed for cell (%d,%d)\n",
                                  col, row);
