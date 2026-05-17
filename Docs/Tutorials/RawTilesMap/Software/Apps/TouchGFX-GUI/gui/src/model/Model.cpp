@@ -27,6 +27,7 @@ const char* kPackCandidates[] = {
     "../Resources/stanley.rawtiles",
     "../../Resources/stanley.rawtiles",
     "../../../../Resources/stanley.rawtiles",
+    "../../../../../Resources/stanley.rawtiles", // launched from build/bin/
     "Resources/stanley.rawtiles",
     "Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles",
 };
