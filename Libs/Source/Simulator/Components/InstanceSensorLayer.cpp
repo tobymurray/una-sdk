@@ -8,6 +8,15 @@
 #include "SDK/Simulator/Components/ComponentSimulator.hpp"
 #include <SDK/Simulator/Kernel/Mock/System.hpp>
 
+// Defaults for apps whose ConfigurationSimulator.hpp predates the IMU fusion
+// sensor: enabling it is a per-app opt-in, the other knobs get sane values.
+#if !defined(IMU_FUSION_SIM_SWING_KEY)
+#define IMU_FUSION_SIM_SWING_KEY '6'
+#endif
+#if !defined(IMU_FUSION_SIM_CSV_PATH)
+#define IMU_FUSION_SIM_CSV_PATH ""
+#endif
+
 namespace Instance {
 
     SensorLayer& SensorLayer::getInstance()
@@ -57,6 +66,15 @@ namespace Instance {
         sm.regDriver(&mSensorImuRunningCadence.getDriver());
 #endif //IMU_RUNNING_CADENCE_SIM_ENABLE
 
+#if defined(IMU_FUSION_SIM_ENABLE) && (IMU_FUSION_SIM_ENABLE == 1)
+        LOG_INFO("\n"
+            "---------------------------------------------------------\n"
+            "|   For a synthetic racquet swing use %c Key in keyboard. |\n"
+            "---------------------------------------------------------\n", IMU_FUSION_SIM_SWING_KEY);
+        mSensorImuFusion.configure(IMU_FUSION_SIM_CSV_PATH);
+        sm.regDriver(&mSensorImuFusion.getDriver());
+#endif //IMU_FUSION_SIM_ENABLE
+
     }
 
     void SensorLayer::handlerButtons(uint8_t key)
@@ -64,6 +82,12 @@ namespace Instance {
         if (IMU_WRIST_SIM_WRIST_DETECT_KEY == key && IMU_WRIST_SIM_ENABLE == 1) {
             mSensorImuWrist.handleWristMotion(SDK::Simulator::Mock::System::GetTimeMs());
         }
+
+#if defined(IMU_FUSION_SIM_ENABLE) && (IMU_FUSION_SIM_ENABLE == 1)
+        if (IMU_FUSION_SIM_SWING_KEY == key) {
+            mSensorImuFusion.injectSwing();
+        }
+#endif //IMU_FUSION_SIM_ENABLE
     }
 
     SensorLayer::SensorLayer()
@@ -78,6 +102,7 @@ namespace Instance {
         , mSensorPressure()
         , mSensorImuStepCounter()
         , mSensorImuRunningCadence()
+        , mSensorImuFusion()
     {
         ComponentSimulator& mComponent = ComponentSimulator::GetInstance();
 

@@ -48,4 +48,9 @@
 // IMU Running Cadence Sensor
 #define IMU_RUNNING_CADENCE_SIM_ENABLE      1 // 0 - Disable
 
+// IMU Fusion Sensor (accel+gyro; CSV playback or synthetic racquet swings)
+#define IMU_FUSION_SIM_ENABLE    1   // 0 - Disable
+#define IMU_FUSION_SIM_SWING_KEY '6' // char type; queues one synthetic swing
+#define IMU_FUSION_SIM_CSV_PATH  ""  // empty - synthetic mode; else CSV path (t_ms,ax,ay,az,gx,gy,gz)
+
 #endif /* __CONFIG_SIMULATOR_HPP */

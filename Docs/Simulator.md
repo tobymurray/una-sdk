@@ -173,6 +173,32 @@ Options:
    #define IMU_STEP_COUNTER_SIM_ENABLE    1 // 0 - Disable
   ```
 
+##### IMU Fusion (accel + gyro)
+Simulates the **FUSION_RAW** sensor: a continuous 6-axis stream (accelerometer + gyroscope, raw int16 values) at whatever rate the app requests (e.g. period 10 ms / latency 100 ms for 100 Hz in 10-sample batches).
+
+Two data sources:
+
+1. **Synthetic** (default): a resting wrist (gravity on +Z) plus racquet-swing bursts injected from the keyboard. Press **key 6** to queue one swing; successive swings alternate **forehand / backhand** (mirrored gyro sign), so swing counting, swing-speed and stroke-side classification can all be exercised. Output is deterministic.
+2. **CSV playback**: set `IMU_FUSION_SIM_CSV_PATH` to a recording and it replays in a loop (sample-and-hold between rows). Format — one sample per line, `#` comments and one header line allowed:
+
+   ```
+   t_ms,ax,ay,az,gx,gy,gz
+   ```
+
+   `t_ms` is a strictly increasing float timestamp in milliseconds (only deltas matter); the six values are raw signed 16-bit sensor units. A file that fails to parse is reported in the log and the sensor falls back to synthetic mode. Relative paths resolve against the simulator's working directory.
+
+Options:
+   - enable/disable sensor
+   - change the key used to inject a swing
+   - replay a CSV recording instead of the synthetic signal
+
+  ```cpp
+   // IMU Fusion Sensor (accel+gyro; CSV playback or synthetic racquet swings)
+   #define IMU_FUSION_SIM_ENABLE    1   // 0 - Disable
+   #define IMU_FUSION_SIM_SWING_KEY '6' // char type; queues one synthetic swing
+   #define IMU_FUSION_SIM_CSV_PATH  ""  // empty - synthetic mode; else CSV path
+  ```
+
 ### Include Header & Source file
 #### MSVS
 1. Open **Application.vcxproj** in a text editor:

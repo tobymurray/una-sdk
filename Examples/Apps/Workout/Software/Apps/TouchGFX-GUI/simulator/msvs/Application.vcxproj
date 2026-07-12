@@ -51,6 +51,8 @@
     <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\Components\SampleRateAdapter.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\Components\InstanceSensorLayer.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\Components\Sensors\Imu\ImuRunningCadence.cpp"/>
+    <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\Components\Sensors\Imu\ImuFusion.cpp"/>
+    <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\Components\Sensors\Imu\ImuFusionSource.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\Components\Sensors\Gps\GpsSpeed.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\Components\Sensors\Gps\GpsLocation.cpp"/>
     <ClCompile Include="$(SdkPath)\Libs\Source\Simulator\Components\Sensors\Gps\GpsDistance.cpp"/>

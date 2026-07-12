@@ -12,6 +12,7 @@
 #include "SDK/Simulator/Components/Sensors/IMU/ImuWristMotion.hpp"
 #include "SDK/Simulator/Components/Sensors/IMU/ImuStepCounter.hpp"
 #include "SDK/Simulator/Components/Sensors/IMU/ImuRunningCadence.hpp"
+#include "SDK/Simulator/Components/Sensors/IMU/ImuFusion.hpp"
 
 namespace Instance {
     class SensorLayer
@@ -37,6 +38,7 @@ namespace Instance {
         Sensor::Pressure                mSensorPressure;
         Sensor::ImuStepCounter          mSensorImuStepCounter;
         Sensor::ImuRunningCadence       mSensorImuRunningCadence;
+        Sensor::ImuFusion               mSensorImuFusion;
 
     };
 }
