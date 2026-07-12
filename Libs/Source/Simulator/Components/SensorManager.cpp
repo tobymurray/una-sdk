@@ -147,6 +147,16 @@ bool Sensor::Manager::isDriverRegistered(SDK::Sensor::Type type) const
                        });
 }
 
+void Sensor::Manager::lock()
+{
+    mMutex.lock();
+}
+
+void Sensor::Manager::unLock()
+{
+    mMutex.unLock();
+}
+
 void Sensor::Manager::updatePeriod()
 {
     mMutex.lock();
@@ -158,25 +168,25 @@ void Sensor::Manager::updatePeriod()
 
 void Sensor::Manager::regSensor(Interface::ISensor* sensor)
 {
-    bool inserted = false;
+    mMutex.lock();
 
-    {
-        mMutex.lock();
+    regSensorNoLock(sensor);
 
-        auto it = std::find(mSensors.begin(), mSensors.end(), sensor);
-        if (it == mSensors.end()) {
-            mSensors.push_back(sensor);
-            updatePeriodNoLock();
-            inserted = true;
-        } else {
-            LOG_WARNING("the sensor is already registered\n");
-        }
+    mMutex.unLock();
+}
 
-        mMutex.unLock();
-    }
-
-    if (inserted) {
+void Sensor::Manager::regSensorNoLock(Interface::ISensor* sensor)
+{
+    // Caller must hold the manager mutex (see lock()).
+    auto it = std::find(mSensors.begin(), mSensors.end(), sensor);
+    if (it == mSensors.end()) {
+        mSensors.push_back(sensor);
+        updatePeriodNoLock();
+        // Waking the refresh thread while holding the mutex is safe: it simply
+        // blocks on the manager mutex until the caller releases it.
         mSemaphore.give();
+    } else {
+        LOG_WARNING("the sensor is already registered\n");
     }
 }
 
@@ -184,6 +194,17 @@ void Sensor::Manager::unRegSensor(Interface::ISensor* sensor)
 {
     mMutex.lock();
 
+    unRegSensorNoLock(sensor);
+
+    mMutex.unLock();
+}
+
+void Sensor::Manager::unRegSensorNoLock(Interface::ISensor* sensor)
+{
+    // Caller must hold the manager mutex (see lock()). Because the refresh pass
+    // in thread() also holds the manager mutex across its whole run, holding it
+    // here guarantees no sensorRefresh() is in flight while a sensor is removed
+    // — the contract Sensor::Driver::disconnect() relies on before sdcStop().
     auto it = std::find_if(mSensors.begin(), mSensors.end(),
                            [sensor](const Interface::ISensor* s) {
                                return s == sensor;
@@ -193,8 +214,6 @@ void Sensor::Manager::unRegSensor(Interface::ISensor* sensor)
         mSensors.erase(it);
         updatePeriodNoLock();
     }
-
-    mMutex.unLock();
 }
 
 Sensor::Driver* Sensor::Manager::getDefaultSensor(SDK::Sensor::Type type) const

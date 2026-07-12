@@ -97,3 +97,36 @@ target_link_libraries(una-sdk-host-tests PRIVATE
 
 enable_testing()
 add_test(NAME una-sdk-host-tests COMMAND una-sdk-host-tests)
+
+# ---------------------------------------------------------------------------
+# Sensor lock-order (deadlock) reproduction / regression suite.
+#
+# Kept as a separate executable because it pulls in the SensorManager singleton,
+# which spawns a background thread on first use; isolating it keeps that thread
+# out of the main host-test binary.
+# ---------------------------------------------------------------------------
+find_package(Threads REQUIRED)
+
+add_executable(una-sdk-sensor-tests
+    simulator/SensorDeadlock_test.cpp
+    support/SimSystemDouble.cpp
+    "${UNA_SDK_ROOT}/Libs/Source/Simulator/Components/SensorDriver.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Simulator/Components/SensorManager.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Simulator/Components/SensorDataQueue.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Simulator/Components/SensorDataSample.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Simulator/Components/SampleRateAdapter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Simulator/OS/OS.cpp"
+)
+
+target_include_directories(una-sdk-sensor-tests PRIVATE
+    "${CMAKE_CURRENT_LIST_DIR}"
+    "${UNA_SDK_ROOT}/Libs/Header"
+)
+
+target_link_libraries(una-sdk-sensor-tests PRIVATE
+    sdk_host_test_support
+    GTest::gtest_main
+    Threads::Threads
+)
+
+add_test(NAME una-sdk-sensor-tests COMMAND una-sdk-sensor-tests)

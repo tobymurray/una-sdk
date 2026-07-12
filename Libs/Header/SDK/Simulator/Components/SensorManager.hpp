@@ -35,6 +35,20 @@ namespace Sensor
         void regSensor(Interface::ISensor* sensor);
         void unRegSensor(Interface::ISensor* sensor);
 
+        //
+        // Lock hierarchy: the manager mutex is the OUTER lock and every
+        // per-driver mutex is INNER. A caller that already holds the manager
+        // mutex (via lock()) drives sensor (de)registration and period recompute
+        // through the *NoLock variants below. This keeps a single global lock
+        // order (manager -> driver) and makes an ABBA deadlock with the refresh
+        // pass impossible by construction. See Sensor::Driver::connect().
+        //
+        void lock();
+        void unLock();
+        void regSensorNoLock(Interface::ISensor* sensor);
+        void unRegSensorNoLock(Interface::ISensor* sensor);
+        void updatePeriodNoLock();
+
         Sensor::Driver*              getDefaultSensor(SDK::Sensor::Type type) const;
         uint16_t                     getDefaultHandle(SDK::Sensor::Type type) const;
         std::vector<Sensor::Driver*> getSensorList(SDK::Sensor::Type type) const;
@@ -46,8 +60,6 @@ namespace Sensor
         Manager();
         ~Manager();
 
-        void updatePeriodNoLock();
-       
         std::vector<Sensor::Driver*>     mDrivers;
         std::vector<Interface::ISensor*> mSensors;
         OS::Mutex                        mMutex;

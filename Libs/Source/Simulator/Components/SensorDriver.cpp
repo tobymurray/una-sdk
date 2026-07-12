@@ -113,7 +113,14 @@ bool Sensor::Driver::connect(SDK::Interface::ISensorDataListener* listener,
 {
     Sensor::DataQueue* newConnectionListener = nullptr;
 
+    // Lock hierarchy: manager mutex (outer) then driver mutex (inner). Acquiring
+    // the manager mutex first — and holding it across the regSensorNoLock() /
+    // updatePeriodNoLock() calls below — enforces a single global lock order and
+    // makes the ABBA deadlock with Manager::thread()'s refresh pass impossible.
+    Sensor::Manager& manager = Sensor::Manager::getInstance();
+
     {
+        manager.lock();
         mMutex.lock();
 
         // EVENT_BASED sensors ignore period/latency requests.
@@ -125,6 +132,7 @@ bool Sensor::Driver::connect(SDK::Interface::ISensorDataListener* listener,
         // Reject negative requested period.
         if (newPeriod < 0.0f) {
             mMutex.unLock();
+            manager.unLock();
             return false;
         }
 
@@ -164,11 +172,13 @@ bool Sensor::Driver::connect(SDK::Interface::ISensorDataListener* listener,
 
             if (newPeriod <= 0.0f) {
                 mMutex.unLock();
+                manager.unLock();
                 return false;
             }
 
             queue->reinit(newPeriod, latency);
             mMutex.unLock();
+            manager.unLock();
             return true;
         }
 
@@ -185,12 +195,13 @@ bool Sensor::Driver::connect(SDK::Interface::ISensorDataListener* listener,
             if (newPeriod <= 0) {
                 LOG_ERROR("failed to start the driver\n");
                 mMutex.unLock();
+                manager.unLock();
                 return false;
             }
 
             mRefreshPeriod = calcUpdatePeriod(newPeriod, latency);
 
-            Sensor::Manager::getInstance().regSensor(&mSensor);
+            manager.regSensorNoLock(&mSensor);
         } else {
             ///////////////////////////////////////
             //// Sensor is already active: maybe
@@ -201,6 +212,7 @@ bool Sensor::Driver::connect(SDK::Interface::ISensorDataListener* listener,
 
             if (newPeriod <= 0.0f) {
                 mMutex.unLock();
+                manager.unLock();
                 return false;
             }
         }
@@ -221,6 +233,7 @@ bool Sensor::Driver::connect(SDK::Interface::ISensorDataListener* listener,
         mNewConnectionListener = nullptr;
     }
     mMutex.unLock();
+    manager.unLock();
     return true;
 }
 
@@ -243,6 +256,12 @@ bool Sensor::Driver::connect(SDK::Interface::ISensorDataListener* listener,
  */
 void Sensor::Driver::disconnect(SDK::Interface::ISensorDataListener* listener)
 {
+    // Manager mutex (outer) before driver mutex (inner) — see connect(). Holding
+    // the manager mutex across unRegSensorNoLock() also guarantees no refresh
+    // pass is running, so sdcStop() sees no sensorRefresh() in flight.
+    Sensor::Manager& manager = Sensor::Manager::getInstance();
+
+    manager.lock();
     mMutex.lock();
 
     auto it = std::find_if(mListeners.begin(), mListeners.end(),
@@ -253,6 +272,7 @@ void Sensor::Driver::disconnect(SDK::Interface::ISensorDataListener* listener)
     if (it == mListeners.end()) {
         // Listener not found — nothing to do.
         mMutex.unLock();
+        manager.unLock();
         return;
     }
 
@@ -263,9 +283,10 @@ void Sensor::Driver::disconnect(SDK::Interface::ISensorDataListener* listener)
 
     // Last listener gone?
     if (mListeners.size() == 0) {
-        Sensor::Manager::getInstance().unRegSensor(&mSensor);
+        manager.unRegSensorNoLock(&mSensor);
         mControl.sdcStop(this);
         mMutex.unLock();
+        manager.unLock();
         return;
     }
 
@@ -278,6 +299,7 @@ void Sensor::Driver::disconnect(SDK::Interface::ISensorDataListener* listener)
     }
 
     mMutex.unLock();
+    manager.unLock();
 }
 
 float Sensor::Driver::calcUpdatePeriod(float period, uint32_t latency) const
@@ -459,5 +481,7 @@ void Sensor::Driver::setPeriod(float period)
 {
     mRefreshPeriod = period;
 
-    Sensor::Manager::getInstance().updatePeriod();
+    // Reached only from applyPeriod(), i.e. from within connect()/disconnect(),
+    // both of which already hold the manager mutex (manager -> driver order).
+    Sensor::Manager::getInstance().updatePeriodNoLock();
 }
