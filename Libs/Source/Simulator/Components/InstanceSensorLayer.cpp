@@ -57,6 +57,17 @@ namespace Instance {
         sm.regDriver(&mSensorImuRunningCadence.getDriver());
 #endif //IMU_RUNNING_CADENCE_SIM_ENABLE
 
+#if defined(RR_REPLAY_SIM_ENABLE) && (RR_REPLAY_SIM_ENABLE == 1)
+        if (mSensorRrReplay.loadFile(RR_REPLAY_SIM_FILE)) {
+            if (mSensorRrReplay.wasTruncated()) {
+                LOG_INFO("RR replay: '%s' exceeded the interval cap — replay truncated\n", RR_REPLAY_SIM_FILE);
+            }
+            sm.regDriver(&mSensorRrReplay.getDriver());
+        } else {
+            LOG_INFO("RR replay: could not open '%s' — RR_INTERVAL not registered\n", RR_REPLAY_SIM_FILE);
+        }
+#endif //RR_REPLAY_SIM_ENABLE
+
     }
 
     void SensorLayer::handlerButtons(uint8_t key)
@@ -78,6 +89,7 @@ namespace Instance {
         , mSensorPressure()
         , mSensorImuStepCounter()
         , mSensorImuRunningCadence()
+        , mSensorRrReplay()
     {
         ComponentSimulator& mComponent = ComponentSimulator::GetInstance();
 

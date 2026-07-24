@@ -45,4 +45,12 @@
 #define IMU_STEP_COUNTER_SIM_ENABLE         0 // 0 - Disable
 #define IMU_STEP_COUNTER_SIM_STRIDE_LENGTH  0.65 //meters per step. Walking 0.65-0.75 m, hiking 0.55-0.70 m, running 1.0-1.4 m
 
+// RR interval replay (mock): streams a Heart Rate Service RR recording
+// (Polar Sensor Logger "*_RR.txt" format) as SDK::Sensor::Type::RR_INTERVAL
+// frames, paced in real time. Point RR_REPLAY_SIM_FILE at a recording (path is
+// relative to the simulator's working directory); the Sensors tutorial ships a
+// sample rr_fixture.txt.
+#define RR_REPLAY_SIM_ENABLE 0 // 0 = disable
+#define RR_REPLAY_SIM_FILE   "rr_fixture.txt"
+
 #endif /* __CONFIG_SIMULATOR_HPP */

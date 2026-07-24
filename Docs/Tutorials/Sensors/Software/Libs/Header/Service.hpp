@@ -50,6 +50,7 @@ private:
     SDK::Sensor::Connection  mSensorFusion;
     SDK::Sensor::Connection  mSensorFusionRaw;
     SDK::Sensor::Connection  mSensorTouchDetect;
+    SDK::Sensor::Connection  mSensorRrInterval;
     float                    mHR;
     float                    mHRTL;
     // CPU time tracking

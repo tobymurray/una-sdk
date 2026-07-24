@@ -48,4 +48,12 @@
 // IMU Running Cadence Sensor
 #define IMU_RUNNING_CADENCE_SIM_ENABLE      1 // 0 - Disable
 
+// RR interval replay (mock): streams a Heart Rate Service RR recording
+// (Polar Sensor Logger "*_RR.txt" format) as SDK::Sensor::Type::RR_INTERVAL
+// frames, paced in real time. A short real sample recording (with a strap
+// dropout) ships as rr_fixture.txt; point RR_REPLAY_SIM_FILE at your own, longer
+// recording to replace it (path is relative to the simulator's working directory).
+#define RR_REPLAY_SIM_ENABLE 0 // 0 = disable
+#define RR_REPLAY_SIM_FILE   "rr_fixture.txt"
+
 #endif /* __CONFIG_SIMULATOR_HPP */

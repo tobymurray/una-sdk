@@ -5,6 +5,7 @@
 #include "SDK/SensorLayer/DataParsers/SensorDataParserStepCounter.hpp"
 #include "SDK/SensorLayer/DataParsers/SensorDataParserFloorCounter.hpp"
 #include "SDK/SensorLayer/DataParsers/SensorDataParserBatteryLevel.hpp"
+#include "SDK/SensorLayer/DataParsers/SensorDataParserRrInterval.hpp"
 #include "SDK/SensorLayer/SensorDataView.hpp"
 #include "SDK/Messages/SensorLayerMessages.hpp"
 #include <cmath>
@@ -55,6 +56,7 @@ Service::Service(SDK::Kernel& kernel)
     , mSensorFusion(SDK::Sensor::Type::FUSION, 0, 0)
     , mSensorFusionRaw(SDK::Sensor::Type::FUSION_RAW, 0, 0)
     , mSensorTouchDetect(SDK::Sensor::Type::TOUCH_DETECT, 0, 0)
+    , mSensorRrInterval(SDK::Sensor::Type::RR_INTERVAL, 0, 0)
     , mHR(0)
     , mHRTL(0)
     , mServiceCpuTimeMs(0)
@@ -103,6 +105,7 @@ void Service::run()
     mSensorFusion.connect();
     mSensorFusionRaw.connect();
     mSensorTouchDetect.connect();
+    mSensorRrInterval.connect();
     LOG_INFO("Note: No BLE calibration at the moment. BLE calibration is required for proper sensor operation, especially for HR.\n");
 
 
@@ -153,6 +156,7 @@ void Service::run()
                     mSensorFusion.disconnect();
                     mSensorFusionRaw.disconnect();
                     mSensorTouchDetect.disconnect();
+                    mSensorRrInterval.disconnect();
                     // We must release message because this is the last event.
                     mKernel.comm.releaseMessage(msg);
                     return;
@@ -289,6 +293,22 @@ void Service::onSdlNewData(uint16_t handle, SDK::Sensor::DataBatch& data)
                 mTxMessages++;
                 mSender.updateHeartRate(mHR, mHRTL);
                 mTxBytes += sizeof(CustomMessage::HRValues);
+            }
+        } else if (mSensorRrInterval.matchesDriver(handle)) {
+            // RR_INTERVAL: one beat-to-beat interval (ms) per frame — the source
+            // for HRV / DFA alpha1. Consecutive intervals arrive as consecutive
+            // frames (one per delivery under the event-based producer), so
+            // iterate DataBatch::size(). hasDiscontinuity() marks a gap boundary.
+            for (uint16_t i = 0; i < data.size(); ++i) {
+                SDK::SensorDataParser::RrInterval parser(data[i]);
+                if (!parser.isDataValid()) {
+                    continue;
+                }
+                LOG_INFO("RR: %.0f ms (%.0f bpm)%s @ %u ms\n",
+                         parser.getRrMs(), parser.getBpm(),
+                         parser.hasDiscontinuity() ? " [gap]" : "",
+                         parser.getTimestamp());
+                mRxMessages++;
             }
         } else if (mSensorGPS.matchesDriver(handle)) {
             SDK::SensorDataParser::GpsLocation parser(data[0]);
