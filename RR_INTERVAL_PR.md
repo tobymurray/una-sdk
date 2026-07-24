@@ -1,71 +1,76 @@
-# feat: experimental RR_INTERVAL beat-to-beat pathway for HRV
+# feat: pass through heart-rate strap R-R intervals (experimental RR_INTERVAL)
 
-Follows the HRV discussion on #167. That thread established there is no
-app-reachable beat-to-beat data today: HR detection is frequency-domain
-(`HEART_BEAT` emits nothing), 20 Hz single-channel PPG is below the HRV floor,
-and an external strap's R-R intervals are collapsed to BPM before the SDK. HRV /
-DFA-α1 — the basis of resting-readiness and threshold metrics — need those
-intervals.
+In one line: the watch can't produce the beat-to-beat timing that HRV needs, but a
+Bluetooth heart-rate strap already sends it and the watch currently throws it
+away; this keeps that data and hands it to apps.
 
-This lands the **SDK-side half** of an RR pathway so the HRV pipeline can be
-built and validated now (against a simulator replay of real Polar H10 data),
-with the producer to follow on the firmware side. Marked **EXPERIMENTAL** — the
-wire shape is not frozen.
+## Why
+HRV and DFA-alpha1, which underpin readiness and training-threshold metrics, are
+built from R-R intervals: the gaps between consecutive heartbeats. The watch
+itself cannot provide them. Per the discussion in #167, its HR detection is
+frequency-domain (HEART_BEAT emits no events) and its 20 Hz single-channel PPG is
+below the floor for HRV.
 
-## Scope: this is the electrical-strap pathway
-`RR_INTERVAL` is aimed at the **electrical chest strap** — which is also the only
-route to *exercise* HRV, since optical can't measure HRV in motion. Per #167,
-optical HRV is more likely to arrive later as an **on-chip computed metric**
-(RMSSD etc.) than as raw intervals, so this type is not trying to be the
-universal HRV answer — just the raw-interval pathway the strap already makes
-possible.
+A Bluetooth heart-rate strap can provide them. The standard Heart Rate Service
+notification (0x2A37) that the watch already reads for BPM also carries the R-R
+intervals, in the same packet. Today the kernel parses that packet, keeps the
+BPM, and discards the R-R values. The core request is to surface them instead.
 
-## What's here
-- `SDK::Sensor::Type::RR_INTERVAL = 0x44` — additive, next free cardio slot.
-- `SensorDataParser::RrInterval` — one interval per frame; optional appended
-  `source` + `flags` fields.
-- A header-only simulator replay mock (default-off behind `RR_REPLAY_SIM_ENABLE`)
-  that replays a Polar Sensor Logger `*_RR.txt`.
-- A consumer example in the Sensors tutorial `Service`; host unit tests.
-  Verified end-to-end in the Linux simulator: replayed fixture → frame → app.
+This is not Polar-specific. R-R intervals are a standard field of the Bluetooth
+Heart Rate Service, so any compliant strap (Polar, Garmin, Wahoo, and so on)
+provides them the same way. A Polar H10 was used only to record the sample fixture.
 
-## Design decisions (and why they already fit the platform)
-These anticipate the obvious constraints; correct me where the firmware reality
-differs:
+## What this PR contains (the SDK-side half)
+It lands the SDK contract and the tooling to build and validate the HRV pipeline
+now, against a simulator replay of real strap data, with the firmware producer to
+follow. The type is marked experimental, so the wire shape is not frozen.
 
-- **One interval per frame.** `SDK::Sensor::Data` has no in-band length field —
-  the field count is derived from the per-driver stride, which is fixed at
-  construction. A variable-length burst therefore can't be represented honestly;
-  the several RR values in one `0x2A37` notification are delivered as
-  **consecutive one-interval frames** (a consumer iterates `DataBatch::size()`).
-  The frame is a small fixed shape, which is exactly what the fixed-stride
-  delivery path wants.
-- **Timestamps are arrival-derived, and that's fine.** BLE HRS carries RR
-  *values* (1/1024 s units) but no per-beat absolute instants — only notification
-  arrival. RMSSD and DFA α1 are computed from the interval *values*, not absolute
-  times, so the metrics are correct regardless; the frame timestamp is best-effort
-  (arrival, back-summed), not a claim of hardware beat-timing.
-- **Gap signalling from connection state; artifact correction is the app's job.**
-  A strap dropout shows only as a jump in arrival time, so `flags` carries a
-  `DISCONTINUITY` bit a producer can set at a reconnect boundary — which the
-  kernel already knows (`Accessory::EventStatus` surfaces `CONNECTED` / `LOST`).
-  Ectopic / artifact correction (Lipponen–Tarvainen etc.) stays in the app,
-  consistent with the SDK's "kernel surfaces data, app computes" split.
-- **Forward-compatible.** `source` and `flags` are optional appended fields
-  (positional, lenient upper bound like `HeartRateEx`), so a minimal producer can
-  ship `rr`-only and enrich later with no ABI break. EXPERIMENTAL keeps even the
-  base layout changeable.
+- `SDK::Sensor::Type::RR_INTERVAL` (0x44): one R-R interval per frame, in
+  milliseconds, with optional appended source and quality-flag fields.
+- `SensorDataParser::RrInterval` to read it, plus host unit tests.
+- A header-only simulator sensor that replays a recording as RR_INTERVAL frames
+  in real time, off by default (`RR_REPLAY_SIM_ENABLE`). A minimal sample fixture
+  (`rr_fixture.txt`, with an injected dropout) is included so it runs out of the box.
+- A consumer in the Sensors tutorial that logs each interval and its gap marker.
+  Verified end to end in the Linux simulator: fixture, frame, app.
 
-## The one open decision, and one firmware question
-1. **New type, or ride on `HEART_RATE_EX`?** RR is event/streaming-shaped, whereas
-   `HEART_RATE_EX` is a fixed ~1 Hz BPM snapshot — cramming beat data into it is
-   awkward, and a separate opt-in type mirrors how `HEART_RATE_EX` was itself split
-   out from `HEART_RATE`. But it's your call; if you'd prefer a companion frame,
-   the parser and mock port easily.
-2. **How entangled is the `0x2A37` RR?** You noted the RR already rides in the
-   notification the kernel parses for BPM — is surfacing the array mostly
-   forwarding, or is it tied into the HR-source arbitration / fusion path?
+## The firmware ask, concretely
+Stop discarding the R-R field. The kernel already parses the 0x2A37 notification
+for BPM, and the R-R values are in the same bytes; the request is to route them
+through the sensor layer as RR_INTERVAL frames. The one unknown is whether that
+field is discarded somewhere clean, or is buried in the HR-source arbitration path.
 
-Happy to take the SDK side wherever you land, and to adjust the shape once the
-firmware reality is clear. Still keen on the broader "generic BLE characteristic
-passthrough" idea from #167, too.
+One neighbouring field comes almost for free and is worth taking at the same time:
+
+- Sensor-contact status, also in the 0x2A37 flags byte, is a data-quality signal
+  for HRV (poor skin contact produces artefacts). It is surfaced here as a quality
+  flag on the interval (`NO_SKIN_CONTACT`).
+
+Strap battery level is deliberately left out. It lives on a separate standard
+service (0x180F), so it is not the same packet or the same work, and it is not
+HRV-relevant.
+
+## Design notes (already fitted to the platform)
+- One interval per frame. `SDK::Sensor::Data` has no in-band length field; the
+  field count comes from the fixed per-driver stride. A burst of R-R values
+  arrives as consecutive one-interval frames, so a consumer iterates
+  `DataBatch::size()`.
+- Arrival-derived timestamps. BLE carries R-R values, not per-beat instants. RMSSD
+  and DFA-alpha1 use the interval values rather than absolute times, so the metrics
+  are correct; the frame timestamp is best-effort.
+- Gaps versus artefacts. A strap dropout shows only in arrival time, so a
+  discontinuity flag marks a reconnect boundary (the kernel already tracks
+  connection state via `Accessory::EventStatus`). Artefact correction stays in the
+  app, matching the SDK's "kernel surfaces data, app computes" split.
+- Forward-compatible. `source` and `flags` are optional appended fields, so a
+  minimal producer can ship R-R only and enrich later with no ABI break.
+
+## Open question
+New sensor type, or fields appended to `HEART_RATE_EX`? R-R is event-shaped and
+streaming, whereas HEART_RATE_EX is a fixed ~1 Hz BPM snapshot, so a separate
+opt-in type fits better and mirrors how HEART_RATE_EX was split from HEART_RATE.
+Happy to reshape if a companion frame is preferred.
+
+Separately, ECG-grade exercise HRV needs the strap's proprietary service rather
+than the standard one, which is a case for the generic BLE passthrough idea from
+#167 rather than for this PR.
