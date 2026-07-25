@@ -48,7 +48,9 @@ TEST(FitProfile, EnumValues)
 {
     EXPECT_EQ(static_cast<uint8_t>(fit::Sport::Running), 1);
     EXPECT_EQ(static_cast<uint8_t>(fit::Sport::Hiking), 17);
+    EXPECT_EQ(static_cast<uint8_t>(fit::Sport::Racket), 64);
     EXPECT_EQ(static_cast<uint8_t>(fit::SubSport::Treadmill), 1);
+    EXPECT_EQ(static_cast<uint8_t>(fit::SubSport::Squash), 94);
     EXPECT_EQ(static_cast<uint8_t>(fit::Event::Timer), 0);
     EXPECT_EQ(static_cast<uint8_t>(fit::EventType::Stop), 1);
     EXPECT_EQ(static_cast<uint8_t>(fit::File::Activity), 4);

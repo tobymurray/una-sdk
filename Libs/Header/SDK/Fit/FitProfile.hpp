@@ -44,9 +44,11 @@ constexpr uint16_t mesgNum(MesgNum m) { return static_cast<uint16_t>(m); }
 
 enum class File : uint8_t { Activity = 4 };
 enum class Sport : uint8_t { Generic = 0, Running = 1, Cycling = 2, Training = 10,
-                             Walking = 11, Hiking = 17 };
+                             Walking = 11, Hiking = 17, Racket = 64 };
+// Squash is a sub_sport of the racket sport family (Sport::Racket), not a
+// top-level sport: pair it with Sport::Racket on session/lap messages.
 enum class SubSport : uint8_t { Generic = 0, Treadmill = 1, Street = 2, Trail = 3,
-                                Track = 4, IndoorCycling = 6 };
+                                Track = 4, IndoorCycling = 6, Squash = 94 };
 enum class Event : uint8_t { Timer = 0 };
 enum class EventType : uint8_t { Start = 0, Stop = 1 };
 enum class ActivityType : uint8_t { Manual = 0, AutoMultiSport = 1 };
