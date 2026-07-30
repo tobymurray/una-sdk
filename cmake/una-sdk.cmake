@@ -14,12 +14,26 @@ set(UNA_SDK_SOURCES_APPSYSTEM
     "$ENV{UNA_SDK}/Libs/Source/AppSystem/EntryPoint/Service/main.cpp"
 )
 
-# Native FIT-format encoder (SDK::Fit). No external dependency.
+# Native FIT-format encoder (SDK::Fit), plus SDK::Fit::ActivityWriter: the
+# shared FIT-message plumbing (file_id/developer_data_id/event/activity, the
+# base record/lap/session fields, developer-field + local-message-type
+# bookkeeping, and the FIT-specific crash-recovery path) that every activity
+# app composes and layers its own sport-specific fields on top of. No
+# external dependency.
 set(UNA_SDK_SOURCES_FIT
     "$ENV{UNA_SDK}/Libs/Source/Fit/FitCrc.cpp"
     "$ENV{UNA_SDK}/Libs/Source/Fit/FitWriter.cpp"
     "$ENV{UNA_SDK}/Libs/Source/Fit/FitRecordCadence.cpp"
     "$ENV{UNA_SDK}/Libs/Source/Fit/RecordingMarker.cpp"
+    "$ENV{UNA_SDK}/Libs/Source/Fit/ActivityWriter.cpp"
+)
+
+# Format-agnostic durable-file lifecycle (SDK::Activity::RecordingFile): dated
+# file + per-month directory + flush cadence, with no notion of FIT or any
+# other payload. Composed by SDK::Fit::ActivityWriter (and available to any
+# future non-FIT periodic recorder).
+set(UNA_SDK_SOURCES_ACTIVITY
+    "$ENV{UNA_SDK}/Libs/Source/Activity/RecordingFile.cpp"
 )
 
 set(UNA_SDK_SOURCES_JSON
@@ -53,6 +67,7 @@ set(UNA_SDK_SOURCES_CALIBRATION
 set(UNA_SDK_SOURCES_SERVICE
     "${UNA_SDK_SOURCES_APPSYSTEM}"
     "${UNA_SDK_SOURCES_FIT}"
+    "${UNA_SDK_SOURCES_ACTIVITY}"
     "${UNA_SDK_SOURCES_JSON}"
     "${UNA_SDK_SOURCES_SENSOR}"
     "${UNA_SDK_SOURCES_TRACKMAP}"

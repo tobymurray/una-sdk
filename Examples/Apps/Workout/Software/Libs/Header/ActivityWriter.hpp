@@ -1,7 +1,12 @@
 /**
  ******************************************************************************
  * @file    ActivityWriter.hpp
- * @brief   Serializes activity data to a FIT file (native SDK::Fit encoder).
+ * @brief   Serializes Workout activity data to a FIT file.
+ *
+ * Composes the shared SDK::Fit::ActivityWriter for the file lifecycle, crash
+ * recovery and the base time/heart-rate/battery fields every activity app
+ * writes, and layers Workout's own extra fields (active + resting/metabolic
+ * calories) on top, using the same underlying FIT encoder.
  ******************************************************************************
  */
 
@@ -10,17 +15,14 @@
 
 #include <cstdint>
 #include <ctime>
-#include <memory>
 #include <string>
 
+#include "SDK/Fit/ActivityWriter.hpp"
 #include "SDK/Kernel/Kernel.hpp"
-#include "SDK/Fit/FitProfile.hpp"
-#include "SDK/Fit/FitWriter.hpp"
-#include "SDK/Fit/RecordingMarker.hpp"
 
 /**
  * @class ActivityWriter
- * @brief Serializes activity data to a FIT file.
+ * @brief Serializes Workout activity data to a FIT file.
  */
 class ActivityWriter {
 public:
@@ -99,61 +101,26 @@ public:
     void discard();
 
     /// Finalize an activity that a previous boot left unfinished (power loss /
-    /// crash mid-recording). If the recovery marker exists it names the torn
-    /// .fit and the last record-complete data-end offset; the file is finalized
-    /// via SDK::Fit::FitWriter::recover() and the marker is removed. Returns true
-    /// only when an interrupted activity was recovered into a valid FIT file.
-    /// Safe (returns false, no side effects) when no marker is present. Must run
-    /// before any new activity is started.
+    /// crash mid-recording). Must run before any new activity is started.
     bool recoverInterrupted();
 
 private:
-    /// Local message types (FIT record header, 0-15).
-    enum Local : uint8_t {
-        L_FILE_ID = 0,
-        L_DEV_ID,
-        L_FIELD_DESC,   // reused for each field_description (redefined per string size)
-        L_EVENT,
-        L_RECORD,       // no battery
-        L_RECORD_B,     // + battery
-        L_LAP,
-        L_SESSION,
-        L_ACTIVITY,
-    };
+    SDK::Fit::ActivityWriter mCore;
 
-    /// Developer field definition numbers (UNA-assigned).
-    enum DevField : uint8_t {
-        DF_BATTERY_LEVEL    = 2,
-        DF_BATTERY_VOLTAGE  = 3,
-        DF_LAP_RESTING_CAL  = 4,
-        DF_HR_SOURCE        = 5,
-        DF_HR_OPTICAL       = 6,
-        DF_HR_EXTERNAL      = 7,
-    };
+    // Local message types for Workout's own record/lap/session definitions
+    // (base fields + calories), allocated from mCore at start().
+    uint8_t mRecordLocal     = 0;
+    uint8_t mRecordBattLocal = 0;
+    uint8_t mLapLocal        = 0;
+    uint8_t mSessionLocal    = 0;
 
-    /// Flush + marker-refresh cadence during recording (seconds of record time).
-    static constexpr std::time_t skFlushIntervalSec = 30;
-
-    const SDK::Kernel& mKernel;
-    const char*        mPath = nullptr;
-
-    std::unique_ptr<SDK::Interface::IFile> mFile = nullptr;
-    std::unique_ptr<SDK::Fit::FitWriter>   mFit  = nullptr;
-    SDK::Fit::RecordingMarker              mMarker;   ///< Shared crash-recovery marker.
-    uint16_t    mLapCounter   = 0;
-    std::time_t mLastFlushUtc = 0;   ///< Record timestamp of the last durability flush.
-
-    void defineRecordMessages();
-    void writeFieldDescription(uint8_t devFieldNum, const char* name,
-                               const char* units, SDK::Fit::BaseType baseType);
-    void addMessageEvent(std::time_t t, SDK::Fit::EventType type);
-
-    bool createAndOpenFile(std::time_t utc);
-    bool saveSummary(const TrackData& track);
-
-    static std::time_t tm2epoch(const struct tm* tm);
-    static std::time_t epochToLocal(std::time_t utc);
-    static uint32_t unixToFitTimestamp(std::time_t unixTimestamp);
+    // Developer field numbers, registered with mCore at start().
+    uint8_t mDfBattLevel     = 0;
+    uint8_t mDfBattVoltage   = 0;
+    uint8_t mDfLapRestingCal = 0;  // resting (BMR) calories over a lap, kcal
+    uint8_t mDfHrSource      = 0;
+    uint8_t mDfHrOptical     = 0;
+    uint8_t mDfHrExternal    = 0;
 };
 
 #endif // ACTIVITY_WRITER_HPP

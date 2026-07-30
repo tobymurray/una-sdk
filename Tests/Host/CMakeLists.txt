@@ -46,6 +46,7 @@ add_executable(una-sdk-host-tests
     fit/FitProfile_test.cpp
     fit/FitRoundTrip_test.cpp
     fit/RecordingMarker_test.cpp
+    fit/ActivityWriter_test.cpp
     apps/Running/ActivityWriter_test.cpp
     sensorlayer/HeartRateParser_test.cpp
     sensorlayer/HeartRateExParser_test.cpp
@@ -67,6 +68,8 @@ add_executable(una-sdk-host-tests
     "${UNA_SDK_ROOT}/Libs/Source/Fit/FitWriter.cpp"
     "${UNA_SDK_ROOT}/Libs/Source/Fit/FitRecordCadence.cpp"
     "${UNA_SDK_ROOT}/Libs/Source/Fit/RecordingMarker.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/ActivityWriter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Activity/RecordingFile.cpp"
     "${UNA_SDK_ROOT}/Libs/Source/SensorLayer/SensorConnection.cpp"
     "${UNA_SDK_ROOT}/Libs/Source/JSON/JsonStreamReader.cpp"
     "${UNA_SDK_ROOT}/Libs/Source/JSON/JsonStreamWriter.cpp"
@@ -74,8 +77,9 @@ add_executable(una-sdk-host-tests
     "${UNA_SDK_ROOT}/Libs/Source/Simulator/Kernel/Mock/FileSystem.cpp"
     "${UNA_SDK_ROOT}/Libs/Source/Wrappers/StdLibWrappers.c"
 )
-# FIT encoding is covered by the SDK::Fit tests (fit/*) and the Running
-# ActivityWriter smoke test (apps/Running/ActivityWriter_test.cpp).
+# FIT encoding is covered by the SDK::Fit tests (fit/*, including the shared
+# SDK::Fit::ActivityWriter) and the Running ActivityWriter smoke test
+# (apps/Running/ActivityWriter_test.cpp).
 
 target_include_directories(una-sdk-host-tests PRIVATE
     "${CMAKE_CURRENT_LIST_DIR}"
@@ -93,3 +97,36 @@ target_link_libraries(una-sdk-host-tests PRIVATE
 
 enable_testing()
 add_test(NAME una-sdk-host-tests COMMAND una-sdk-host-tests)
+
+# Workout's ActivityWriter.{hpp,cpp} shares its (unnamespaced) class name with
+# Running's -- a pre-existing ODR collision if both are ever linked into one
+# binary. Rather than paper over that in test-only CMake plumbing, Workout's
+# ActivityWriter smoke test gets its own executable/process.
+add_executable(workout-activity-writer-tests
+    apps/Workout/ActivityWriter_test.cpp
+    "${UNA_SDK_ROOT}/Examples/Apps/Workout/Software/Libs/Sources/ActivityWriter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/ActivityWriter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Activity/RecordingFile.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitCrc.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitWriter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitRecordCadence.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/RecordingMarker.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/JSON/JsonStreamWriter.cpp"
+    "${COREJSON_DIR}/core_json.c"
+    "${UNA_SDK_ROOT}/Libs/Source/Simulator/Kernel/Mock/FileSystem.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Wrappers/StdLibWrappers.c"
+)
+
+target_include_directories(workout-activity-writer-tests PRIVATE
+    "${CMAKE_CURRENT_LIST_DIR}"
+    "${UNA_SDK_ROOT}/Libs/Header"
+    "${COREJSON_DIR}/include"
+    "${UNA_SDK_ROOT}/Examples/Apps/Workout/Software/Libs/Header"
+)
+
+target_link_libraries(workout-activity-writer-tests PRIVATE
+    sdk_host_test_support
+    GTest::gtest_main
+)
+
+add_test(NAME workout-activity-writer-tests COMMAND workout-activity-writer-tests)
