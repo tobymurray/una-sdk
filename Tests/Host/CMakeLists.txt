@@ -91,5 +91,37 @@ target_link_libraries(una-sdk-host-tests PRIVATE
     GTest::gmock
 )
 
+# GpsLab is a standalone copy of the Running app carrying the GNSS quality
+# series, so it defines its own global `class ActivityWriter`. That collides
+# with Running's at link time, hence a second executable rather than
+# namespacing an example app purely to satisfy the test harness.
+add_executable(una-sdk-gpslab-tests
+    apps/GpsLab/ActivityWriter_test.cpp
+    "${UNA_SDK_ROOT}/Examples/Apps/GpsLab/Software/Libs/Sources/ActivityWriter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitCrc.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitWriter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitRecordCadence.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/RecordingMarker.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/JSON/JsonStreamReader.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/JSON/JsonStreamWriter.cpp"
+    "${COREJSON_DIR}/core_json.c"
+    "${UNA_SDK_ROOT}/Libs/Source/Simulator/Kernel/Mock/FileSystem.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Wrappers/StdLibWrappers.c"
+)
+
+target_include_directories(una-sdk-gpslab-tests PRIVATE
+    "${CMAKE_CURRENT_LIST_DIR}"
+    "${UNA_SDK_ROOT}/Libs/Header"
+    "${COREJSON_DIR}/include"
+    "${UNA_SDK_ROOT}/Examples/Apps/GpsLab/Software/Libs/Header"
+)
+
+target_link_libraries(una-sdk-gpslab-tests PRIVATE
+    sdk_host_test_support
+    GTest::gtest_main
+    GTest::gmock
+)
+
 enable_testing()
 add_test(NAME una-sdk-host-tests COMMAND una-sdk-host-tests)
+add_test(NAME una-sdk-gpslab-tests COMMAND una-sdk-gpslab-tests)

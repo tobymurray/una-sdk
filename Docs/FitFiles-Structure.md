@@ -891,6 +891,59 @@ mFit->data(L_SESSION)
     .write();
 ```
 
+### GpsLab (Examples/Apps/GpsLab/)
+**Sport Type**: `Sport::Running`
+
+A standalone copy of the Running app that additionally records a **GNSS
+quality series**, for characterising receiver performance against a reference
+device. It carries its own `APP_ID`, so it installs alongside Running rather
+than replacing it. Everything Running writes, plus:
+
+**Additional native record fields**: `gps_accuracy` (31, uint8, m),
+`distance` (5, uint32, scale 100).
+
+**Additional developer fields**:
+- Per record: `DF_GPS_PRECISION` (7, float32, m), `DF_GPS_STATE` (8, uint8
+  bitmask), `DF_GPS_ALTITUDE` (9, float32, m), `DF_GPS_SPEED` (10, float32,
+  m/s), `DF_GPS_FIX_AGE` (11, uint16, ms)
+- Per session: `DF_GNSS_TTFF` (12, sint32, s), `DF_GNSS_PWR_OFFSET`
+  (13, sint32, s)
+
+| Field | Meaning |
+|---|---|
+| `gps_accuracy` (native) | Error estimate rounded to whole metres; what third-party tools read. Saturates at 254 (255 is the FIT invalid sentinel). |
+| `gps_precision` (dev 7) | The same estimate at full `float32` resolution -- prefer this for analysis. |
+| `gps_state` (dev 8) | Bitmask: `1` subscribed, `2` position fix, `4` observed speed fix, `8` dead reckoning, `16` sample fresh. Always written, so a record with no position says *why*. |
+| `gps_altitude` (dev 9) | GNSS altitude. Distinct from `enhanced_altitude`, which is barometric. |
+| `gps_speed` (dev 10) | Raw receiver speed, written whenever a sample exists -- including while dead-reckoning, since that is what explains distance creep. Qualification lives in `gps_state`, not in the field's presence. Distinct from `enhanced_speed`, which is the aggregated/filtered metric. |
+| `gps_fix_age` (dev 11) | Age of the latched GNSS sample at record time. |
+| `distance` (native) | Activity-cumulative distance: rebased at track start, frozen across pauses. Fed by the receiver's odometer but neither that odometer nor the summed length of the position trace. |
+
+**Sample age is what makes the series scoreable.** Records are emitted on a
+fixed app tick while GNSS samples arrive asynchronously, so every field above
+describes the *last sample received*. Without `gps_fix_age`, a repeated fix is
+indistinguishable from a fresh one, and duplicate positions get counted as
+independent measurements -- which biases any scatter or dispersion statistic
+optimistically. A latched sample older than `skGpsStaleMs` (3 s) is treated as
+stale: position, GNSS altitude and precision are withheld, and
+`GPS_SAMPLE_FRESH` clears. Analysis should reject epochs without that bit.
+
+The two session timings exist because the receiver is powered on at the
+pre-activity screen and the events they measure are over before the first
+record exists: `gnss_ttff` (power-on to first fix) and `gnss_power_on_offset`
+(power-on relative to track start, negative). Both hold the SInt32 invalid
+sentinel `0x7FFFFFFF` when the event never occurred.
+
+A `gps_precision` of zero is written as *invalid*, never as `0.0`: zero is the
+most confident value the field can express, so emitting it where the receiver
+declared nothing would fabricate perfect confidence exactly where there is no
+estimate.
+
+Note that `position_lat`/`position_long` originate as `float` in the sensor
+layer (`GPS_LOCATION`), so the trace carries a quantization floor of roughly
+0.4-0.6 m at mid-latitudes regardless of receiver quality. This is a property
+of the sensor API, not of the FIT encoding.
+
 ### Cycling (Examples/Apps/Cycling/)
 **Sport Type**: `Sport::Cycling`
 
