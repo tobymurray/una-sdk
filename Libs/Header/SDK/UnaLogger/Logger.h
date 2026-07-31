@@ -196,7 +196,7 @@ void message(Level level,
              const char* module,
              const char* func,
              int line,
-             const char* fmt, ...) __attribute__((format(printf, 5, 6)));
+             const char* fmt, ...) UNA_PRINTF_FMT(5, 6);
 
 /**
  * @brief Emit a hex dump. Call through the LOG_*_DUMP macros.

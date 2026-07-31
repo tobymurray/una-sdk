@@ -69,7 +69,7 @@ class Logger final : public SDK::Interface::ILogger {
 public:
 
     void printf(const char* format, ...) override
-        __attribute__((format(printf, 2, 3)))
+        UNA_PRINTF_FMT(2, 3)
     {
         va_list args;
         va_start(args, format);
@@ -78,14 +78,14 @@ public:
     }
 
     void vprintf(const char* format, va_list args) override
-        __attribute__((format(printf, 2, 0)))
+        UNA_PRINTF_FMT(2, 0)
     {
         render(nullptr, nullptr, nullptr, 0, format, args);
     }
 
     void mvprintf(const char* level, const char* module_name, const char* func, int line,
         const char* fmt, va_list args) override
-        __attribute__((format(printf, 6, 0)))
+        UNA_PRINTF_FMT(6, 0)
     {
         render(level, module_name, func, line, fmt, args);
     }

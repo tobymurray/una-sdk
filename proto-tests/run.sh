@@ -169,6 +169,40 @@ static_assert(std::atomic<uint32_t>::is_always_lock_free, "uint32_t not lock fre
 EOF
 $CXX -fsyntax-only $B/lockfree.cpp && print "  atomics always-lock-free" || fail "atomics not lock free"
 
+print "\n===== 11. non-GNU compiler path (the Windows simulator builds with MSVC) ====="
+# MSVC does not implement __attribute__. UNA_PRINTF_FMT_OFF forces the same
+# unannotated path MSVC takes, so that configuration is exercised here rather
+# than discovered on a machine no one in CI has.
+for lvl in 4 0; do
+    $CXX -DUNA_PRINTF_FMT_OFF -DLOG_LEVEL=$lvl -fsyntax-only $INC $LOGGER \
+      && print "  Logger.cpp, LOG_LEVEL=$lvl: ok" \
+      || fail "Logger.cpp does not build on the non-GNU path at LOG_LEVEL=$lvl"
+done
+$CXX -DUNA_PRINTF_FMT_OFF -fsyntax-only $INC $P/mock_a.cpp \
+  && print "  Mock/Logger.hpp + Logger.h via a simulator TU: ok" \
+  || fail "simulator headers do not build on the non-GNU path"
+# Every logging source, on the non-GNU path.
+broke=0
+for f in $(grep -rlE 'LOG_(DEBUG|INFO|WARNING|ERROR)' --include='*.cpp' $W/Libs/Source); do
+    out=$($CXX -DUNA_PRINTF_FMT_OFF -fsyntax-only $INC $f 2>&1)
+    print -r -- "$out" | grep -q "file not found" && continue
+    print -r -- "$out" | grep -q "error:" && { broke=$((broke+1)); print "    BROKE ${f#$W/}" }
+done
+print "  existing logging sources on the non-GNU path: broken=$broke"
+[[ $broke -eq 0 ]] || fail "existing sources break on the non-GNU path"
+
+print "\n===== 12. no unguarded compiler-specific syntax in the public headers ====="
+# The annotation must only ever appear inside UNA_PRINTF_FMT's own definition.
+stray=$(grep -rn "__attribute__" $W/Libs/Header/ \
+        | grep -v "define UNA_PRINTF_FMT" \
+        | grep -vE "^\S+:[0-9]+: \*" \
+        | wc -l | tr -d ' ')
+print "  raw __attribute__ outside the macro definition: $stray (want 0)"
+[[ $stray -eq 0 ]] || {
+    grep -rn "__attribute__" $W/Libs/Header/ | grep -v "define UNA_PRINTF_FMT" | grep -vE "^\S+:[0-9]+: \*" | sed 's/^/    /'
+    fail "compiler-specific syntax leaked into a public header"
+}
+
 print ""
 if [[ $rc -eq 0 ]]; then print "===== ALL CHECKS PASSED ====="; else print "===== FAILURES ====="; fi
 exit $rc
