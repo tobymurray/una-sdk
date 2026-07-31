@@ -32,7 +32,8 @@ public:
      * @param format Format string (printf-style).
      * @param ... Additional arguments.
      */
-    virtual void printf(const char *format, ...) = 0;
+    virtual void printf(const char *format, ...)
+        __attribute__((format(printf, 2, 3))) = 0;
 
     /**
      * @brief Log a formatted message.
@@ -42,7 +43,8 @@ public:
      * @param format Format string (printf-style).
      * @param args Variable argument list
      */
-    virtual void vprintf(const char *format, va_list args) = 0;
+    virtual void vprintf(const char *format, va_list args)
+        __attribute__((format(printf, 2, 0))) = 0;
 
     /**
      * @brief Log a formatted message with metadata.
@@ -55,8 +57,12 @@ public:
      * @param fmt Format string (printf-style).
      * @param args Variable argument list
      */
+    // The format attributes on these three are diagnostic only -- they do not
+    // affect the ABI, so they are safe to add to this firmware-facing interface,
+    // and they make every call through it format-checked by the compiler.
     virtual void mvprintf(const char *level, const char *module_name,
-            const char *func, int line, const char *fmt, va_list args) = 0;
+            const char *func, int line, const char *fmt, va_list args)
+        __attribute__((format(printf, 6, 0))) = 0;
 
 protected:
 
