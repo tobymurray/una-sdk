@@ -47,16 +47,16 @@ inline constexpr uint32_t secToTicks(uint32_t sec, uint32_t fps)
 // =============================================================================
 
 /** @brief Convert kilometres to miles. */
-inline float kmToMiles(float km) { return km * 0.621371f; }
+inline constexpr float kmToMiles(float km) { return km * 0.621371f; }
 
 /** @brief Convert miles to kilometres. */
-inline float milesToKm(float mi) { return mi / 0.621371f; }
+inline constexpr float milesToKm(float mi) { return mi / 0.621371f; }
 
 /** @brief Convert metres to feet. */
-inline float metersToFeet(float m) { return m * 3.28084f; }
+inline constexpr float metersToFeet(float m) { return m * 3.28084f; }
 
 /** @brief Convert feet to metres. */
-inline float feetToMeters(float ft) { return ft / 3.28084f; }
+inline constexpr float feetToMeters(float ft) { return ft / 3.28084f; }
 
 // =============================================================================
 // Time decomposition
@@ -74,7 +74,7 @@ struct HMS {
  * @param sec  Total seconds (non-negative).
  * @return     HMS struct with h, m, s fields.
  */
-inline HMS toHMS(std::time_t sec)
+inline constexpr HMS toHMS(std::time_t sec)
 {
     HMS result;
     result.h = static_cast<uint16_t>(sec / 3600);

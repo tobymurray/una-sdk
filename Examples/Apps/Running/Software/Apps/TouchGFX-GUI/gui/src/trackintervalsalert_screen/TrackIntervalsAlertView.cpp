@@ -87,9 +87,9 @@ void TrackIntervalsAlertView::setPhaseTime(std::time_t sec)
     intervalsTimer.setDescriptionVisible(false);
 }
 
-void TrackIntervalsAlertView::setPhaseDistance(float distDisplay, bool isImperial)
+void TrackIntervalsAlertView::setPhaseDistance(const SDK::Units::Reading& distance)
 {
-    intervalsTimer.setPhaseDistance(distDisplay, isImperial);
+    intervalsTimer.setPhaseDistance(distance);
     intervalsTimer.setDescriptionVisible(false);
 }
 

@@ -16,9 +16,12 @@ public:
 
     void setUnitsImperial(bool isImperial);
     void setLapNum(uint32_t n);
+
+    /// @param metres  Lap distance in metres. Always metres.
     void setDistance(float metres);
     void setTimer(std::time_t sec);
-    void setPace(float secPerM);
+    /// @param secondsPerMetre  Lap pace in s/m. Always s/m.
+    void setPace(float secondsPerMetre);
 
 protected:
     virtual void handleKeyEvent(uint8_t key) override;
@@ -26,7 +29,8 @@ protected:
 private:
     void onDismiss();
 
-    bool mIsImperial = false;
+    /// The screen's single source of truth for the user's unit preference.
+    SDK::Units::Formatter mUnits;
 
     CountdownTimer                      mDismissTimer;
     touchgfx::Callback<TrackLapView>    mDismissCb;

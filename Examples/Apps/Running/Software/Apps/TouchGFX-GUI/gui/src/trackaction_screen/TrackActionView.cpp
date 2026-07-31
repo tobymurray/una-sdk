@@ -1,5 +1,7 @@
 #include <gui/trackaction_screen/TrackActionView.hpp>
 
+#include "SDK/GUI/UnitText.hpp"
+
 constexpr uint16_t kTrackTitleInfoSwitchPeriod = SDK::Utils::secToTicks(3, App::Config::kFrameRate);
 
 TrackActionView::TrackActionView() :
@@ -54,7 +56,7 @@ uint16_t TrackActionView::getPositionId()
 
 void TrackActionView::setUnitsImperial(bool isImperial)
 {
-    mIsImperial = isImperial;
+    mUnits.setImperial(isImperial);
     infoCarousel.refresh();
 }
 
@@ -63,26 +65,15 @@ void TrackActionView::setTimer(std::time_t sec)
     pauseIndicator.setTime(sec);
 }
 
-void TrackActionView::setAvgPace(float secPerM)
+void TrackActionView::setAvgPace(float secondsPerMetre)
 {
-    auto paceConv = [this](float s) -> float {
-        if (s < 1e-6f) return 0.0f;
-        const float secPerKm = s * 1000.0f;
-        return mIsImperial ? secPerKm / SDK::Utils::kmToMiles(1.0f) : secPerKm;
-    };
-
-    mAvgPaceConv = paceConv(secPerM);
+    mAvgPaceSecPerM = secondsPerMetre;
     infoCarousel.refresh();
 }
 
 void TrackActionView::setDistance(float metres)
 {
-    auto distConv = [this](float m) -> float {
-        const float km = m / 1000.0f;
-        return mIsImperial ? SDK::Utils::kmToMiles(km) : km;
-    };
-
-    mDistanceConv = distConv(metres);
+    mDistanceMetres = metres;
     infoCarousel.refresh();
 }
 
@@ -94,7 +85,7 @@ void TrackActionView::setAvgHR(float hr)
 
 void TrackActionView::setElevation(float metres)
 {
-    mElevationConv = mIsImperial ? SDK::Utils::metersToFeet(metres) : metres;
+    mElevationMetres = metres;
     infoCarousel.refresh();
 }
 
@@ -143,32 +134,13 @@ void TrackActionView::onCarouselUpdate(int16_t index)
 
     case 0:
         infoCarousel.setTitle(T_TEXT_AVG_DOT_PACE_UC);
-        {
-            if (mAvgPaceConv < App::Display::kMinPace) {
-                Unicode::snprintf(buf, kBufSize, "---");
-            } else {
-                // Round to the nearest second (consistent with the lap pace displays).
-                auto hms = SDK::Utils::toHMS(static_cast<std::time_t>(mAvgPaceConv + 0.5f));
-                if (hms.h > 0) {
-                    Unicode::snprintf(buf, kBufSize, "%u:%02u", hms.h, hms.m);
-                } else {
-                    Unicode::snprintf(buf, kBufSize, "%u:%02u", hms.m, hms.s);
-                }
-            }
-        }
+        SDK::Gui::formatPaceHoursMinutes(mUnits.pace(mAvgPaceSecPerM), buf, kBufSize);
         break;
 
     case 1:
-        infoCarousel.setTitle(T_TEXT_DISTANCE_UC); 
-        {
-            if (mDistanceConv < App::Display::kMinDist) {
-                Unicode::snprintf(buf, kBufSize, "---");
-            } else if (mDistanceConv < 100.0f) {
-                Unicode::snprintfFloat(buf, kBufSize, "%.02f", mDistanceConv);
-            } else {
-                Unicode::snprintfFloat(buf, kBufSize, "%.01f", mDistanceConv);
-            }
-        }
+        infoCarousel.setTitle(T_TEXT_DISTANCE_UC);
+        SDK::Gui::formatValue(mUnits.distance(mDistanceMetres, App::Display::kDistance),
+                              buf, kBufSize);
         break;
 
     case 2:
@@ -182,7 +154,8 @@ void TrackActionView::onCarouselUpdate(int16_t index)
 
     case 3:
         infoCarousel.setTitle(T_TEXT_ELEVATION_UC);
-        Unicode::snprintf(buf, kBufSize, "%d", static_cast<int16_t>(mElevationConv));
+        Unicode::snprintf(buf, kBufSize, "%d",
+            static_cast<int16_t>(mUnits.elevation(mElevationMetres).value));
         break;
 
     default:

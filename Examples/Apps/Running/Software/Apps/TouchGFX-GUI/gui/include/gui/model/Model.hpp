@@ -10,6 +10,7 @@
 #include "SDK/Interfaces/IGuiLifeCycleCallback.hpp"
 #include "SDK/Interfaces/ICustomMessageHandler.hpp"
 #include <SDK/Utils/Utils.hpp>
+#include <SDK/Units/Units.hpp>
 #include <SDK/GUI/Config.hpp>
 #include <SDK/GUI/Color.hpp>
 #include <SDK/GUI/Button.hpp>
@@ -37,13 +38,21 @@ constexpr uint8_t kHrThresholdsCount = CustomMessage::kHrThresholdsCount;
 } // namespace App::Config
 
 // ---------------------------------------------------------------------------
-// App::Display -- minimum valid values for on-screen display.
-// Below these thresholds the widget shows "---" instead of a number.
+// App::Display -- how measurements are rendered.
+//
+// Precision and conversion come from SDK::Units; this app only says where its
+// data stops being trustworthy. A value under a policy's floor is reported as
+// !valid and the widget draws "---" rather than a number.
 // ---------------------------------------------------------------------------
 namespace App::Display
 {
-constexpr float kMinDist = 0.0f;   ///< km or mi  -- negative = no data
-constexpr float kMinPace = 30.0f;  ///< sec/km or sec/mi -- below any human running pace
+/** @brief Distance: SDK precision tiers, with negative treated as "no fix yet". */
+constexpr SDK::Units::Precision kDistance =
+    SDK::Units::withPlaceholderBelow(SDK::Units::Policy::kDistance, 0.0f);
+
+/** @brief Pace floor in seconds per displayed unit -- below any human running pace. */
+constexpr float kMinPace = SDK::Units::Policy::kMinPaceSeconds;
+
 constexpr float kMinHR = 20.0f;    ///< bpm -- below physiological minimum
 } // namespace App::Display
 
@@ -78,6 +87,20 @@ public:
 
     // Settings
     bool isUnitsImperial() const;
+
+    /**
+     * @brief The user's unit preference as a formatter, for presenters to hand
+     *        to their view.
+     *
+     * Prefer this over isUnitsImperial() anywhere a measurement is about to be
+     * displayed: it keeps conversion, precision and unit label together.
+     */
+    SDK::Units::Formatter units() const
+    {
+        return SDK::Units::Formatter(isUnitsImperial() ? SDK::Units::System::Imperial
+                                                       : SDK::Units::System::Metric);
+    }
+
     bool is12HourFormat() const;
     const uint8_t* getHrThresholds() const;
     uint8_t        getHrThresholdsCount() const;

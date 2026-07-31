@@ -37,10 +37,9 @@ public:
 
     /**
      * @brief Update the timer for a distance-based phase -- shows distance remaining.
-     * @param distDisplay Already-converted display value in km or mi.
-     * @param isImperial  Selects unit label.
+     * @param distance Remaining distance, from SDK::Units::Formatter::distance().
      */
-    void setPhaseDistance(float distDisplay, bool isImperial);
+    void setPhaseDistance(const SDK::Units::Reading& distance);
 
     /**
      * @brief Update the timer for an open-ended phase -- shows "Open" instead of 00:00.

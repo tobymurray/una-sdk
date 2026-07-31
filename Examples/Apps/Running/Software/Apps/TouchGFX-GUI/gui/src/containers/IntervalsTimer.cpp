@@ -1,4 +1,5 @@
 #include <gui/containers/IntervalsTimer.hpp>
+#include <gui/UnitLabels.hpp>
 #include <texts/TextKeysAndLanguages.hpp>
 #include <touchgfx/Color.hpp>
 
@@ -36,13 +37,15 @@ void IntervalsTimer::setPhaseTime(std::time_t sec, Track::IntervalsMetric metric
     }
 }
 
-void IntervalsTimer::setPhaseDistance(float distDisplay, bool isImperial)
+void IntervalsTimer::setPhaseDistance(const SDK::Units::Reading& distance)
 {
-    setTimerDist(distDisplay);
+    // The countdown keeps its own zero-padded fixed-width format rather than
+    // the shared precision tiers, so the digits do not shift as it counts down.
+    setTimerDist(distance.valid ? distance.value : 0.0f);
 
     touchgfx::Unicode::UnicodeChar buf[24];
     Unicode::snprintf(buf, 24, "%s %s",
-        touchgfx::TypedText(isImperial ? T_TEXT_MI : T_TEXT_KM).getText(),
+        touchgfx::TypedText(App::unitTextId(distance.label)).getText(),
         touchgfx::TypedText(T_TEXT_REMAINING_LC).getText());
     setDescriptionText(buf);
 }

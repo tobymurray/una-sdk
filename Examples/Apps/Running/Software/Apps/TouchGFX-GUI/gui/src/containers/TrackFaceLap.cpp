@@ -1,5 +1,7 @@
 #include <gui/containers/TrackFaceLap.hpp>
 
+#include "SDK/GUI/UnitText.hpp"
+
 TrackFaceLap::TrackFaceLap()
 {
 }
@@ -24,35 +26,14 @@ void TrackFaceLap::setHR(float hr, const uint8_t* thresholds, uint8_t thresholdC
     hrZone.setHR(static_cast<uint8_t>(hr), thresholds, thresholdCount);
 }
 
-void TrackFaceLap::setPace(float pace)
+void TrackFaceLap::setPace(const SDK::Units::PaceReading& pace)
 {
-    if (pace < App::Display::kMinPace) {
-        Unicode::snprintf(lapPaceValueBuffer, LAPPACEVALUE_SIZE, "---");
-    } else {
-        // Round to the nearest second (matches the lap-alert popup / summary
-        // pace; truncating would read a second low for the same grid lap).
-        auto hms = SDK::Utils::toHMS(static_cast<std::time_t>(pace + 0.5f));
-        if (hms.h > 0) {
-            Unicode::snprintf(lapPaceValueBuffer, LAPPACEVALUE_SIZE, "%u:%02u", hms.h, hms.m);
-        } else {
-            Unicode::snprintf(lapPaceValueBuffer, LAPPACEVALUE_SIZE, "%u:%02u", hms.m, hms.s);
-        }
-    }
-    lapPaceValue.invalidate();
+    SDK::Gui::setPaceHoursMinutes(pace, {&lapPaceValue, lapPaceValueBuffer, LAPPACEVALUE_SIZE});
 }
 
-void TrackFaceLap::setDistance(float dist)
+void TrackFaceLap::setDistance(const SDK::Units::Reading& distance)
 {
-    if (dist < App::Display::kMinDist) {
-        Unicode::snprintf(lapDistValueBuffer, LAPDISTVALUE_SIZE, "---");
-    } else if (dist < 10.0f) {
-        Unicode::snprintfFloat(lapDistValueBuffer, LAPDISTVALUE_SIZE, "%.02f", dist);
-    } else if (dist < 100.0f) {
-        Unicode::snprintfFloat(lapDistValueBuffer, LAPDISTVALUE_SIZE, "%.01f", dist);
-    } else {
-        Unicode::snprintfFloat(lapDistValueBuffer, LAPDISTVALUE_SIZE, "%.0f", dist);
-    }
-    lapDistValue.invalidate();
+    SDK::Gui::setReading(distance, {&lapDistValue, lapDistValueBuffer, LAPDISTVALUE_SIZE});
 }
 
 void TrackFaceLap::setTimer(std::time_t sec)
