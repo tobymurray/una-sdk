@@ -83,7 +83,10 @@ private:
 
     const char* mName;
 
-    Mock::Logger     mLogger;
+    // No Mock::Logger member. The sink it used to hold was installed globally by
+    // Logger_init() while its lifetime ended with this object -- shorter than the
+    // threads and static-duration singletons that log through it. It now lives in
+    // Mock::logger(), for the whole process.
     Mock::AppMemory  mAppMemory;
     Mock::FileSystem mFilesystem;
 

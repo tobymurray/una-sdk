@@ -21,11 +21,10 @@ namespace SDK::Simulator
 
 Kernel::Kernel(const char* name)
     : mName(name)
-    , mLogger()
     , mAppMemory()
     , mFilesystem(sFsPath)
     , mISystem(nullptr)
-    , mILogger(&mLogger)
+    , mILogger(&Mock::logger())
     , mIAppMemory(&mAppMemory)
 	, mIAppComm(nullptr)
     , mIFilesystem(&mFilesystem)
