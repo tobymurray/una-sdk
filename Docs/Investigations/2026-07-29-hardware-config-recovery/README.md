@@ -161,6 +161,50 @@ Note `0x50`/`0x58` appear on every bus and are now suspected to be a marginal-AC
 9. GTZC (Global TrustZone controller) registers — not read yet; would settle WRP/watermark/GTZC state from the original security-posture ask, now that RM0456 gives exact register offsets (chapter 5).
 10. Clock-tree exact frequency decode — RCC raw dump captured three times now (sweeps #4-7, byte-identical every time) but the bit-level MSIRANGE/PLL decode is still blocked on the garbled PDF-extracted bit diagram; would need the actual RM0456 page image, not more text extraction.
 
+## Phase 2 — BLE GATT / FTS / CCS protocol recovery (Phases A/B/C all closed for the read path)
+
+Goal, plan, and guardrails: `BLE-COMPANION-disassembly-prompt.md`. Running findings, full ledger,
+and confidence tags: **`BLE-COMPANION-protocol-spec.md`** (this folder) — do not duplicate that
+detail here; summary only:
+
+- **A real BLE capture of the Una app syncing (twice) was obtained** via `adb bugreport` from the
+  user's own GrapheneOS phone, decoded with `tshark`. This is the dynamic evidence stream the plan
+  called for, and it **settled the core objective**: the FTS whole-file-read protocol
+  (opcode `0x10` request / `0x11` streamed response, 128-byte chunks, no per-chunk ack needed) was
+  fully recovered from real traffic, and **two real `.fit` activity files were reconstructed
+  byte-for-byte from the capture and validated three independent ways** — FIT header field
+  arithmetic, a from-scratch CRC-16 recomputation matching the stored file CRC exactly on both
+  files, and independent recognition by `file(1)`'s own magic database. This is a genuine,
+  end-to-end proof that a companion can pull `.fit` files off this watch today.
+- **Auth verdict: CONFIRMED, closed.** A Ghidra headless static pass disassembled the actual FTS
+  `readHandler`/`writeHandler`/`listDirHandler` bodies directly: **no call to any bonding/security-
+  check function appears anywhere in them.** The bonding-check function's only two callers, traced
+  exhaustively, are a generic `isBonded()` accessor and the advertising-mode-selection logic — both
+  unrelated to file transfer. Combined with the dynamic capture (standard BLE re-encryption from a
+  stored bond, zero extra handshake traffic across five real FTS operations) and the static "no
+  crypto vocabulary in the firmware strings" lead, this is now triple-corroborated: **security for
+  FTS is standard BLE bonding, full stop — no vendor secret, challenge, or key gates it.**
+- **GATT table: every custom service UUID group now CONFIRMED by decompiled constructor code**
+  (not just string adjacency) — CCS and CANS each resolve to 1 service + 2 characteristics exactly;
+  FTS resolves to *two separate* service objects (one reusing Adafruit's real `0xFEBB` 16-bit
+  service UUID with UNA's own characteristic numbering, one a literal Nordic UART Service clone).
+  Binding the live capture's attribute *handle numbers* to these confirmed UUIDs is the one
+  remaining loose end, and doesn't block a same-firmware companion.
+- **CTS independently CONFIRMED** by decoding live Current Time / Local Time Information writes
+  byte-for-byte against the standard Bluetooth SIG format, on the exact real-world date/time of the
+  capture session.
+- **REFUTED, recorded per the ground rule:** the `ADAF...`-prefixed UUIDs looked like a drop-in
+  match for Adafruit's public open-source BLE File Transfer Service; checking the real Adafruit
+  source shows different characteristic-suffix IDs there — the base UUID pattern was borrowed, the
+  protocol was not.
+- **CONFIRMED** (byte-exact match to public specs): Apple **AMS + ANCS** UUIDs reused verbatim for
+  iOS notification/media; a live-observed characteristic also confirms an Android-notification
+  bridge (CANS) is real and actively used, matching a firmware-string-only hypothesis.
+- **Remaining open items** (none blocking a read-path companion prototype): binding the live
+  capture's attribute handle numbers to the now-confirmed UUIDs (only matters for cross-firmware
+  portability); the `uint16` file-size field's ceiling on large recordings; a secondary `0x30`
+  command and the EPO upload (`0x20/0x21/0x22`) framing. See the spec doc's §6 for the full list.
+
 ## Safety notes honored this round
 
 - All sweep #3 reads are read-only except: (a) a write/readback test confined to the app's own static SRAM buffer (self-contained, cannot affect kernel state), and (b) I2C START/STOP probe pulses (bounded, recoverable by power-cycle, no register/option-byte/boot-region writes).
