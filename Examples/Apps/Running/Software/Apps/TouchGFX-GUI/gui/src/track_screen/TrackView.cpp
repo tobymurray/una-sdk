@@ -75,8 +75,8 @@ uint16_t TrackView::getPositionId()
 
 void TrackView::setConfig(bool isImperial, const uint8_t* thresholds, uint8_t thresholdCount)
 {
-    mIsImperial        = isImperial;
-    mHrThresholdCount  = thresholdCount < App::Config::kHrThresholdsCount ? 
+    mUnits.setImperial(isImperial);
+    mHrThresholdCount  = thresholdCount < App::Config::kHrThresholdsCount ?
                             thresholdCount : static_cast<uint8_t>(App::Config::kHrThresholdsCount);
     memcpy(mHrThresholds, thresholds, mHrThresholdCount);
 }
@@ -88,23 +88,15 @@ void TrackView::setTimeFormat(bool is12Hour)
 
 void TrackView::setTrackData(const Track::Data& data)
 {
-    auto paceConv = [this](float secPerM) -> float {
-        if (secPerM < 1e-6f) return 0.0f;
-        const float secPerKm = secPerM * 1000.0f;
-        return mIsImperial ? secPerKm / SDK::Utils::kmToMiles(1.0f) : secPerKm;
-    };
-
-    auto distConv = [this](float metres) -> float {
-        const float km = metres / 1000.0f;
-        return mIsImperial ? SDK::Utils::kmToMiles(km) : km;
-    };
-
-    trackFaceTotal.setPace(paceConv(data.pace));
-    trackFaceTotal.setDistance(distConv(data.distance), mIsImperial);
+    // Track::Data is SI throughout: metres and seconds per metre. mUnits is the
+    // only thing on this screen that knows the user's preference, and each
+    // Reading it produces carries its own unit, so no face can mislabel one.
+    trackFaceTotal.setPace(mUnits.pace(data.pace));
+    trackFaceTotal.setDistance(mUnits.distance(data.distance, App::Display::kDistance));
     trackFaceTotal.setTimer(data.totalTime);
 
-    trackFaceLap.setPace(paceConv(data.lapPace));
-    trackFaceLap.setDistance(distConv(data.lapDistance));
+    trackFaceLap.setPace(mUnits.pace(data.lapPace));
+    trackFaceLap.setDistance(mUnits.distance(data.lapDistance, App::Display::kDistance));
     trackFaceLap.setTimer(data.lapTime);
     trackFaceLap.setHR(data.hr, mHrThresholds, mHrThresholdCount);
 
@@ -114,12 +106,13 @@ void TrackView::setTrackData(const Track::Data& data)
         trackFaceIntervals.setPhase(iv.phase, iv.repeat, iv.totalRepeats);
 
         if (iv.metric == Track::IntervalsMetric::DISTANCE) {
-            trackFaceIntervals.setPhaseDistance(distConv(iv.distRemaining), mIsImperial);
+            trackFaceIntervals.setPhaseDistance(
+                mUnits.distance(iv.distRemaining, App::Display::kDistance));
         } else {
             trackFaceIntervals.setPhaseTime(iv.phaseTimerSec, iv.metric);
         }
 
-        trackFaceIntervals.setPace(paceConv(data.pace));
+        trackFaceIntervals.setPace(mUnits.pace(data.pace));
         trackFaceIntervals.setHR(data.hr);
     }
 

@@ -6,6 +6,8 @@
 #include <ctime>
 #include "ActivitySummary.hpp"
 
+#include "SDK/Units/Units.hpp"
+
 /**
  * @brief Summary face showing individual lap metrics in a paginated scrollable list.
  *
@@ -36,12 +38,12 @@ public:
 
     /**
      * @brief Populate the list with lap data and reset to the first page.
-     * @param laps       Reference to the lap vector owned by the activity summary.
-     *                   The reference must remain valid for the lifetime of this container.
-     * @param isImperial When true, distances are shown in mi and pace in sec/mi;
-     *                   otherwise km and sec/km.
+     * @param laps  Reference to the lap vector owned by the activity summary.
+     *              The reference must remain valid for the lifetime of this container.
+     * @param units The screen's formatter, copied so each row can be converted
+     *              on demand without materialising a converted copy of the list.
      */
-    void setLaps(const std::vector<LapSummary>& laps, bool isImperial);
+    void setLaps(const std::vector<LapSummary>& laps, SDK::Units::Formatter units);
 
     /** @brief Return true if there is at least one more page below the current one. */
     bool canScrollDown() const;
@@ -66,7 +68,7 @@ protected:
     virtual void scrollListUpdateItem(LapListItem& item, int16_t itemIndex) override;
 
     const std::vector<LapSummary>* mLaps        = nullptr;
-    bool    mIsImperial  = false;
+    SDK::Units::Formatter mUnits;
     uint8_t mCurrentPage = 0;
     uint8_t mNumPages    = 0;
 };

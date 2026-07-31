@@ -17,7 +17,7 @@ public:
     uint16_t getPositionId();
     void setUnitsImperial(bool isImperial);
     void setTimer(std::time_t sec);
-    void setAvgPace(float secPerM);
+    void setAvgPace(float secondsPerMetre);
     void setDistance(float metres);
     void setAvgHR(float hr);
     void setElevation(float metres);
@@ -25,12 +25,16 @@ public:
 protected:
     using Menu = App::MenuNav::TrackView::Action;
 
-    bool mIsImperial = false;
+    /// The screen's single source of truth for the user's unit preference.
+    SDK::Units::Formatter mUnits;
 
-    float mAvgPaceConv   = 0.0f; 
-    float mDistanceConv  = 0.0f;
-    float mAvgHr         = 0.0f;
-    float mElevationConv = 0.0f;
+    // Cached in SI and converted when the carousel draws, so a mid-session
+    // change of unit preference re-renders correctly instead of leaving stale
+    // converted numbers behind a freshly-changed label.
+    float mAvgPaceSecPerM  = 0.0f;
+    float mDistanceMetres  = 0.0f;
+    float mAvgHr           = 0.0f;
+    float mElevationMetres = 0.0f;
 
     ItemLayout mItemLayout {};
 

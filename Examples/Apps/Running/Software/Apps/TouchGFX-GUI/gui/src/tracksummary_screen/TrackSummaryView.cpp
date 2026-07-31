@@ -30,30 +30,22 @@ void TrackSummaryView::tearDownScreen()
 
 void TrackSummaryView::setSummary(const ActivitySummary& s, bool isImperial, bool isPaused)
 {
-    mIsImperial    = isImperial;
+    mUnits.setImperial(isImperial);
     mTrackIsPaused = isPaused;
 
-    auto distConv = [isImperial](float metres) -> float {
-        const float km = metres / 1000.0f;
-        return isImperial ? SDK::Utils::kmToMiles(km) : km;
-    };
+    // One Reading, shared by both faces: they cannot disagree about the number
+    // or about the unit beside it.
+    const SDK::Units::Reading distance = mUnits.distance(s.distance, App::Display::kDistance);
 
-    auto paceConv = [isImperial](float secPerM) -> float {
-        if (secPerM < 1e-6f) return 0.0f;
-        const float secPerKm = secPerM * 1000.0f;
-        return isImperial ? secPerKm / SDK::Utils::kmToMiles(1.0f) : secPerKm;
-    };
-
-    const float dist = distConv(s.distance);
-    summaryFaceMap.setDistance(dist, isImperial);
-    summaryFaceOverview.setDistance(dist, isImperial);
-    summaryFaceOverview.setAvgPace(paceConv(s.paceAvg));
+    summaryFaceMap.setDistance(distance);
+    summaryFaceOverview.setDistance(distance);
+    summaryFaceOverview.setAvgPace(mUnits.pace(s.paceAvg));
     summaryFaceOverview.setTimer(s.time);
     summaryFaceHeartRate.setMaxHR(s.hrMax);
     summaryFaceHeartRate.setAvgHR(s.hrAvg);
     summaryFaceMap.setMap(s.map);
 
-    summaryFaceLaps.setLaps(s.laps, isImperial);
+    summaryFaceLaps.setLaps(s.laps, mUnits);
     mLapsPageCount = summaryFaceLaps.getPageCount();
     scrollIndicator.setCount(3 + mLapsPageCount);
 

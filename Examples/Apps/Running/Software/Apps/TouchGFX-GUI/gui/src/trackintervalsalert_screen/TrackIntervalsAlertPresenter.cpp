@@ -15,10 +15,7 @@ void TrackIntervalsAlertPresenter::activate()
     view.setPhase(iv.phase, iv.repeat, iv.totalRepeats);
 
     if (iv.metric == Track::IntervalsMetric::DISTANCE) {
-        const bool imperial     = model->isUnitsImperial();
-        const float distMetres  = iv.distRemaining;
-        const float distDisplay = imperial ? distMetres / 1609.344f : distMetres / 1000.0f;
-        view.setPhaseDistance(distDisplay, imperial);
+        view.setPhaseDistance(model->units().distance(iv.distRemaining, App::Display::kDistance));
     } else if (iv.metric == Track::IntervalsMetric::TIME_OPEN) {
         // Open-ended phase has no target -- show "Open" rather than 00:00.
         view.setPhaseOpen();

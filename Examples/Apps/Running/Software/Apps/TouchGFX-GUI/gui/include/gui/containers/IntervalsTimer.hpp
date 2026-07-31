@@ -4,6 +4,8 @@
 #include <gui_generated/containers/IntervalsTimerBase.hpp>
 #include <ctime>
 
+#include "SDK/Units/Units.hpp"
+
 class IntervalsTimer : public IntervalsTimerBase
 {
 public:
@@ -27,10 +29,11 @@ public:
     /**
      * @brief Update timer for a distance-based metric -- shows distance + "km/mi remaining".
      *
-     * @param distDisplay Already-converted display value in km or mi (presenter converts).
-     * @param isImperial  Selects unit label: "mi" if true, "km" if false.
+     * @param distance Remaining distance, from SDK::Units::Formatter::distance().
+     *                 Its label drives the description text, so the number and
+     *                 the word beside it always describe the same unit.
      */
-    void setPhaseDistance(float distDisplay, bool isImperial);
+    void setPhaseDistance(const SDK::Units::Reading& distance);
 
     /**
      * @brief Update timer for alert screens -- MM:SS only, no description, no line.

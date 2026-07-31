@@ -35,8 +35,12 @@ protected:
 
     bool     mIntervalsMode = false;
     uint16_t mCurrentFaceId = 0;
-    bool     mIsImperial    = false;
     bool     mIs12Hour      = false;
+
+    // The screen's single source of truth for the user's unit preference.
+    // Faces receive Readings from it and hold no unit state of their own.
+    SDK::Units::Formatter mUnits;
+
     uint8_t  mHrThresholds[App::Config::kHrThresholdsCount] = {};
     uint8_t  mHrThresholdCount = 0;
     uint8_t  mAccessoryState = 0;  // last SDK::Accessory::State (engaged?)

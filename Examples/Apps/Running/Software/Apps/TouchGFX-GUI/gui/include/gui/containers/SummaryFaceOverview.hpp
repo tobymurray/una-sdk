@@ -4,11 +4,13 @@
 #include <gui_generated/containers/SummaryFaceOverviewBase.hpp>
 #include <ctime>
 
+#include "SDK/Units/Units.hpp"
+
 /**
  * @brief Summary face showing overall session metrics: distance, average pace and elapsed time.
  *
  * One of four swipeable faces on the TrackSummary screen.
- * All values are display-ready -- unit conversion is the view's responsibility.
+ * Measurements arrive as Readings, already converted and labelled by the view.
  */
 class SummaryFaceOverview : public SummaryFaceOverviewBase
 {
@@ -18,19 +20,11 @@ public:
 
     virtual void initialize();
 
-    /**
-     * @brief Display total distance with unit label.
-     * @param dist       Already-converted value in km or mi (view's responsibility).
-     * @param isImperial Selects unit label: "mi" if true, "km" if false.
-     */
-    void setDistance(float dist, bool isImperial);
+    /** @brief Display total distance and its unit, from SDK::Units::Formatter::distance(). */
+    void setDistance(const SDK::Units::Reading& distance);
 
-    /**
-     * @brief Display average pace.
-     * @param pace Already-converted value in sec/km or sec/mi (view's responsibility).
-     *             Pass a value < 1.0 to show "---" (no data).
-     */
-    void setAvgPace(float pace);
+    /** @brief Display average pace, from SDK::Units::Formatter::pace(). */
+    void setAvgPace(const SDK::Units::PaceReading& pace);
 
     /** @brief Display total elapsed active time as "H:MM:SS". */
     void setTimer(std::time_t sec);
