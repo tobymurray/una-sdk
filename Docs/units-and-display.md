@@ -179,6 +179,37 @@ single copy under `-ffunction-sections --gc-sections`.
 `Units.hpp` itself stays header-only and fully `constexpr` -- it wants to fold
 at compile time, and does.
 
+## Unit labels repaint only when they change
+
+`setReading()` rewrites the value area on every call but touches the unit area
+only when the text actually differs. A unit label changes when the user changes
+their preference and at no other time, while the value beside it is rewritten
+every tick.
+
+On Running's track face the two widgets **overlap** -- `distanceValue` is
+`(53,111,134x42)` and `distanceUnits` is `(178,129,45x19)` -- so invalidating
+the label does not merely add its own rect, it can widen the value's:
+
+```
+value rect                   5628 px
+unit rect                     855 px
+union bounding box           7140 px
+```
+
+TouchGFX ships here as a prebuilt archive, so its dirty-rect merge rule is not
+readable from this tree and the saving can only be bounded:
+
+- if intersecting rects are merged to their bounding box: **1512 px/frame**
+- if they are kept separate: **855 px/frame**
+
+At 240x240 and 10 fps that is 8.5k-15k px/s not blitted, or roughly 4-8% of the
+track face's per-frame dirty area. It costs 56 bytes of flash.
+
+**This has not been measured on hardware.** No claim is made about battery
+life: that needs a current measurement on a device, which the pixel arithmetic
+above does not substitute for. Judge the change on those numbers, and drop it
+if they are not worth 56 bytes -- `setUnitText()` is self-contained.
+
 ## Reference
 
 - `Libs/Header/SDK/Units/Units.hpp`

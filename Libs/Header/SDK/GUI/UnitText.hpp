@@ -117,11 +117,37 @@ inline const char* decimalFormat(uint8_t decimals)
     }
 }
 
-/** @brief Write @p text into @p field and repaint it. */
+/** @brief Whether two strings match within @p maxChars, terminators included. */
+SDK_GUI_NO_INLINE inline bool sameText(const touchgfx::Unicode::UnicodeChar* a,
+                                       const touchgfx::Unicode::UnicodeChar* b,
+                                       uint16_t                              maxChars)
+{
+    for (uint16_t i = 0; i < maxChars; ++i) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+        if (a[i] == 0) {
+            return true;
+        }
+    }
+    return true;
+}
+
+/**
+ * @brief Write @p text into @p field, repainting only if it actually changed.
+ *
+ * A unit label changes when the user changes their preference and at no other
+ * time, but the value beside it is rewritten on every tick. Invalidating the
+ * label along with it enlarges the dirty region for no visible reason.
+ */
 SDK_GUI_NO_INLINE inline void setUnitText(const TextField&                      field,
                                           const touchgfx::Unicode::UnicodeChar* text)
 {
     if (!field.isBound() || text == nullptr) {
+        return;
+    }
+
+    if (sameText(field.buffer, text, field.size)) {
         return;
     }
 
