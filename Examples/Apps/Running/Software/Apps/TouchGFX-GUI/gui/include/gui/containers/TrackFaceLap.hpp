@@ -3,11 +3,13 @@
 
 #include <gui_generated/containers/TrackFaceLapBase.hpp>
 
+#include "SDK/Units/Units.hpp"
+
 /**
  * @brief Track face showing current lap metrics and heart rate zone.
  *
  * Displays lap pace, lap distance, lap elapsed time and an HR zone bar.
- * All distance/pace values are display-ready -- unit conversion is the view's responsibility.
+ * Measurements arrive as Readings, already converted and labelled by the view.
  */
 class TrackFaceLap : public TrackFaceLapBase
 {
@@ -26,19 +28,14 @@ public:
      */
     void setHR(float hr, const uint8_t* thresholds, uint8_t thresholdCount);
 
-    /**
-     * @brief Display current lap pace.
-     * @param pace Already-converted value in sec/km or sec/mi (view's responsibility).
-     *             Pass a value < App::Display::kMinPace to show "---" (no GPS / no data).
-     */
-    void setPace(float pace);
+    /** @brief Display current lap pace, from SDK::Units::Formatter::pace(). */
+    void setPace(const SDK::Units::PaceReading& pace);
 
     /**
-     * @brief Display current lap distance.
-     * @param dist Already-converted value in km or mi (view's responsibility).
-     *             Pass a value < App::Display::kMinDist to show "---" (no GPS / no data).
+     * @brief Display current lap distance, from SDK::Units::Formatter::distance().
+     * @note  This face has no unit text area; the km/mi label is part of the design.
      */
-    void setDistance(float dist);
+    void setDistance(const SDK::Units::Reading& distance);
 
     /** @brief Display current lap elapsed time as "M:SS" (or "H:MM" when >= 1 h). */
     void setTimer(std::time_t sec);

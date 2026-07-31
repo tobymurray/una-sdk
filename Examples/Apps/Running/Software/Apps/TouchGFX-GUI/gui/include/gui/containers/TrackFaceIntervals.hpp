@@ -5,6 +5,8 @@
 #include <ctime>
 #include "touchgfx/Color.hpp"
 
+#include "SDK/Units/Units.hpp"
+
 class TrackFaceIntervals : public TrackFaceIntervalsBase
 {
 public:
@@ -39,10 +41,9 @@ public:
 
     /**
      * @brief Update the timer for distance metric -- always shows "km/mi remaining".
-     * @param dist       Already-converted value in km or mi (view's responsibility).
-     * @param isImperial Selects unit label.
+     * @param distance Remaining distance, from SDK::Units::Formatter::distance().
      */
-    void setPhaseDistance(float dist, bool isImperial);
+    void setPhaseDistance(const SDK::Units::Reading& distance);
 
     // -------------------------------------------------------------------------
     // Bottom row  (call each tick from the presenter)
@@ -50,10 +51,9 @@ public:
 
     /**
      * @brief Update pace -- visible only during RUN phase.
-     * @param pace Already-converted value in sec/km or sec/mi (view's responsibility).
-     *             Pass a value < App::Display::kMinPace to show "---" (no GPS / no data).
+     * @param pace Current pace, from SDK::Units::Formatter::pace().
      */
-    void setPace(float pace);
+    void setPace(const SDK::Units::PaceReading& pace);
 
     /**
      * @brief Update heart rate -- visible during REST phase.

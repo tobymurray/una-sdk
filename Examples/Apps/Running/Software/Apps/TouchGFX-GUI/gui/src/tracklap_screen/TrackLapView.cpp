@@ -1,5 +1,6 @@
 #include <gui/tracklap_screen/TrackLapView.hpp>
 
+#include "SDK/GUI/UnitText.hpp"
 
 static constexpr uint16_t kDismissTicks = SDK::Utils::secToTicks(5, App::Config::kFrameRate);
 
@@ -30,7 +31,7 @@ void TrackLapView::tearDownScreen()
 
 void TrackLapView::setUnitsImperial(bool isImperial)
 {
-    mIsImperial = isImperial;
+    mUnits.setImperial(isImperial);
 }
 
 void TrackLapView::setLapNum(uint32_t n)
@@ -44,52 +45,16 @@ void TrackLapView::setLapNum(uint32_t n)
     title.set(buffer);
 }
 
-void TrackLapView::setPace(float secPerM)
+void TrackLapView::setPace(float secondsPerMetre)
 {
-    auto paceConv = [this](float s) -> float {
-        if (s < 1e-6f) return 0.0f;
-        const float secPerKm = s * 1000.0f;
-        return mIsImperial ? secPerKm / SDK::Utils::kmToMiles(1.0f) : secPerKm;
-    };
-
-    float value = paceConv(secPerM);
-
-    if (value < App::Display::kMinPace) {
-        Unicode::snprintf(paceValueBuffer, PACEVALUE_SIZE, "---");
-    } else {
-        // Round to the nearest second so a grid-aligned lap's pace matches its
-        // displayed whole-second duration (pace is a float speed round-trip that
-        // lands a hair below the exact value; truncating would drop a second).
-        auto hms = SDK::Utils::toHMS(static_cast<std::time_t>(value + 0.5f));
-        if (hms.h > 0) {
-            Unicode::snprintf(paceValueBuffer, PACEVALUE_SIZE, "%u:%02u", hms.h, hms.m);
-        } else {
-            Unicode::snprintf(paceValueBuffer, PACEVALUE_SIZE, "%u:%02u", hms.m, hms.s);
-        }
-    }
-    paceValue.invalidate();
+    SDK::Gui::setPaceHoursMinutes(mUnits.pace(secondsPerMetre),
+                                  {&paceValue, paceValueBuffer, PACEVALUE_SIZE});
 }
 
 void TrackLapView::setDistance(float metres)
 {
-    auto distConv = [this](float m) -> float {
-        const float km = m / 1000.0f;
-        return mIsImperial ? SDK::Utils::kmToMiles(km) : km;
-    };
-
-    float value = distConv(metres);
-
-    if (value < App::Display::kMinDist) {
-        Unicode::snprintf(distanceValueBuffer, DISTANCEVALUE_SIZE, "---");
-    } else if (value < 10.0f) {
-        Unicode::snprintfFloat(distanceValueBuffer, DISTANCEVALUE_SIZE, "%.02f", value);
-    } else if (value < 100.0f) {
-        Unicode::snprintfFloat(distanceValueBuffer, DISTANCEVALUE_SIZE, "%.01f", value);
-    } else {
-        Unicode::snprintfFloat(distanceValueBuffer, DISTANCEVALUE_SIZE, "%.0f", value);
-    }
-
-    distanceValue.invalidate();
+    SDK::Gui::setReading(mUnits.distance(metres, App::Display::kDistance),
+                         {&distanceValue, distanceValueBuffer, DISTANCEVALUE_SIZE});
 }
 
 void TrackLapView::setTimer(std::time_t sec)

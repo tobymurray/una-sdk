@@ -25,9 +25,11 @@ protected:
     };
 
     uint8_t mCurrentFace    = FACE_MAP;
-    bool    mIsImperial     = false;
     bool    mTrackIsPaused  = false;
     uint8_t mLapsPageCount  = 0;
+
+    /// The screen's single source of truth for the user's unit preference.
+    SDK::Units::Formatter mUnits;
 
     virtual void handleKeyEvent(uint8_t key) override;
     void updateFace();

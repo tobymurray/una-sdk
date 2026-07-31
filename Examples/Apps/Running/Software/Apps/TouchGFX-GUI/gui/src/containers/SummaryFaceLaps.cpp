@@ -1,5 +1,8 @@
 #include <gui/containers/SummaryFaceLaps.hpp>
+#include <gui/UnitLabels.hpp>
 #include <texts/TextKeysAndLanguages.hpp>
+
+#include "SDK/GUI/UnitText.hpp"
 
 static constexpr uint32_t skListAnimationSteps = App::Config::kMenuAnimationSteps / 2;
 
@@ -13,10 +16,10 @@ void SummaryFaceLaps::initialize()
     title.set(T_TEXT_LAPS_UC);
 }
 
-void SummaryFaceLaps::setLaps(const std::vector<LapSummary>& laps, bool isImperial)
+void SummaryFaceLaps::setLaps(const std::vector<LapSummary>& laps, SDK::Units::Formatter units)
 {
-    mLaps       = &laps;
-    mIsImperial = isImperial;
+    mLaps  = &laps;
+    mUnits = units;
 
     Unicode::snprintf(lapsTextBuffer, LAPSTEXT_SIZE, "%u %s",
         static_cast<uint32_t>(laps.size()),
@@ -91,29 +94,21 @@ void SummaryFaceLaps::scrollListUpdateItem(LapListItem& item, int16_t itemIndex)
 
     const LapSummary& lap = (*mLaps)[itemIndex];
 
-    const float km   = lap.distance / 1000.0f;
-    const float dist = mIsImperial ? SDK::Utils::kmToMiles(km) : km;
-
-    const float   secPerKm  = (lap.paceAvg > 1e-6f) ? lap.paceAvg * 1000.0f : 0.0f;
-    const float   paceUnits = mIsImperial ? secPerKm / SDK::Utils::kmToMiles(1.0f) : secPerKm;
-    // Round to the nearest second so a grid-aligned lap's pace matches its
-    // displayed whole-second duration (pace is a float speed round-trip that
-    // lands a hair below the exact value; truncating would drop a second).
-    const time_t  pace      = (secPerKm > 0.0f) ? static_cast<time_t>(paceUnits + 0.5f) : 0;
+    // Rows are converted on demand rather than up front, so the formatter is
+    // consulted here; the row still gets exactly the precision and rounding the
+    // track and summary faces use.
+    const SDK::Units::Reading     distance = mUnits.distance(lap.distance, App::Display::kDistance);
+    const SDK::Units::PaceReading pace     = mUnits.pace(lap.paceAvg);
 
     touchgfx::Unicode::UnicodeChar buf[32];
 
     Unicode::snprintf(buf, 32, "%u.", static_cast<uint32_t>(itemIndex + 1));
     item.setIndex(buf);
 
-    if (dist < 100.0f) {
-        Unicode::snprintfFloat(buf, 32, "%.2f", dist);
-    } else {
-        Unicode::snprintfFloat(buf, 32, "%.1f", dist);
-    }
+    SDK::Gui::formatValue(distance, buf, 32);
     item.setDistance(buf);
 
-    item.setUnits(touchgfx::TypedText(mIsImperial ? T_TEXT_MI : T_TEXT_KM).getText());
+    item.setUnits(touchgfx::TypedText(App::unitTextId(distance.label)).getText());
 
     auto dur = SDK::Utils::toHMS(lap.duration);
     if (dur.h > 0) {
@@ -123,15 +118,6 @@ void SummaryFaceLaps::scrollListUpdateItem(LapListItem& item, int16_t itemIndex)
     }
     item.setTime(buf);
 
-    if (pace < static_cast<time_t>(App::Display::kMinPace)) {
-        Unicode::snprintf(buf, 32, "---");
-    } else {
-        auto pac = SDK::Utils::toHMS(pace);
-        if (pac.h > 0) {
-            Unicode::snprintf(buf, 32, "%u:%02u", pac.h, pac.m);
-        } else {
-            Unicode::snprintf(buf, 32, "%u:%02u", pac.m, pac.s);
-        }
-    }
+    SDK::Gui::formatPaceHoursMinutes(pace, buf, 32);
     item.setPace(buf);
 }

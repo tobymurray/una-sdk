@@ -3,10 +3,14 @@
 
 #include <gui_generated/containers/TrackFaceTotalBase.hpp>
 
+#include "SDK/Units/Units.hpp"
+
 /**
  * @brief Track face showing overall session metrics: pace, total distance and elapsed time.
  *
- * All values are display-ready -- unit conversion is the view's responsibility.
+ * The face has no unit preference of its own. It draws the Readings the view
+ * hands it, each of which already carries its converted value, its precision
+ * and the unit label that belongs to that value.
  */
 class TrackFaceTotal : public TrackFaceTotalBase
 {
@@ -16,20 +20,11 @@ public:
 
     virtual void initialize();
 
-    /**
-     * @brief Display current pace.
-     * @param pace Already-converted value in sec/km or sec/mi (view's responsibility).
-     *             Pass a value < App::Display::kMinPace to show "---" (no GPS / no data).
-     */
-    void setPace(float pace);
+    /** @brief Display current pace, from SDK::Units::Formatter::pace(). */
+    void setPace(const SDK::Units::PaceReading& pace);
 
-    /**
-     * @brief Display total distance with unit label.
-     * @param dist       Already-converted value in km or mi (view's responsibility).
-     *                   Pass a value < App::Display::kMinDist to show "---" (no GPS / no data).
-     * @param isImperial Selects unit label: "mi" if true, "km" if false.
-     */
-    void setDistance(float dist, bool isImperial);
+    /** @brief Display total distance and its unit, from SDK::Units::Formatter::distance(). */
+    void setDistance(const SDK::Units::Reading& distance);
 
     /** @brief Display total elapsed time as "H:MM:SS". */
     void setTimer(std::time_t sec);
