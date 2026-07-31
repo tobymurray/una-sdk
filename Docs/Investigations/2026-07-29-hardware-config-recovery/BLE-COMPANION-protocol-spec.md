@@ -362,6 +362,46 @@ standard specs closely enough to be practically actionable for a companion regar
 
 ---
 
+## 6a. Standalone prototype — built and validated against the real watch, phone-free
+
+A Linux desktop prototype (Python + BlueZ D-Bus: `bleak` for discovery/pairing groundwork, raw
+`dbus_fast` D-Bus calls for the actual GATT traffic) paired directly with the watch — no phone, no
+Una app involved at all — and pulled a real `.fit` activity file end-to-end. The reconstructed file
+passed the same validation as the phone-capture analysis: correct FIT header arithmetic and an
+exact CRC-16 match (`0x75C7`), independently confirmed by `file(1)`'s magic database.
+
+Two real findings came out of building this that refine earlier phone-capture-only conclusions:
+
+- **The FTS list-directory command (`0x50`) has one more byte than originally transcribed.** The
+  real wire format is `50 00 <path_len:u16LE> <path>` — a reserved/flag byte after the opcode,
+  matching the same convention already documented for the `0x10` read command. This was a
+  transcription slip in the original phone-capture analysis, not a protocol ambiguity; §2.2 above
+  should be read with this correction. Missing the byte produces a real, deterministic 2-byte error
+  reply from the watch (`[echoed_opcode, 0x04]`) rather than a silent failure — a useful signature
+  if this bug recurs.
+- **The `0x10` whole-file read is NOT "one request, fully streamed response" as the phone capture
+  suggested — it needs one `0x10` request per chunk, with the offset field advancing each time.**
+  Requesting only once (as the phone's capture implied) reliably delivered exactly one 128-byte
+  chunk and then nothing further, even when watching the raw notification socket directly via
+  `AcquireNotify` (which bypasses BlueZ's D-Bus `PropertiesChanged` — that path independently
+  turned out to coalesce rapid successive notifications, a real gotcha worth knowing regardless:
+  **use `AcquireNotify` for any high-rate GATT notification stream from BlueZ, not property-change
+  signals, or you will silently drop chunks**). Explicitly requesting the next offset (`0x10` with
+  `offset=128`) reliably produced the next chunk. Why the original phone capture *looked* like a
+  single request sufficed is an open question — possibly a phone-side stack difference, possibly
+  an artifact of how that capture was parsed — but the per-chunk-request loop is now proven correct
+  end-to-end and is what any companion implementation should use.
+- **Bonding is genuinely session-fragile on this firmware from a non-phone central**: the watch's
+  advertising window (both for initial pairing-mode discovery and for post-bond reconnection) is
+  short, and the connection itself timed out repeatedly during interactive testing. A production
+  companion should implement patient retry/reconnect logic rather than assuming a single connect
+  attempt will succeed — this is an implementation-robustness note, not a protocol finding.
+
+Practical takeaway for anyone building on this: pair normally (standard BLE bonding — this
+confirms §4's auth conclusion under real end-to-end use, no surprises), then for FTS use
+`AcquireNotify` and a per-chunk request loop against the characteristic with UUID `adaf0002-4669-
+6c65-5472-616e73666572` (service `0xFEBB`).
+
 ## 6. Status summary and what's left
 
 **Phase C (FTS read protocol): done.** Real, validated, two-file round trip proven end-to-end from
@@ -375,26 +415,25 @@ extra handshake on the wire). Standard BLE bonding is the entire gate.
 sub-services) is now CONFIRMED by decompiled constructor code, not just string adjacency —
 including resolving CANS to exactly 2 characteristics (no missing 3rd) and refining the ADAF/
 Adafruit relationship precisely (service UUID matches, characteristics don't). AMS/ANCS/NUS remain
-byte-exact matches to public specs. CTS is behaviorally confirmed from live writes. The one
-remaining gap is binding the *attribute handle numbers* seen in the live capture (`0x0027` for FTS,
-`0x002B` for CANS, etc.) to these now-confirmed UUIDs — this needs either a fresh-pairing discovery
-capture, or reading the concrete contents of the data-driven service/characteristic table that
-`initServices()` (`FUN_0808d958`, also disassembled) walks at runtime, which wasn't pursued further
-this pass since it doesn't block building a companion for the same firmware build (handles are
-boot-deterministic and can just be hardcoded from this capture).
+byte-exact matches to public specs. CTS is behaviorally confirmed from live writes. **The
+handle↔UUID binding gap is now closed too** (§6a): a live discovery pass during standalone-prototype
+pairing directly confirmed `adaf0002-4669-6c65-5472-616e73666572` (part of the `0xFEBB` service) as
+the FTS characteristic, at declaration handle `0x0026` / value handle `0x0027` — matching the
+original phone capture's `0x0027` exactly.
 
 Remaining work, roughly in priority order:
-1. **Bind attribute handles to UUIDs**, if cross-firmware-version portability matters — otherwise
-   skippable for a same-firmware companion.
-2. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing (both secondary to
+1. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing (both secondary to
    the core read-path goal, which is solved).
-3. Test whether a longer/larger real activity recording still transfers cleanly, given the
+2. Test whether a longer/larger real activity recording still transfers cleanly, given the
    `uint16` `total_size` field observed (§2.2's flagged ceiling).
+3. Understand why the phone capture appeared to need only one `0x10` request per file while the
+   standalone prototype needed one per chunk (§6a) — a real discrepancy, not yet explained.
 
-**None of the above blocks writing a Gadgetbridge/standalone companion prototype for the read
-path.** The protocol is real, validated, and sufficient to pull `.fit` files off this exact watch
-today: pair normally, write handle `0x0027` with the `0x10` read command, collect `0x11` chunks
-until `offset+chunklen == total_size`.
+**The read path is fully proven, not just specified.** §6a's standalone prototype pairs with the
+watch with no phone involved, lists directories, and pulls a real `.fit` file that passes CRC
+validation — this is a working existence proof, not a plan: pair normally, use `AcquireNotify` on
+handle `0x0027` (UUID `adaf0002-...`), write `0x50 00 <len> <path>` to list or `0x10 00 <len>
+<offset> <chunk_len> <path>` per chunk to read, until `offset+chunklen == total_size`.
 
 ## Sources used
 

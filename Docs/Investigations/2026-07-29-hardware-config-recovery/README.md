@@ -161,11 +161,21 @@ Note `0x50`/`0x58` appear on every bus and are now suspected to be a marginal-AC
 9. GTZC (Global TrustZone controller) registers — not read yet; would settle WRP/watermark/GTZC state from the original security-posture ask, now that RM0456 gives exact register offsets (chapter 5).
 10. Clock-tree exact frequency decode — RCC raw dump captured three times now (sweeps #4-7, byte-identical every time) but the bit-level MSIRANGE/PLL decode is still blocked on the garbled PDF-extracted bit diagram; would need the actual RM0456 page image, not more text extraction.
 
-## Phase 2 — BLE GATT / FTS / CCS protocol recovery (Phases A/B/C all closed for the read path)
+## Phase 2 — BLE GATT / FTS / CCS protocol recovery (read path proven end-to-end, phone-free)
 
 Goal, plan, and guardrails: `BLE-COMPANION-disassembly-prompt.md`. Running findings, full ledger,
 and confidence tags: **`BLE-COMPANION-protocol-spec.md`** (this folder) — do not duplicate that
 detail here; summary only:
+
+- **A standalone Linux prototype (§6a of the spec doc) paired with the watch directly — no phone,
+  no Una app — and pulled a real `.fit` file, CRC-validated.** This is no longer just a recovered
+  spec; it's a working proof. Building it surfaced two corrections to the phone-capture-only
+  analysis below: the `0x50` list command has a reserved byte after the opcode that the original
+  transcription dropped, and the `0x10` file read needs **one request per chunk** (not a single
+  trigger-and-stream as the phone capture suggested) — still an open question why the phone capture
+  looked different. Also surfaced a real BlueZ implementation gotcha worth keeping in mind for any
+  Linux-based companion: use `AcquireNotify`'s raw socket for high-rate GATT notifications, not
+  D-Bus `PropertiesChanged`, which silently coalesces/drops rapid notifications.
 
 - **A real BLE capture of the Una app syncing (twice) was obtained** via `adb bugreport` from the
   user's own GrapheneOS phone, decoded with `tshark`. This is the dynamic evidence stream the plan
@@ -200,10 +210,13 @@ detail here; summary only:
 - **CONFIRMED** (byte-exact match to public specs): Apple **AMS + ANCS** UUIDs reused verbatim for
   iOS notification/media; a live-observed characteristic also confirms an Android-notification
   bridge (CANS) is real and actively used, matching a firmware-string-only hypothesis.
-- **Remaining open items** (none blocking a read-path companion prototype): binding the live
-  capture's attribute handle numbers to the now-confirmed UUIDs (only matters for cross-firmware
-  portability); the `uint16` file-size field's ceiling on large recordings; a secondary `0x30`
-  command and the EPO upload (`0x20/0x21/0x22`) framing. See the spec doc's §6 for the full list.
+- **Handle↔UUID binding now closed too**: live discovery during prototype pairing confirmed
+  `adaf0002-4669-6c65-5472-616e73666572` (part of the `0xFEBB` service) at value handle `0x0027`,
+  matching the phone capture exactly.
+- **Remaining open items** (none blocking a read-path companion): the `uint16` file-size field's
+  ceiling on large recordings; a secondary `0x30` command and the EPO upload (`0x20/0x21/0x22`)
+  framing; why the phone capture appeared not to need per-chunk requests. See the spec doc's §6/§6a
+  for the full list.
 
 ## Safety notes honored this round
 
