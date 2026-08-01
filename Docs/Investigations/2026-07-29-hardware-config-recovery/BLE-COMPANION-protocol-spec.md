@@ -130,6 +130,43 @@ NUS-compatible serial pipe, with UNA's own command/offset/length framing layered
 stream itself (see §2) — **not** that any off-the-shelf NUS client can pull a `.fit` file without
 also implementing that framing.
 
+### 1.2 CORRECTED: offset/total/chunklen are genuine 32-bit fields, matching Adafruit's spec exactly — no ceiling
+
+**An earlier version of this section claimed UNA had narrowed Adafruit's real 32-bit wire fields to
+16-bit, producing a 64KB transfer ceiling. That claim was wrong, and is retracted here.** It was
+caused by a bug in this investigation's own prototype client (`una_ble_client.py`), which parsed
+the response header as three `uint16` fields (`struct.unpack("<HHH", b[4:6]+b[8:10]+b[12:14])`)
+and silently discarded what it treated as 2 padding bytes after each one. Those bytes are not
+padding — they're the real high 16 bits of genuine 32-bit fields, and discarding them produced a
+falsely truncated `total_size` on any file over 64KB (e.g. reading back `46684` instead of the true
+`177756` for one test file — note `46684 == 177756 mod 65536`, which is exactly why the bug read as
+a plausible-looking "wraparound").
+
+This was caught and fixed after a live BLE HCI capture of the *real* Una phone app syncing this
+exact 177,756-byte file showed the true 32-bit response header directly on the wire:
+
+```
+1101000000b400005cb6020080000000
+```
+
+Parsed as `<BBxx III>` (Adafruit's exact layout — cmd, status, 2 pad, offset:u32, total:u32,
+chunklen:u32): `offset=46080`, **`total=0x0002b65c = 177756`** (the correct true file size),
+`chunklen=128`. The "extra" bytes this investigation had assumed were always-zero padding read
+`02 00` here — the real upper 16 bits of `total`, non-zero specifically because this file exceeds
+65536 bytes.
+
+**Corrected conclusion:** UNA's FTS request/response header is a byte-for-byte structural clone of
+Adafruit's real BLE File Transfer Service wire format — same 12-byte request / 16-byte response
+sizes, same field order, same byte offsets — **and the field widths were preserved correctly as
+genuine 32-bit values, not narrowed.** There is no 64KB ceiling. `una_ble_client.py`'s `read_file()`
+has been fixed to parse `<III>` instead of `<HHH>`, and pulling the same file with the corrected
+parser reproduces the true `177756` total exactly.
+
+Source: `adafruit/Adafruit_CircuitPython_BLE_File_Transfer`,
+`adafruit_ble_file_transfer.py` (github.com/adafruit/Adafruit_CircuitPython_BLE_File_Transfer) —
+the source used to first identify the field widths, and the same one that exposed this
+investigation's own parsing bug once compared byte-for-byte against a real capture.
+
 ---
 
 ## 2. FTS command surface — CONFIRMED from a real capture, byte-exact
@@ -186,17 +223,37 @@ Response (Notification, repeated until offset+chunklen == total, no per-chunk ac
   11 01 00 00 <offset:u16LE> 00 00 <total_size:u16LE> 00 00 <chunklen:u16LE> 00 00 <chunklen bytes of file data>
 ```
 Confirmed concretely: request chunk length was `128` in every observed transfer; the server
-honored it exactly (every chunk except the final remainder was 128 bytes); **the client issues
-exactly one request per file and the server streams the entire file back unprompted** — there is
-no per-chunk request/ack round-trip, which is good news for a companion implementation (no flow
-control puzzle — read notifications until the byte count matches `total_size`, exactly as the
-firmware's `Reading: %u%% (%u/%u bytes)` log string in §2.3 already implied).
+honored it exactly (every chunk except the final remainder was 128 bytes).
 
-**⚠ Practical ceiling worth flagging:** `total_size` is carried as a `uint16` (max 65535 bytes) in
-every field observed. Both captured files were well under this. Whether larger recordings (long
-rides/runs, which could plausibly exceed 64KB of FIT records) use a wider field, a different
-opcode, or genuinely cannot exceed 65535 bytes this way is **unconfirmed** — worth testing with a
-longer real activity before assuming this scales.
+**CORRECTED — "one request per file" was wrong; it's one request per chunk, via two opcodes.**
+The original phone-capture analysis (on two short, sub-2KB test files) concluded the client sends
+a single `0x10` request and the server streams the whole file back unprompted. A later live capture
+of the *real* Una app syncing a 177,756-byte file shows this was an artifact of those files being
+small enough to not clearly distinguish the two cases. The real behavior, confirmed on-wire:
+
+- **`0x10`** (with the full path, as documented above) opens the file and returns **only the first
+  chunk** (`offset=0`).
+- **`0x12`** — a previously undocumented opcode — requests each *subsequent* chunk: same 12-byte
+  header shape as `0x10` (`cmd, flags, 00 00, offset:u32, chunklen:u32`), but with the path-length
+  field zeroed and no path bytes appended, since the file is already open from the `0x10` call.
+  Captured example: `12 01 00 00 00 b4 00 00 80 00 00 00` → offset=46080, chunklen=128.
+
+So it is a per-chunk request/ack loop after all — matching `prototype/una_ble_client.py`'s
+approach — just split across two opcodes instead of repeating `0x10`. Repeating `0x10` with the
+full path on every chunk (what the prototype currently does) still works — the firmware doesn't
+seem to require `0x12` specifically — but a companion wanting to match the real app's traffic
+exactly should use `0x10` once then `0x12` for the rest. **This also resolves §6's previously-open
+item 3** ("why did the phone capture look like one request per file while the standalone prototype
+needed one per chunk") — it was one request per chunk all along in both cases; the earlier analysis
+just didn't recognize `0x12` as a second per-chunk opcode.
+
+**No 64KB ceiling — see §1.2 for the full correction.** An earlier version of this document claimed
+`total_size` was a `uint16` that wraps at 65536, based on a real-looking but ultimately false test
+result. That was a bug in this investigation's own client, not the firmware: `offset`/`total`/
+`chunklen` are genuine 32-bit fields (matching Adafruit's real spec exactly, per §1.2), and a live
+capture of the real Una app pulling the same 177,756-byte file shows the correct `total=177756` in
+every single response header, with the transfer progressing normally (128-byte chunks, monotonic
+offset) as far as that capture window extended. There is no known ceiling on FTS file size.
 
 **A secondary, still-unexplained command pair** (`0x30` request / response byte `0x02` or `0x01`)
 was also observed, issued *after* a successful `0x10` read of the same path, and also probed
@@ -239,7 +296,8 @@ images transit onto the device filesystem at a specific path, and CCS's `firmwar
   `0x0027`'s exact UUID doesn't block a same-firmware companion (which can hardcode the handle),
   but does matter for cross-firmware-version portability and for confirming which of the
   §1 UUID candidates it actually is.
-- Whether `total_size`'s 16-bit width is a real ceiling on file size (see above).
+- ~~Whether `total_size`'s 16-bit width is a real ceiling on file size~~ — resolved, §1.2/§2.2: the
+  fields are genuinely 32-bit, no ceiling.
 - The `0x30` secondary command's exact purpose.
 - The `0x20/0x21/0x22` upload framing (secondary to the read-path goal).
 
@@ -424,10 +482,19 @@ original phone capture's `0x0027` exactly.
 Remaining work, roughly in priority order:
 1. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing (both secondary to
    the core read-path goal, which is solved).
-2. Test whether a longer/larger real activity recording still transfers cleanly, given the
-   `uint16` `total_size` field observed (§2.2's flagged ceiling).
-3. Understand why the phone capture appeared to need only one `0x10` request per file while the
-   standalone prototype needed one per chunk (§6a) — a real discrepancy, not yet explained.
+2. ~~Test whether a longer/larger real activity recording still transfers cleanly~~ — **done, §2.2:
+   CONFIRMED fine, no ceiling.** A real one-hour recording (177756 bytes) transfers correctly;
+   `offset`/`total`/`chunklen` are genuine 32-bit fields matching Adafruit's real spec (§1.2). An
+   earlier version of this doc claimed a 64KB wraparound bug here — that was a bug in this
+   investigation's own client (parsing 16 of 32 bits), not the firmware, and has been retracted and
+   fixed (`prototype/una_ble_client.py`'s `read_file` now parses `<III>`).
+3. ~~Understand why the phone capture appeared to need only one `0x10` request per file~~ — **done,
+   §2.2: it's one request per chunk after all**, via `0x10` for the first chunk and a previously
+   undocumented `0x12` for subsequent chunks (no path needed once the file's open). Resolved by a
+   live capture of a real large-file sync.
+4. Find out what the real Una app does with the `0x12`-chunked large-file transfer once it exceeds
+   whatever ATT MTU/negotiation limits apply at scale (untested at very large sizes, e.g.
+   multi-hour recordings) — low priority now that the 64KB "ceiling" is known to not exist.
 
 **The read path is fully proven, not just specified.** §6a's standalone prototype pairs with the
 watch with no phone involved, lists directories, and pulls a real `.fit` file that passes CRC

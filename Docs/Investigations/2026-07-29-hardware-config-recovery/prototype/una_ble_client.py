@@ -156,14 +156,20 @@ async def read_file(bus, char_path: str, filepath: str, chunk_len: int = 128):
     NOTE: a single 0x10 request does NOT stream the whole file on this firmware/setup --
     one request per chunk is required. See spec doc §6a for the full story; this differs
     from what an earlier phone-capture analysis assumed.
+
+    offset/total/chunklen are genuine 32-bit fields (matching Adafruit's real BLE File Transfer
+    Service spec byte-for-byte -- see spec doc §1.2/§2.2). An earlier version of this function
+    parsed them as 16-bit and silently discarded the high half, which produced a false "64KB
+    ceiling" finding on a real >64KB file -- retracted once a live phone-sync capture showed the
+    high 16 bits were non-zero and combined with the low 16 bits into the correct true size.
     """
     path_b = filepath.encode("ascii")
     chunks = {}
     total_size = None
 
     async def request_chunk(bus_, offset):
-        cmd = (b"\x10\x00" + struct.pack("<H", len(path_b)) + struct.pack("<H", offset)
-               + b"\x00\x00" + struct.pack("<H", chunk_len) + b"\x00\x00" + path_b)
+        cmd = (b"\x10\x00" + struct.pack("<H", len(path_b)) + struct.pack("<I", offset)
+               + struct.pack("<I", chunk_len) + path_b)
         await write_command(bus_, char_path, cmd)
 
     async with NotifyStream(bus, char_path) as stream:
@@ -176,10 +182,10 @@ async def read_file(bus, char_path: str, filepath: str, chunk_len: int = 128):
                 break
             if not b or b[0] != 0x11 or len(b) < 16:
                 break
-            got_offset, total, real_chunklen = struct.unpack("<HHH", b[4:6] + b[8:10] + b[12:14])
+            got_offset, total, real_chunklen = struct.unpack("<III", b[4:16])
             payload = b[16:16 + real_chunklen]
             total_size = total
-            chunks[got_offset] = payload
+            chunks[got_offset] = payload[:max(0, total - got_offset)]
             if got_offset + real_chunklen >= total:
                 break
             offset = got_offset + real_chunklen
