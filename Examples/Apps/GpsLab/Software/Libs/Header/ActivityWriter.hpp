@@ -85,6 +85,7 @@ public:
         uint8_t     hrSource       = 0;     // HeartRateEx::Source (0=none,1=optical,2=external)
         uint8_t     hrOpticalBpm   = 0;     // raw wrist-optical (PPG) bpm (0 = none)
         uint8_t     hrExternalBpm  = 0;     // raw external strap bpm (0 = none)
+        float       hrTrust        = 0.0f;  // kernel-arbitrated HR confidence (HeartRateEx::TRUST_LEVEL, scale undocumented upstream)
         uint8_t     batteryLevel   = 0;     // %
         uint16_t    batteryVoltage = 0;     // mV
         float       cadenceSpm     = 0.0f;  // steps/min
@@ -227,6 +228,7 @@ private:
         // Session-scoped (written once, on the session message).
         DF_GNSS_TTFF       = 12,
         DF_GNSS_PWR_OFFSET = 13,
+        DF_HR_TRUST        = 14,
     };
 
     /// Flush + marker-refresh cadence during recording (seconds of record time).

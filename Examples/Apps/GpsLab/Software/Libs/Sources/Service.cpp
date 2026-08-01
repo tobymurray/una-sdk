@@ -785,6 +785,9 @@ ActivityWriter::RecordData Service::prepareRecordData()
     fitRecord.hrSource     = hasHeartRate ? mHrSource : 0;
     fitRecord.hrOpticalBpm = mHrOpticalBpm;
     fitRecord.hrExternalBpm= mHrExternalBpm;
+    // Written unconditionally (unlike hrSource) so a record whose HR the
+    // hasHeartRate gate rejected still shows the trust value that failed it.
+    fitRecord.hrTrust      = mTrackData.hrTrustLevel;
 
     // Both samples must be checked every call; evaluate separately to avoid short-circuit.
     const bool socReady     = mBatterySoc.isDue();

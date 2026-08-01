@@ -73,6 +73,7 @@ constexpr uint8_t kGpsSpeed      = 10;
 constexpr uint8_t kGpsFixAge     = 11;
 constexpr uint8_t kGnssTtff      = 12;
 constexpr uint8_t kGnssPwrOffset = 13;
+constexpr uint8_t kHrTrust       = 14;
 }  // namespace devfield
 
 namespace recfield {
@@ -115,10 +116,13 @@ TEST(GpsLabActivityWriter, ProducesValidFitFile)
         r.set(ActivityWriter::RecordData::Field::SPEED);  r.speed = 3.0f;
         r.set(ActivityWriter::RecordData::Field::ALTITUDE); r.altitude = 35.0f;
         r.set(ActivityWriter::RecordData::Field::HEART_RATE); r.heartRate = 130;
-        r.hrSource = 1; r.hrOpticalBpm = 130;
+        r.hrSource = 1; r.hrOpticalBpm = 130; r.hrTrust = 2.5f;
         w.addRecord(r);
     }
-    // GPS + battery record.
+    // GPS + battery record. HEART_RATE is deliberately left unset (as the app
+    // does when its hrTrustLevel gate rejects a reading) with a trust value
+    // that would have failed that gate -- hr_trust must still be written, so
+    // a rejected reading's trust is visible for threshold analysis.
     {
         ActivityWriter::RecordData r;
         r.timestamp = info.timestamp + 2;
@@ -126,7 +130,8 @@ TEST(GpsLabActivityWriter, ProducesValidFitFile)
         r.latitude = 51.5075f; r.longitude = -0.1278f;
         r.set(ActivityWriter::RecordData::Field::BATTERY);
         r.batteryLevel = 90; r.batteryVoltage = 4100;
-        r.set(ActivityWriter::RecordData::Field::HEART_RATE); r.heartRate = 140;
+        r.heartRate = 140;  // arbitrated bpm the gate rejected; HEART_RATE left unset
+        r.hrTrust = 0.4f;   // below the app's accepted [1,3] band
         w.addRecord(r);
     }
 
@@ -161,15 +166,23 @@ TEST(GpsLabActivityWriter, ProducesValidFitFile)
     EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::Lap)).size(), 1u);
     EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::Session)).size(), 1u);
     EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::Activity)).size(), 1u);
-    // 12 developer field descriptions: 5 HR/battery, 5 per-record GNSS,
-    // 2 session-level GNSS acquisition timings.
-    EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::FieldDescription)).size(), 12u);
+    // 13 developer field descriptions: 6 HR/battery (incl. hr_trust), 5
+    // per-record GNSS, 2 session-level GNSS acquisition timings.
+    EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::FieldDescription)).size(), 13u);
 
     // Records carry the hr_source/optical/external developer fields (4/5/6).
     const auto recs = r.withGlobal(fit::mesgNum(fit::MesgNum::Record));
     ASSERT_EQ(recs.size(), 3u);
     EXPECT_EQ(recs[0]->fields.at(3).u(), 120u);              // heart_rate
     EXPECT_EQ(recs[0]->devFields.count(4), 1u);              // hr_source dev field
+    // hr_trust is a plain HR developer field (not gated by Field::HEART_RATE),
+    // so it round-trips on the accepted-HR record just like hr_source does.
+    EXPECT_FLOAT_EQ(asF32(recs[1]->devFields.at(devfield::kHrTrust)), 2.5f);
+    // GPS+battery record: the app's hasHeartRate gate rejected this reading
+    // (native heart_rate reads invalid), but hr_trust is still written --
+    // that's the whole point, seeing the trust value a rejected reading had.
+    EXPECT_EQ(recs[2]->fields.at(3).u(), fit::baseTypeInvalid(fit::BaseType::UInt8));
+    EXPECT_FLOAT_EQ(asF32(recs[2]->devFields.at(devfield::kHrTrust)), 0.4f);
     // GPS+battery record carries battery developer fields 2 and 3.
     EXPECT_EQ(recs[2]->devFields.count(2), 1u);              // batteryLevel
     EXPECT_EQ(recs[2]->devFields.at(2).u(), 90u);
