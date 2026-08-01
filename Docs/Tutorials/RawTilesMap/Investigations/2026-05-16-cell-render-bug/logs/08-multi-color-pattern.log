@@ -1,0 +1,13 @@
+ 252932868 -I- Model::Model::124                   : rawtiles: opening /home/toby/git/cpp/una-sdk/Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles -> ok
+ 252932868 -I- Model::Model::141                   : rawtiles header:
+ 252932868 -I- Model::Model::166                   : rawtiles: tile[0] first 32 bytes: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa 
+ 252932868 -I- Model::Model::213                   : rawtiles: viewport centre = z=14 x=2587 y=5604
+ 252932868 -I- Model::Model::222                   : rawtiles: DIAG sDebugPattern at 0x7f26a2cff010 (heap)
+ 252932868 -I- Model::Model::224                   : rawtiles: DIAG active — slot (col=1,row=1) carries orientation marker
+ 252932868 -I- Model::Model::239                   : rawtiles: 4/9 viewport tiles found in pack
+ 252932868 -I- Model::Model::258                   : rawtiles: DIAG registering solid-RED bitmap for slot (col=1,row=1)
+ 252932868 -I- Model::Model::275                   : rawtiles: DIAG cell (col=1,row=1) id=16 passed=0x7f26a2cff010 stored=0x7f26a2cff010 first_byte=0xc0
+ 252932868 -I- Model::Model::275                   : rawtiles: DIAG cell (col=2,row=1) id=17 passed=0x7f26a37cf224 stored=0x7f26a37cf224 first_byte=0xea
+ 252932868 -I- Model::Model::275                   : rawtiles: DIAG cell (col=1,row=2) id=18 passed=0x7f26a37af224 stored=0x7f26a37af224 first_byte=0xfa
+ 252932868 -I- Model::Model::275                   : rawtiles: DIAG cell (col=2,row=2) id=19 passed=0x7f26a37df224 stored=0x7f26a37df224 first_byte=0xfa
+ 252932868 -I- Model::Model::280                   : rawtiles: viewport filled 4/9 cells

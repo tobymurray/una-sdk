@@ -121,6 +121,30 @@ target_link_libraries(gpstrack-host-tests PRIVATE
     GTest::gmock
 )
 
+# RawTilesMap's ActivityWriter is the same story as GpsTrack's -- an
+# unqualified `class ActivityWriter` (in fact byte-identical to GpsTrack's
+# pre-migration copy; RawTilesMap forked from it and never touched it), so
+# it needs its own executable too rather than colliding with the other two.
+add_executable(rawtilesmap-host-tests
+    apps/RawTilesMap/ActivityWriter_test.cpp
+    "${UNA_SDK_ROOT}/Docs/Tutorials/RawTilesMap/Software/Libs/Sources/ActivityWriter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitCrc.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitWriter.cpp"
+)
+
+target_include_directories(rawtilesmap-host-tests PRIVATE
+    "${CMAKE_CURRENT_LIST_DIR}"
+    "${UNA_SDK_ROOT}/Libs/Header"
+    "${UNA_SDK_ROOT}/Docs/Tutorials/RawTilesMap/Software/Libs/Header"
+)
+
+target_link_libraries(rawtilesmap-host-tests PRIVATE
+    sdk_host_test_support
+    GTest::gtest_main
+    GTest::gmock
+)
+
 enable_testing()
 add_test(NAME una-sdk-host-tests COMMAND una-sdk-host-tests)
 add_test(NAME gpstrack-host-tests COMMAND gpstrack-host-tests)
+add_test(NAME rawtilesmap-host-tests COMMAND rawtilesmap-host-tests)
