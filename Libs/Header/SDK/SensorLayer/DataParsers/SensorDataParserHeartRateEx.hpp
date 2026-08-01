@@ -84,17 +84,29 @@ namespace SDK
             /**
              * @brief The chosen source. Maps only known wire values; anything
              *        else (garbage / a future source kind) reads as UNKNOWN.
+             * @note  Matched in float space on purpose. Narrowing the field to an
+             *        integer first is undefined behaviour for NaN, for either
+             *        infinity, and for anything outside the destination range, and
+             *        a switch default cannot catch that because the cast forms the
+             *        switch condition. Comparing instead means only the exact wire
+             *        values map, so a fractional 1.5f reads as UNKNOWN rather than
+             *        truncating into OPTICAL. The Source values are small integers
+             *        and exactly representable, so the equality is not fragile.
              */
             Source getSource() const
             {
                 if (!isDataValid()) {
                     return Source::UNKNOWN;
                 }
-                switch (static_cast<uint8_t>(mData.f[SOURCE])) {
-                    case static_cast<uint8_t>(Source::OPTICAL):  return Source::OPTICAL;
-                    case static_cast<uint8_t>(Source::EXTERNAL): return Source::EXTERNAL;
-                    default:                                     return Source::UNKNOWN;
+                const float source = mData.f[SOURCE];
+
+                if (source == static_cast<float>(Source::OPTICAL)) {
+                    return Source::OPTICAL;
                 }
+                if (source == static_cast<float>(Source::EXTERNAL)) {
+                    return Source::EXTERNAL;
+                }
+                return Source::UNKNOWN;
             }
 
             uint32_t getTimestamp() const   { return isDataValid() ? mData.getTimestamp() : 0; }

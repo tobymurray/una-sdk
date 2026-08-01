@@ -5,6 +5,7 @@
  */
 
 #include <cstdint>
+#include <limits>
 
 #include <gtest/gtest.h>
 
@@ -85,6 +86,51 @@ TEST(HeartRateExParser, UnknownSourceForOutOfRangeValue)
 
     EXPECT_TRUE(p.isDataValid());
     EXPECT_EQ(src(p.getSource()), src(HeartRateEx::Source::UNKNOWN));
+}
+
+TEST(HeartRateExParser, SourceMapsOnlyExactWireValues)
+{
+    // getSource() matches SOURCE in float space, so the whole mapping contract is
+    // one table: the exact wire values must still map (the guard must not
+    // over-reject), and everything else reads as UNKNOWN — including the values a
+    // float->int narrowing would truncate into a valid source (1.5f -> OPTICAL)
+    // and the ones that make the narrowing itself undefined behaviour.
+    struct Case {
+        const char*         label;
+        float               wire;
+        HeartRateEx::Source expected;
+    };
+
+    const float inf = std::numeric_limits<float>::infinity();
+
+    const Case cases[] = {
+        { "exact 0 (none)",     0.f,                                     HeartRateEx::Source::UNKNOWN  },
+        { "exact 1 (optical)",  1.f,                                     HeartRateEx::Source::OPTICAL  },
+        { "exact 2 (external)", 2.f,                                     HeartRateEx::Source::EXTERNAL },
+        { "fractional 0.5",     0.5f,                                    HeartRateEx::Source::UNKNOWN  },
+        { "fractional 1.5",     1.5f,                                    HeartRateEx::Source::UNKNOWN  },
+        { "fractional 2.5",     2.5f,                                    HeartRateEx::Source::UNKNOWN  },
+        { "NaN",                std::numeric_limits<float>::quiet_NaN(), HeartRateEx::Source::UNKNOWN  },
+        { "+infinity",          inf,                                     HeartRateEx::Source::UNKNOWN  },
+        { "-infinity",          -inf,                                    HeartRateEx::Source::UNKNOWN  },
+        { "negative",           -1.f,                                    HeartRateEx::Source::UNKNOWN  },
+        { "large positive",     1e12f,                                   HeartRateEx::Source::UNKNOWN  },
+        { "large negative",     -1e12f,                                  HeartRateEx::Source::UNKNOWN  },
+    };
+
+    for (const Case& c : cases) {
+        SCOPED_TRACE(c.label);
+
+        HrExData m;
+        fill(m, 130.f, 3.f, /*source=*/c.wire, /*opt=*/70.f, 2.f, /*ext=*/130.f, 3.f);
+
+        HeartRateEx p(SDK::Sensor::DataView(*m.data(), HeartRateEx::COUNT));
+
+        EXPECT_EQ(src(p.getSource()), src(c.expected));
+        // An unusable source neither invalidates the frame nor disturbs the rest.
+        EXPECT_TRUE(p.isDataValid());
+        EXPECT_FLOAT_EQ(p.getBpm(), 130.f);
+    }
 }
 
 TEST(HeartRateExParser, ShortFrameIsInvalid)
