@@ -97,5 +97,30 @@ target_link_libraries(una-sdk-host-tests PRIVATE
     GTest::gmock
 )
 
+# GpsTrack's ActivityWriter is a separate, unqualified `class ActivityWriter`,
+# same as Running's -- true in every app (each ships as its own executable),
+# harmless until two of them try to link into the same test binary. Give it
+# its own executable rather than namespacing production code just to satisfy
+# host-test aggregation.
+add_executable(gpstrack-host-tests
+    apps/GpsTrack/ActivityWriter_test.cpp
+    "${UNA_SDK_ROOT}/Docs/Tutorials/GpsTrack/Software/Libs/Sources/ActivityWriter.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitCrc.cpp"
+    "${UNA_SDK_ROOT}/Libs/Source/Fit/FitWriter.cpp"
+)
+
+target_include_directories(gpstrack-host-tests PRIVATE
+    "${CMAKE_CURRENT_LIST_DIR}"
+    "${UNA_SDK_ROOT}/Libs/Header"
+    "${UNA_SDK_ROOT}/Docs/Tutorials/GpsTrack/Software/Libs/Header"
+)
+
+target_link_libraries(gpstrack-host-tests PRIVATE
+    sdk_host_test_support
+    GTest::gtest_main
+    GTest::gmock
+)
+
 enable_testing()
 add_test(NAME una-sdk-host-tests COMMAND una-sdk-host-tests)
+add_test(NAME gpstrack-host-tests COMMAND gpstrack-host-tests)
