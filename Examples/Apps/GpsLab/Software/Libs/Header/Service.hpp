@@ -111,6 +111,18 @@ private:
     SDK::Metric::ThrottledSample<float, SDK::Interface::ISystem> mBatterySoc;     ///< State of charge, percent
     SDK::Metric::ThrottledSample<float, SDK::Interface::ISystem> mBatteryVoltage; ///< Voltage, volts
 
+    // Coulomb-counted battery cost of the activity: integrates BATTERY_METRICS'
+    // AVERAGE_CURRENT over time (mAh += |avgCurrentMa| * dt_s / 3600) rather than
+    // diffing state-of-charge, which the nonlinear Li-ion voltage/SoC curve (and
+    // a cell's post-load voltage relaxation) would make misleading. Unlike
+    // mBatterySoc/mBatteryVoltage this is not throttled -- every sample must be
+    // integrated for the running total to be accurate; only what gets *written*
+    // to a record is throttled (see prepareRecordData()).
+    float    mBatteryConsumedMah      = 0.0f;  ///< Running total for the active track, mAh.
+    uint32_t mBatteryLastSampleMs     = 0;     ///< Sensor timestamp of the last integrated sample.
+    bool     mBatteryLastSampleValid  = false; ///< A prior sample exists to integrate from.
+    float    mBatteryDesignCapacityMah = 0.0f; ///< Latched from the fuel gauge; a battery property, not reset per-track.
+
     // -- GPS state ------------------------------------------------------------
 
     struct {

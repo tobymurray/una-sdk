@@ -86,6 +86,7 @@ public:
         uint8_t     hrOpticalBpm   = 0;     // raw wrist-optical (PPG) bpm (0 = none)
         uint8_t     hrExternalBpm  = 0;     // raw external strap bpm (0 = none)
         float       hrTrust        = 0.0f;  // kernel-arbitrated HR confidence (HeartRateEx::TRUST_LEVEL, scale undocumented upstream)
+        float       consumedMah    = 0.0f;  // cumulative battery discharge this activity, mAh (coulomb-counted from BatteryMetrics average current); written unconditionally, like hrTrust
         uint8_t     batteryLevel   = 0;     // %
         uint16_t    batteryVoltage = 0;     // mV
         float       cadenceSpm     = 0.0f;  // steps/min
@@ -166,6 +167,13 @@ public:
         // series alone.
         int32_t gnssTtffS           = kGnssTimingInvalid;  // power-on -> first fix, s
         int32_t gnssPowerOnOffsetS  = kGnssTimingInvalid;  // power-on relative to track start, s (negative)
+
+        // Coulomb-counted battery cost of this activity (see RecordData::consumedMah).
+        // batteryPctOfCapacity is consumedMah / DESIGN_CAPACITY -- deliberately NOT
+        // a before/after state-of-charge diff, which the nonlinear Li-ion
+        // voltage/SoC curve and post-load voltage relaxation both make misleading.
+        float batteryMahConsumed    = 0.0f;  // mAh
+        float batteryPctOfCapacity  = 0.0f;  // % of the battery's DESIGN_CAPACITY; 0 if never sampled
     };
 
     ActivityWriter(const SDK::Kernel& kernel, const char* pathToDir);
@@ -229,6 +237,7 @@ private:
         DF_GNSS_TTFF       = 12,
         DF_GNSS_PWR_OFFSET = 13,
         DF_HR_TRUST        = 14,
+        DF_BATTERY_MAH     = 15,
     };
 
     /// Flush + marker-refresh cadence during recording (seconds of record time).

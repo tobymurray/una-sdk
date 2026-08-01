@@ -119,6 +119,8 @@ void ActivityWriter::start(const AppInfo& info)
     // records where hasHeartRate gated the native heart_rate field to invalid)
     // so a rejected reading's trust value is still visible for threshold work.
     writeFieldDescription(DF_HR_TRUST, "hr_trust", nullptr, fit::BaseType::Float32);
+    // Coulomb-counted cumulative battery discharge for the activity so far.
+    writeFieldDescription(DF_BATTERY_MAH, "battery_mah", "mAh", fit::BaseType::Float32);
     // GNSS quality series. gps_precision is the full-resolution twin of the
     // native record.gps_accuracy (which quantises to whole metres); the rest
     // record inputs the native profile has no field for.
@@ -185,6 +187,12 @@ void ActivityWriter::defineRecordMessages()
     const DevFieldDef batt2[] = {
         {DF_BATTERY_LEVEL, 1, 0}, {DF_BATTERY_VOLTAGE, 2, 0},
     };
+    // Cumulative mAh: written on every variant, like hr4[3] (DF_HR_TRUST) --
+    // it is a running total independent of whether this particular record
+    // happens to carry a fresh instantaneous level/voltage sample.
+    const DevFieldDef battMah[] = {
+        {DF_BATTERY_MAH, 4, 0},
+    };
     // GNSS quality tails every variant, including the no-GPS ones: a record
     // without a position is exactly where gps_state has to say whether the
     // receiver lost its fix, lost its subscription, or is dead-reckoning.
@@ -202,7 +210,7 @@ void ActivityWriter::defineRecordMessages()
          kRecordCommonTail[0], kRecordCommonTail[1], kRecordCommonTail[2],
          kRecordCommonTail[3], kRecordCommonTail[4], kRecordCommonTail[5],
          kRecordCommonTail[6], kRecordCommonTail[7]},
-        {hr4[0], hr4[1], hr4[2], hr4[3],
+        {hr4[0], hr4[1], hr4[2], hr4[3], battMah[0],
          gpsQ[0], gpsQ[1], gpsQ[2], gpsQ[3], gpsQ[4]});
 
     // + GPS.
@@ -212,7 +220,7 @@ void ActivityWriter::defineRecordMessages()
          kRecordCommonTail[0], kRecordCommonTail[1], kRecordCommonTail[2],
          kRecordCommonTail[3], kRecordCommonTail[4], kRecordCommonTail[5],
          kRecordCommonTail[6], kRecordCommonTail[7]},
-        {hr4[0], hr4[1], hr4[2], hr4[3],
+        {hr4[0], hr4[1], hr4[2], hr4[3], battMah[0],
          gpsQ[0], gpsQ[1], gpsQ[2], gpsQ[3], gpsQ[4]});
 
     // + battery.
@@ -221,7 +229,7 @@ void ActivityWriter::defineRecordMessages()
          kRecordCommonTail[0], kRecordCommonTail[1], kRecordCommonTail[2],
          kRecordCommonTail[3], kRecordCommonTail[4], kRecordCommonTail[5],
          kRecordCommonTail[6], kRecordCommonTail[7]},
-        {batt2[0], batt2[1], hr4[0], hr4[1], hr4[2], hr4[3],
+        {batt2[0], batt2[1], hr4[0], hr4[1], hr4[2], hr4[3], battMah[0],
          gpsQ[0], gpsQ[1], gpsQ[2], gpsQ[3], gpsQ[4]});
 
     // + GPS + battery.
@@ -231,7 +239,7 @@ void ActivityWriter::defineRecordMessages()
          kRecordCommonTail[0], kRecordCommonTail[1], kRecordCommonTail[2],
          kRecordCommonTail[3], kRecordCommonTail[4], kRecordCommonTail[5],
          kRecordCommonTail[6], kRecordCommonTail[7]},
-        {batt2[0], batt2[1], hr4[0], hr4[1], hr4[2], hr4[3],
+        {batt2[0], batt2[1], hr4[0], hr4[1], hr4[2], hr4[3], battMah[0],
          gpsQ[0], gpsQ[1], gpsQ[2], gpsQ[3], gpsQ[4]});
 }
 
@@ -333,6 +341,7 @@ void ActivityWriter::addRecord(const RecordData& record)
     }
     d.u8(record.hrSource).u8(record.hrOpticalBpm).u8(record.hrExternalBpm);
     d.f32(record.hrTrust);
+    d.f32(record.consumedMah);
 
     // GNSS quality. gps_state is unconditional (it describes the record even
     // when every other GNSS field is absent); the rest fall back to the
@@ -658,6 +667,8 @@ bool ActivityWriter::saveSummary(const TrackData& track)
     writer.add("distance", track.distance);
     writer.add("hr_avg", track.hrAvg);
     writer.add("elevation", track.ascent - track.descent);
+    writer.add("battery_mah_consumed", track.batteryMahConsumed);
+    writer.add("battery_pct_of_capacity", track.batteryPctOfCapacity);
     writer.add("activity_type", "running");
     writer.endMap();
 

@@ -74,6 +74,7 @@ constexpr uint8_t kGpsFixAge     = 11;
 constexpr uint8_t kGnssTtff      = 12;
 constexpr uint8_t kGnssPwrOffset = 13;
 constexpr uint8_t kHrTrust       = 14;
+constexpr uint8_t kBatteryMah    = 15;
 }  // namespace devfield
 
 namespace recfield {
@@ -132,6 +133,7 @@ TEST(GpsLabActivityWriter, ProducesValidFitFile)
         r.batteryLevel = 90; r.batteryVoltage = 4100;
         r.heartRate = 140;  // arbitrated bpm the gate rejected; HEART_RATE left unset
         r.hrTrust = 0.4f;   // below the app's accepted [1,3] band
+        r.consumedMah = 12.5f;  // running coulomb-counted total at this point
         w.addRecord(r);
     }
 
@@ -166,9 +168,9 @@ TEST(GpsLabActivityWriter, ProducesValidFitFile)
     EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::Lap)).size(), 1u);
     EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::Session)).size(), 1u);
     EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::Activity)).size(), 1u);
-    // 13 developer field descriptions: 6 HR/battery (incl. hr_trust), 5
-    // per-record GNSS, 2 session-level GNSS acquisition timings.
-    EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::FieldDescription)).size(), 13u);
+    // 14 developer field descriptions: 6 HR/battery (incl. hr_trust), 1
+    // battery_mah, 5 per-record GNSS, 2 session-level GNSS acquisition timings.
+    EXPECT_EQ(r.withGlobal(fit::mesgNum(fit::MesgNum::FieldDescription)).size(), 14u);
 
     // Records carry the hr_source/optical/external developer fields (4/5/6).
     const auto recs = r.withGlobal(fit::mesgNum(fit::MesgNum::Record));
@@ -187,6 +189,12 @@ TEST(GpsLabActivityWriter, ProducesValidFitFile)
     EXPECT_EQ(recs[2]->devFields.count(2), 1u);              // batteryLevel
     EXPECT_EQ(recs[2]->devFields.at(2).u(), 90u);
     EXPECT_EQ(recs[2]->devFields.at(3).u(), 4100u);          // batteryVoltage
+    // battery_mah is a running total, written unconditionally like hr_trust
+    // (not gated behind Field::BATTERY -- that flag only gates the
+    // instantaneous level/voltage sample).
+    EXPECT_FLOAT_EQ(asF32(recs[2]->devFields.at(devfield::kBatteryMah)), 12.5f);
+    EXPECT_TRUE(recs[0]->devFields.count(devfield::kBatteryMah))
+        << "battery_mah is present even on the plain HR-only record variant";
 
     // session sport = running.
     const auto* ses = r.withGlobal(fit::mesgNum(fit::MesgNum::Session)).front();

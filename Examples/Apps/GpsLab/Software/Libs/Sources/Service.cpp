@@ -442,6 +442,23 @@ void Service::handleSensorsData(uint16_t handle, SDK::Sensor::DataBatch& data)
         if (parser.isDataValid()) {
             mBatteryVoltage.set(parser.getVoltage());
             LOG_DEBUG("Battery voltage %.1f V\n", mBatteryVoltage.get());
+
+            // Coulomb-count AVERAGE_CURRENT into a running mAh total. fabs():
+            // the sign convention for discharge vs. charge current is not
+            // documented upstream ("sign per firmware contract"), and a track
+            // is never recorded while charging, so the magnitude is what
+            // matters here regardless of which sign the firmware happens to use.
+            const uint32_t nowMs = parser.getTimestamp();
+            if (mBatteryLastSampleValid && nowMs > mBatteryLastSampleMs) {
+                const float deltaS = static_cast<float>(nowMs - mBatteryLastSampleMs) / 1000.0f;
+                mBatteryConsumedMah += std::fabs(parser.getAverageCurrent()) * deltaS / 3600.0f;
+            }
+            mBatteryLastSampleMs    = nowMs;
+            mBatteryLastSampleValid = true;
+            if (parser.getDesignCapacity() > 0.0f) {
+                mBatteryDesignCapacityMah = parser.getDesignCapacity();
+            }
+            LOG_DEBUG("Battery consumed %.2f mAh\n", mBatteryConsumedMah);
         }
     } else if (mSensorWristMotion.matchesDriver(handle)) {
         SDK::SensorDataParser::WristMotion parser(data[0]);
@@ -788,6 +805,9 @@ ActivityWriter::RecordData Service::prepareRecordData()
     // Written unconditionally (unlike hrSource) so a record whose HR the
     // hasHeartRate gate rejected still shows the trust value that failed it.
     fitRecord.hrTrust      = mTrackData.hrTrustLevel;
+    // Written unconditionally, like hrTrust: a running total, not an
+    // instantaneous sample gated on a fresh battery reading this tick.
+    fitRecord.consumedMah  = mBatteryConsumedMah;
 
     // Both samples must be checked every call; evaluate separately to avoid short-circuit.
     const bool socReady     = mBatterySoc.isDue();
@@ -874,6 +894,11 @@ void Service::startTrack(std::time_t utc)
     mAltitudeCounter.reset();
     mBatterySoc.reset(skBatteryLogPeriodMs);
     mBatteryVoltage.reset(skBatteryLogPeriodMs);
+    // NOT mBatteryDesignCapacityMah: that's a property of the battery, not
+    // the track, and should survive across activities once latched.
+    mBatteryConsumedMah     = 0.0f;
+    mBatteryLastSampleMs    = 0;
+    mBatteryLastSampleValid = false;
     mGps.reset();
     mRunningCadence = {};
 
@@ -1223,6 +1248,11 @@ void Service::stopTrack(bool discard)
 
         fitTrack.ascent    = mAltitudeCounter.getAscent();
         fitTrack.descent   = mAltitudeCounter.getDescent();
+
+        fitTrack.batteryMahConsumed   = mBatteryConsumedMah;
+        fitTrack.batteryPctOfCapacity = (mBatteryDesignCapacityMah > 0.0f)
+            ? (mBatteryConsumedMah / mBatteryDesignCapacityMah) * 100.0f
+            : 0.0f;
 
         // GNSS acquisition timings. Both describe the window before the first
         // record exists, so they have no per-record home; each stays at the
