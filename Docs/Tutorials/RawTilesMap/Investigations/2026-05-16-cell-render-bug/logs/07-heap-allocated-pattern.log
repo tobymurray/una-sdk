@@ -1,0 +1,27 @@
+ 251825355 -I- Model::Model::118                   : rawtiles: opening /home/toby/git/cpp/una-sdk/Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles -> ok
+ 251825355 -I- Model::Model::135                   : rawtiles header:
+ 251825355 -I- Model::Model::160                   : rawtiles: tile[0] first 32 bytes: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa 
+ 251825355 -I- Model::Model::207                   : rawtiles: viewport centre = z=14 x=2587 y=5604
+ 251825355 -I- Model::Model::216                   : rawtiles: DIAG sDebugPattern at 0x7ff0d34ff010 (heap)
+ 251825355 -I- Model::Model::218                   : rawtiles: DIAG active — slot (col=1,row=1) carries orientation marker
+ 251825355 -I- Model::Model::233                   : rawtiles: 4/9 viewport tiles found in pack
+ 251825355 -I- Model::Model::252                   : rawtiles: DIAG registering solid-RED bitmap for slot (col=1,row=1)
+ 251825355 -I- Model::Model::269                   : rawtiles: DIAG cell (col=1,row=1) id=16 passed=0x7ff0d34ff010 stored=0x7ff0d34ff010 first_byte=0xc3
+ 251825355 -I- Model::Model::269                   : rawtiles: DIAG cell (col=2,row=1) id=17 passed=0x7ff0dc002224 stored=0x7ff0dc002224 first_byte=0xea
+ 251825355 -I- Model::Model::269                   : rawtiles: DIAG cell (col=1,row=2) id=18 passed=0x7ff0dbfe2224 stored=0x7ff0dbfe2224 first_byte=0xfa
+ 251825355 -I- Model::Model::269                   : rawtiles: DIAG cell (col=2,row=2) id=19 passed=0x7ff0dc012224 stored=0x7ff0dc012224 first_byte=0xfa
+ 251825355 -I- Model::Model::274                   : rawtiles: viewport filled 4/9 cells
+ 251826254 -I- TileCanvas::draw::45                : draw: widget area=(0,0 240x72) absolute=(0,0 240x72) getW=240 getH=240 tileDim=256
+ 251826254 -I- TileCanvas::draw::53                : draw: slot (col=0,row=0) INVALID
+ 251826254 -I- TileCanvas::draw::53                : draw: slot (col=1,row=0) INVALID
+ 251826254 -I- TileCanvas::draw::53                : draw: slot (col=2,row=0) INVALID
+ 251826254 -I- TileCanvas::draw::53                : draw: slot (col=0,row=1) INVALID
+ 251826254 -I- TileCanvas::draw::57                : draw: slot (col=1,row=1) id=16 addr=0x7ff0d34ff010 first_byte=0xc3
+ 251826254 -I- TileCanvas::draw::57                : draw: slot (col=2,row=1) id=17 addr=0x7ff0dc002224 first_byte=0xea
+ 251826254 -I- TileCanvas::draw::53                : draw: slot (col=0,row=2) INVALID
+ 251826254 -I- TileCanvas::draw::57                : draw: slot (col=1,row=2) id=18 addr=0x7ff0dbfe2224 first_byte=0xfa
+ 251826254 -I- TileCanvas::draw::57                : draw: slot (col=2,row=2) id=19 addr=0x7ff0dc012224 first_byte=0xfa
+ 251826254 -I- TileCanvas::operator()::70          : draw: cell (col=1,row=1) id=16 local=(-136,-136) abs=(-136,-136) bmp=256x256
+ 251826254 -I- TileCanvas::operator()::70          : draw: cell (col=2,row=1) id=17 local=(120,-136) abs=(120,-136) bmp=256x256
+ 251826254 -I- TileCanvas::operator()::70          : draw: cell (col=1,row=2) id=18 local=(-136,120) abs=(-136,120) bmp=256x256
+ 251826254 -I- TileCanvas::operator()::70          : draw: cell (col=2,row=2) id=19 local=(120,120) abs=(120,120) bmp=256x256
