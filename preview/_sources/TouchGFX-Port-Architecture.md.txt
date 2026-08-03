@@ -807,9 +807,8 @@ public:
 #### Service Layer Communication
 ```cpp
 // In Service (Backend)
-void Service::sendHeartRateUpdate(uint16_t bpm) {
-    auto msg = make_msg<HeartRateMessage>(bpm);
-    kernel->comm.sendMessage(msg);
+bool Service::sendHeartRateUpdate(uint16_t bpm) {
+    return SDK::send_msg<HeartRateMessage>(*kernel, bpm, getCurrentTime());
 }
 
 // In Model (GUI)
@@ -896,14 +895,17 @@ graph TD
 
 #### Message Definition
 ```cpp
-// In shared header file (e.g., AppTypes.hpp)
-enum class CustomMessageType : uint32_t {
-    HEART_RATE_UPDATE = 0x00010001,
-    GPS_LOCATION_UPDATE = 0x00010002,
-    BATTERY_STATUS = 0x00010003,
-    WORKOUT_START = 0x00010004,
-    WORKOUT_STOP = 0x00010005
-};
+// In shared header file (e.g., Commands.hpp)
+namespace CustomMessage {
+
+// `SDK::MessageType::Type` is a `uint32_t` alias, and `MessageBase` takes one directly, so
+// declare the IDs as constants of that type. A scoped `enum class` would not convert
+// implicitly — neither in the constructor below nor in a `switch (msg->getType())`.
+constexpr SDK::MessageType::Type HEART_RATE_UPDATE   = 0x00010001;
+constexpr SDK::MessageType::Type GPS_LOCATION_UPDATE = 0x00010002;
+constexpr SDK::MessageType::Type BATTERY_STATUS      = 0x00010003;
+constexpr SDK::MessageType::Type WORKOUT_START       = 0x00010004;
+constexpr SDK::MessageType::Type WORKOUT_STOP        = 0x00010005;
 
 // Message structures
 struct HeartRateMessage : public SDK::MessageBase {
@@ -911,7 +913,7 @@ struct HeartRateMessage : public SDK::MessageBase {
     uint32_t timestamp;
 
     HeartRateMessage(uint16_t heartRate, uint32_t time)
-        : MessageBase(CustomMessageType::HEART_RATE_UPDATE)
+        : SDK::MessageBase(HEART_RATE_UPDATE)
         , bpm(heartRate), timestamp(time) {}
 };
 
@@ -919,22 +921,31 @@ struct WorkoutCommand : public SDK::MessageBase {
     enum class Action { START, PAUSE, RESUME, STOP };
     Action command;
 
-    WorkoutCommand(Action cmd)
-        : MessageBase(CustomMessageType::WORKOUT_START)
+    explicit WorkoutCommand(Action cmd)
+        : SDK::MessageBase(WORKOUT_START)
         , command(cmd) {}
 };
+
+} // namespace CustomMessage
 ```
 
 #### Service-Side Message Sending
+
+Because each message fills its own fields in its constructor, sending one is a single call:
+`SDK::send_msg<T>(kernel, args...)` allocates the message, forwards `args...` to the constructor,
+sends it, and releases it — returning `false` if allocation or the send failed. Apps do not need a
+sender class of their own.
+
+Return the `bool` rather than swallowing it, so the caller can decide. For periodic telemetry the
+caller usually ignores it — a dropped heart-rate sample is superseded a second later, and the
+example apps do exactly that. A dropped reply to a request is not self-correcting, so those sends
+are worth checking (see the request-response pattern below).
+
 ```cpp
 class FitnessService {
 public:
-    void sendHeartRateUpdate(uint16_t bpm) {
-        auto msg = mKernel.comm.allocateMessage<HeartRateMessage>(bpm, getCurrentTime());
-        if (msg) {
-            mKernel.comm.sendMessage(msg, 100); // 100ms timeout
-            mKernel.comm.releaseMessage(msg);
-        }
+    bool sendHeartRateUpdate(uint16_t bpm) {
+        return SDK::send_msg<HeartRateMessage>(mKernel, bpm, getCurrentTime());
     }
 
     void handleWorkoutCommand(WorkoutCommand::Action action) {
@@ -950,20 +961,30 @@ public:
 };
 ```
 
+Note that `send_msg` posts with a **zero timeout**: if the message queue is full it gives up
+immediately rather than waiting for room. That suits telemetry, but when you need to wait for queue
+space — or to read a reply — use `SDK::make_msg<T>` and send it yourself with an explicit timeout:
+
+```cpp
+if (auto msg = SDK::make_msg<HeartRateMessage>(mKernel, bpm, getCurrentTime())) {
+    msg.send(100);  // wait up to 100 ms for queue space
+}
+```
+
 #### GUI-Side Message Handling
 ```cpp
 class FitnessModel : public ICustomMessageHandler {
 public:
     bool customMessageHandler(MessageBase* msg) override {
         switch (msg->getType()) {
-            case CustomMessageType::HEART_RATE_UPDATE: {
+            case CustomMessage::HEART_RATE_UPDATE: {
                 auto* hrMsg = static_cast<HeartRateMessage*>(msg);
                 mCurrentHeartRate = hrMsg->bpm;
                 mLastUpdateTime = hrMsg->timestamp;
                 notifyHeartRateChanged();
                 return true;
             }
-            case CustomMessageType::BATTERY_STATUS: {
+            case CustomMessage::BATTERY_STATUS: {
                 auto* battMsg = static_cast<BatteryMessage*>(msg);
                 mBatteryLevel = battMsg->percentage;
                 notifyBatteryChanged();
@@ -987,30 +1008,34 @@ private:
 
 #### Request-Response Pattern
 ```cpp
+constexpr SDK::MessageType::Type CONFIG_REQUEST  = 0x00010006;
+constexpr SDK::MessageType::Type CONFIG_RESPONSE = 0x00010007;
+
 // Request message
-struct ConfigurationRequest : public MessageBase {
+struct ConfigurationRequest : public SDK::MessageBase {
     enum class ConfigType { UNITS, THEME, ALERTS };
     ConfigType type;
 
-    ConfigurationRequest(ConfigType t)
-        : MessageBase(CONFIG_REQUEST_TYPE), type(t) {}
+    explicit ConfigurationRequest(ConfigType t)
+        : SDK::MessageBase(CONFIG_REQUEST), type(t) {}
 };
 
 // Response message
-struct ConfigurationResponse : public MessageBase {
+struct ConfigurationResponse : public SDK::MessageBase {
     ConfigurationRequest::ConfigType type;
     std::string value;
 
-    ConfigurationResponse(ConfigType t, const std::string& val)
-        : MessageBase(CONFIG_RESPONSE_TYPE), type(t), value(val) {}
+    ConfigurationResponse(ConfigurationRequest::ConfigType t, const std::string& val)
+        : SDK::MessageBase(CONFIG_RESPONSE), type(t), value(val) {}
 };
 
 // Service implementation
 void Service::handleConfigRequest(ConfigurationRequest* req) {
     std::string value = getConfigurationValue(req->type);
-    auto response = allocateMessage<ConfigurationResponse>(req->type, value);
-    comm.sendMessage(response);
-    releaseMessage(response);
+    if (!SDK::send_msg<ConfigurationResponse>(mKernel, req->type, value)) {
+        // Nothing retries this for us: the requester will block until it times out.
+        Logger::error("Config response for type %d dropped", static_cast<int>(req->type));
+    }
 }
 ```
 
