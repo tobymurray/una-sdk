@@ -16,11 +16,15 @@ namespace {
 // .bss and the linker tells us immediately if the budget doesn't hold.
 uint8_t sTileBuf[RawTilesProbe::kTileBytes];
 
+// The four absolute "N:/..." volume-prefixed candidates were dropped after
+// device testing: they never resolved (exist() false on all of them), and
+// they depend on a volume-letter mapping that was only ever confirmed in the
+// sim's mock FS, never on hardware. Sandbox-relative resolution — per
+// watch-apps/Barcode's InputConfig.hpp — is the one path convention actually
+// confirmed working on this watch (Apps/<Folder>/ as both the USB volume and
+// the BLE file-transfer service see it), so it's the only candidate left.
 const char* const kCandidates[RawTilesProbe::kCandidates] = {
-    "2:/maps/stanley.rawtiles",             // USB-visible volume (apps + media)
-    "1:/maps/stanley.rawtiles",             // eMMC user data — where packs should live
-    "0:/maps/stanley.rawtiles",             // internal NOR
-    "2:/Apps/HelloWorld/stanley.rawtiles",  // next to the .uapp the user just copied
+    "stanley.rawtiles",
 };
 
 uint16_t rdU16(const uint8_t* p) { return static_cast<uint16_t>(p[0] | (p[1] << 8)); }

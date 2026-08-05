@@ -34,7 +34,10 @@ namespace SDK::Interface
 {
 
 #define DUMMY_KERNEL_ADDR           (0xA5A5A5A5)
-#define KERNEL_INTERFACE_VERSION    (3)
+// Spike-only downgrade: this watch's firmware still advertises kernel
+// interface v2 (68676e7c bumped to v3 for home-widget IPC this app
+// doesn't use). Revert before this branch is ever built for a v3 watch.
+#define KERNEL_INTERFACE_VERSION    (2)
 
 class IKernel {
 public:

@@ -18,7 +18,7 @@ class RawTilesProbe
 public:
     static constexpr uint16_t kTileDim    = 256;
     static constexpr uint32_t kTileBytes  = static_cast<uint32_t>(kTileDim) * kTileDim; // ABGR2222
-    static constexpr int      kCandidates = 4;
+    static constexpr int      kCandidates = 1;
 
     // CRC-32/ISO-HDLC of the first zoom_max tile (z14 x2587 y5604) of the
     // stanley.rawtiles sample pack, computed on the host. Display-only aid:

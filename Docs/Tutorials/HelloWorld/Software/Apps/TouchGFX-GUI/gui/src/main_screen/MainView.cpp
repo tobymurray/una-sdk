@@ -26,12 +26,19 @@ void MainView::setupScreen()
     // Stats overlay: dimmed backdrop + one wildcard text area. The template
     // typography (TMP_REGULAR_18_L) already carries the full ASCII wildcard
     // glyph range, so no texts.xml change or asset regeneration is needed.
-    mStatsBg.setPosition(0, 0, 240, 168);
+    //
+    // Positioned within the round panel's visible circle, not the square
+    // 240x240 framebuffer: a box top-anchored at y=4 put its upper lines
+    // near the bezel's narrowest chord and lost their left edge (confirmed
+    // on-device photo: "run 1 FAIL @ exist" read as "-AIL @ exist"). Centering
+    // the block vertically on y=120 and insetting it horizontally keeps every
+    // line within the chord at its row instead of the square's corners.
+    mStatsBg.setPosition(0, 36, 240, 168);
     mStatsBg.setColor(touchgfx::Color::getColorFromRGB(0, 0, 0));
     mStatsBg.setAlpha(160);
     add(mStatsBg);
 
-    mStats.setPosition(6, 4, 228, 160);
+    mStats.setPosition(20, 40, 200, 160);
     mStats.setTypedText(touchgfx::TypedText(T_TMP_REGULAR_18_L));
     mStats.setColor(touchgfx::Color::getColorFromRGB(255, 255, 255));
     touchgfx::Unicode::snprintf(mStatsBuf, kStatsBufSize, "probe in ~1s...");
@@ -59,12 +66,10 @@ void MainView::updateProbe()
         std::snprintf(
             text, sizeof(text),
             "run %d FAIL @ %s\n"
-            "2:/maps %c  1:/maps %c\n"
-            "0:/maps %c  2:/Apps %c\n"
+            "rel %c\n"
             "scan %ums open %ums",
             r.runs, r.failStage,
-            r.existHit[0] ? 'Y' : 'n', r.existHit[1] ? 'Y' : 'n',
-            r.existHit[2] ? 'Y' : 'n', r.existHit[3] ? 'Y' : 'n',
+            r.existHit[0] ? 'Y' : 'n',
             static_cast<unsigned>(r.existScanMs), static_cast<unsigned>(r.openMs));
     } else {
         std::snprintf(

@@ -15,11 +15,11 @@ photo of the watch is the evidence. All stages also go to LOG_INFO.
 
 | # | Hypothesis | Retired by | Verdict |
 |---|---|---|---|
-| H1 | The GUI process can open and read files at all on hardware (a `SDK::Kernel` with a live `fs` reaches the GUI via `KernelProviderGUI`) | probe reaching the `open` stage | *pending device run* |
-| H2 | A 64 KiB single `read()` off watch storage costs single-digit-to-low-tens of ms — cheap enough for read-on-pan | the `64K cold/warm` numbers on screen | *pending device run* |
-| H3 | `LCD::blitCopy` renders an ABGR2222 buffer correctly on the hardware draw path, including partial-overhang draws (its sibling `drawPartialBitmap` has two defects, the Y-overhang one reproduced on STM32U595) | tile visible and correct at all three L1 positions, incl. the (60,220) repro geometry | *pending device run* |
-| H4 | A 64 KiB tile buffer in GUI `.bss` fits the app RAM budget | GUI ELF links; app boots | *pending device run* (link: see `arm-build.log`) |
-| H5 | Which volumes exist and are USB-reachable — does the mass-storage drive map to `2:/`, and is `1:/` populatable at all today | the `2:/maps … 2:/Apps` Y/n line on screen | *pending device run* |
+| H1 | The GUI process can open and read files at all on hardware (a `SDK::Kernel` with a live `fs` reaches the GUI via `KernelProviderGUI`) | probe reaching the `open` stage | **CONFIRMED** |
+| H2 | A 64 KiB single `read()` off watch storage costs single-digit-to-low-tens of ms — cheap enough for read-on-pan | the `64K cold/warm` numbers on screen | **CONFIRMED** — cold 7–9 ms, warm 6–9 ms across 7 runs |
+| H3 | `LCD::blitCopy` renders an ABGR2222 buffer correctly on the hardware draw path, including partial-overhang draws (its sibling `drawPartialBitmap` has two defects, the Y-overhang one reproduced on STM32U595) | tile visible and correct at all three L1 positions, incl. the (60,220) repro geometry | **CONFIRMED** — all three positions render cleanly, no red-artifact at the (60,220) Y-overhang geometry that broke `drawPartialBitmap` |
+| H4 | A 64 KiB tile buffer in GUI `.bss` fits the app RAM budget | GUI ELF links; app boots | **CONFIRMED** (link: see `arm-build.log`) |
+| H5 | Which volumes exist and are USB-reachable — does the mass-storage drive map to `2:/`, and is `1:/` populatable at all today | the `2:/maps … 2:/Apps` Y/n line on screen | **ANSWERED, differently than planned** — none of the four absolute `N:/...` volume paths ever resolved on hardware; see Results |
 
 ## Simulator validation (done 2026-08-05 — code paths green, mock FS)
 
@@ -94,4 +94,70 @@ the negative for those volumes).
 
 ## Results
 
-*(fill in after the device run — numbers, photos in `device/`, and the H1–H5 verdicts)*
+Four real problems surfaced between "sim green" and a clean device run, none of them the
+Container API questions this spike was actually built to answer. Recorded here because the
+run-book above still describes the *original* plan, not what actually worked.
+
+**1. Kernel interface version mismatch (blocked launch entirely).** `main` bumped
+`KERNEL_INTERFACE_VERSION` 2→3 on 2026-07-31 (`68676e7c`, for home-widget IPC this app
+doesn't use) — three days after this watch's firmware was last confirmed at v2. Built against
+`main` after that commit, both `HelloWorld.SRV` and `HelloWorld.GUI` hit `una_init_kernel`'s
+version gate and exited immediately (`Kernel not supported. Minimum 3, got 2`), surfaced on
+the watch as an `App PID` fault screen with nothing else logged. Fixed locally (this branch
+only — never meant to merge) by pinning `KERNEL_INTERFACE_VERSION` back to `2` in
+`Libs/Header/SDK/Interfaces/IKernel.hpp`.
+
+**2. Stats overlay clipped by the round bezel.** The overlay was top-anchored (`y=4`,
+`width=228` in a 240×240 square framebuffer), which put its upper lines where the physical
+round panel's visible chord is narrowest — confirmed on-device: `run 1 FAIL @ exist` read as
+`-AIL @ exist`, losing ~7 leading characters (`device/01-fail-clipped-layout.png`). Fixed by
+recentering the block vertically on the panel's center (`y=36..204` for the backdrop) and
+insetting it horizontally (`x=20`, `width=200`) — confirmed clean afterward
+(`device/02-success-run1-recentered.png`).
+
+**3. H5's real answer: none of the four absolute volume-prefixed candidates ever worked.**
+`2:/maps/...`, `1:/maps/...`, `0:/maps/...`, `2:/Apps/HelloWorld/...` all reported
+`exist() == 0` on every run — the `2:` mapping was only ever confirmed in the sim's mock FS,
+never on hardware. `watch-apps/Barcode`'s `InputConfig.hpp` had already solved this: a bare
+relative path (`stanley.rawtiles`, no volume prefix) resolves against the app's own sandbox
+folder the same way for the USB volume and the BLE file-transfer service both. Added as a
+5th candidate, confirmed as the only one that resolves, then the probe was simplified to just
+that one candidate — the four dead absolute paths were deleted from `RawTilesProbe.cpp`
+rather than left as leverage.
+
+**4. USB-MSC writes and the watch's own BLE sync collided on the same exFAT partition.**
+Mid-session, `stanley.rawtiles` was found corrupted at two different byte offsets in its two
+on-device copies (787,008 B and mtime both unchanged — same size, same timestamp, different
+content), then a redeployed `.uapp` became unreadable (`Input/output error`, persistent on
+retry, isolated to that one file — new filenames and other paths wrote fine), then the mount
+itself died (`Transport endpoint is not connected`). Root cause: the watch was actively
+syncing over Bluetooth with a phone while the same partition was mounted via USB-MSC on the
+host — two independent writers on one filesystem with no coordination. Turning off BLE sync
+resolved it immediately; a clean unmount/remount recovered the dead mount, and a fresh copy
+verified byte-identical across a genuine eject→remount→read cycle (not just page cache).
+**Takeaway for the real Container API and for anyone re-running this bundle: don't have the
+watch actively BLE-syncing while pushing files over USB-MSC.**
+
+**Final clean run** (`device/02-success-run1-recentered.png`, UART trace in this bundle):
+
+```
+run 1  stanley.rawtiles
+scan 4ms open 1ms
+z12-14 n=12  787008 B
+tile z14 x2587 y5604
+64K cold 7ms warm 6ms
+crc 26E5979B OK
+```
+
+Repeated across 7 R1 reruns, cold/warm consistently 6–9 ms, CRC matching every time. All
+three L1 positions photographed and correct:
+- `device/03-pos0-near-full.png` — position 0 `(-8,-8)`, near-full tile.
+- `device/04-pos1-y-overhang-repro.png` — position 1 `(60,220)`, the exact geometry that
+  produced a Y-clipping defect on `drawPartialBitmap`; blitCopy renders it clean, no
+  red-artifact.
+- `device/05-pos2-neg-xy-overhang.png` — position 2 `(-120,-120)`, matches the sim's
+  136×136 bottom-right-quadrant-in-top-left-corner result exactly.
+
+H1–H4 confirmed as planned. H5 answered in a way that changes the Container API
+recommendation: design around sandbox-relative paths, not absolute volume letters — the
+volume-letter scheme this spike started with never worked on real hardware at all.
