@@ -152,6 +152,34 @@ nothing is needed, the tags can be dropped — they are a safety net, not a perm
   corresponding implementation still carry their copy. This branch is for reading, not for
   building or merging from.
 - **Feature documentation** that ships with unmerged work — tutorial `ARCHITECTURE.md` files,
-  the GpsLab app README, the Rust CustomGUI POC README — stayed with the feature branches it
-  documents (`feat/gpstrack-tutorial`, `feat/rawtilesmap-tutorial`,
-  `feat/gps-quality-logging`, `poc/rust-customgui-frontend`).
+  the GpsLab app README — stayed with the feature branch it documents
+  (`feat/gpstrack-tutorial`, `feat/rawtilesmap-tutorial`, `feat/gps-quality-logging`).
+
+---
+
+## 8. Apps now live in `tobymurray/watch-apps`
+
+Four apps were subtree-split out of this SDK into a separate repo:
+**Barcode**, **GpsLab**, **RustGuiPoc**, **Squash**. They build against a released SDK found
+through `$UNA_SDK`, so do not re-add them here. `Barcode`, `Squash` and `RustGuiPoc` are fully
+gone from this repo; `poc/rust-customgui-frontend` was retired once watch-apps had moved past
+it (see `archive/poc/rust-customgui-frontend`).
+
+**One migration is still incomplete.** `feat/gps-quality-logging` is deliberately still here,
+because it is *ahead* of the GpsLab in watch-apps, not behind it:
+
+- Two developer fields watch-apps does not have — `DF_HR_TRUST` (kernel-arbitrated HR
+  confidence) and `DF_BATTERY_MAH` (coulomb-counted cumulative discharge, integrated from
+  `BATTERY_METRICS` average current rather than diffed from state-of-charge).
+- `Tests/Host/apps/GpsLab/ActivityWriter_test.cpp` — a host test that has **not** been carried
+  over. Subtree splits miss these, because app host tests live in the SDK tree under
+  `Tests/Host/apps/`, not inside the app directory. Squash's tests were moved by hand
+  (`test(squash): bring the recorder host tests out of the SDK tree`); GpsLab's were not.
+- SDK-side changes that belong to the SDK regardless: `Libs/Header/SDK/Fit/FitProfile.hpp`,
+  `Docs/FitFiles-Structure.md`, `Tests/Host/CMakeLists.txt`.
+
+Port those forward into watch-apps before retiring that branch.
+
+Note that an app moving out does **not** mean its SDK support moves with it —
+`feat/fit-profile-racket-squash` (squash = sport 64 / sub_sport 94) has to stay in the SDK for
+the migrated Squash app to build against it.
