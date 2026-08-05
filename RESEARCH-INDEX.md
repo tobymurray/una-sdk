@@ -1,0 +1,157 @@
+# Research index
+
+This branch is a **read-only reference collection**. It is the consolidation of every
+investigation, experiment, protocol spec, design note and handoff prompt that used to be
+scattered across a dozen short-lived branches on the `tobymurray/una-sdk` fork.
+
+It is built directly on top of `upstream/main` (`0f17b5c7`) and adds **documentation and
+research artifacts only** — no SDK source is modified, so `git diff upstream/main..research`
+is purely additive. Nothing here is upstream policy or official SDK documentation; it is a
+contributor's working record.
+
+**If you are an agent picking up work on this repo, read this file first**, then open only the
+investigation that matches your task. Several of these documents are large (the hardware
+recovery ledger is ~39 KB) and are written to be self-contained.
+
+---
+
+## 1. Hardware & firmware reverse engineering
+
+`Docs/Investigations/2026-07-29-hardware-config-recovery/`
+
+The largest body of work here. Characterizing the real silicon inside a physically-owned UNA
+Watch, dumping its firmware, and recovering its BLE sync protocol — in order to build
+independent firmware and a phone-free companion.
+
+| File | What it is |
+|---|---|
+| `README.md` | **Start here.** The living investigation doc: a verification ledger where every claim is tagged CONFIRMED / LIKELY / UNVERIFIED / REFUTED with its corroborating method, plus per-sweep round data. |
+| `REPRODUCTION-GUIDE.md` | A self-contained walkthrough of the *technique* — every command and source edit needed to reproduce the hardware-config read from scratch. Narrative counterpart to the ledger. |
+| `BLE-COMPANION-protocol-spec.md` | Running output of the BLE/GATT recovery: the File Transfer Service protocol as recovered from a first-party HCI capture plus flash strings. |
+| `prototype/una_ble_client.py` | **Working, validated code.** A phone-free Linux BlueZ client that lists directories and pulls `.fit` activity files off the watch with matching CRC-16. Proof the protocol spec above is correct. |
+| `prototype/README.md` | Setup and usage for that prototype. |
+| `BLE-COMPANION-disassembly-prompt.md` | Self-contained handoff prompt: recover the GATT profile to build a Gadgetbridge plugin / standalone companion. |
+| `SEAM-HUNT-disassembly-prompt.md` | Self-contained handoff prompt: find injectable seams in the closed vendor kernel for incremental per-peripheral Rust replacement. |
+| `NEXT-SESSION-disassembly-prompt.md` | Self-contained handoff prompt: disassemble the verified 4 MB kernel dump in Ghidra. |
+| `reassemble_dump.py` | Reassembles and CRC-verifies the chunked on-device flash dump. |
+| `service-cpp-instrumentation-sweep7.cpp` | The instrumented `Service.cpp` used for the register/I²C sweeps — the actual read primitive. |
+
+**Established highlights** (see the ledger for the confidence tag on each): MCU is an
+STM32U5A5 confirmed three independent ways; apps run with **no isolation at all** (MPU
+disabled, CPU privileged, TrustZone off); full 4 MB flash dumped and CRC-verified two ways
+with the real image ending at `0x0820A140`; dual vector table confirming a bootloader at
+`0x08000000` and kernel at `0x08060000`; IMU confirmed as BMI270 by exact CHIP_ID match.
+
+> Note on the two top-level documents: `README.md` and `REPRODUCTION-GUIDE.md` both lived at
+> `README.md` on their respective branches and are genuinely different documents, not
+> revisions of one another. Both are kept.
+
+---
+
+## 2. TouchGFX `drawPartialBitmap` defect
+
+Two independent investigations of the same underlying framework bug, kept separate because
+they were found from different directions.
+
+### `Docs/Investigations/2026-05-16-touchgfx-drawpartialbitmap-negative-x/`
+
+| File | What it is |
+|---|---|
+| `README.md` | How to test whether *your* platform (Windows simulator, embedded ARM) is affected. The Linux simulator already works around it. |
+| `DynamicBitmapDraw.hpp` | **The workaround itself**, kept here as an investigation artifact. On its original branch this lived at `Libs/Header/SDK/GUI/DynamicBitmapDraw.hpp`; move it back there if you adopt it. Active only under `SIMULATOR && __linux__`. |
+
+### `Docs/Tutorials/RawTilesMap/Investigations/2026-05-16-cell-render-bug/`
+
+**Status: RESOLVED.** A full experimental record — 33 files of READMEs, run logs, patch diffs
+and screenshots across experiments A, B, C and C2. `LCD8bpp_ABGR2222::drawPartialBitmap` in
+the prebuilt Linux `libtouchgfx.a` silently drops external dynamic bitmaps with a negative
+target X, and stretches source across widget width for positive X. Fix: `LCD::blitCopy` with
+a source-relative `blitRect`, verified in `experiment-C2-blitCopy-corrected/`.
+
+The dead-ends are deliberately left in the narrative — the "shared pixel pointer count"
+theory was a red herring, and that is worth knowing before re-deriving it.
+
+### `Docs/touchgfx-drawpartialbitmap-y-clipping-bug-report.md`
+
+Draft ST Community post reporting the defect upstream to ST. Never posted. The reproduction
+case lives on the still-open `bug/drawpartialbitmap-y-clipping-repro` branch (PR #134), which
+was left untouched.
+
+---
+
+## 3. Design notes
+
+| File | What it is |
+|---|---|
+| `Docs/units-and-display.md` | Design rationale for `SDK::Units`: measurements stay SI internally, metric/imperial is applied exactly once at the moment a value becomes text. Includes measured flash cost and why the drawing functions are `SDK_GUI_NO_INLINE`. The live code for this is on the `feat/sdk-units-core` → `feat/sdk-units-touchgfx` → `refactor/running-adopt-units` → `perf/unit-label-repaint-skip` stack. |
+| `Docs/companion-data-channel-analysis.md` | Analysis / RFC: third-party watch apps have no supported way to receive companion data. Written against upstream `2764a3e7`, with each claim checked against the cited file. |
+| `RR_INTERVAL_PR.md` | The long-form rationale for the experimental `RR_INTERVAL` beat-to-beat pathway — the watch cannot produce HRV-grade timing but a BLE strap already sends it in the packet the kernel parses and discards. Written as a PR description for **open PR #220** (`feat/rr-interval-contract`, untouched). |
+
+---
+
+## 4. Verification harnesses
+
+| Path | What it is |
+|---|---|
+| `proto-tests/` | Self-contained harness (`zsh proto-tests/run.sh`, needs only clang++ with C++17 — no TouchGFX or SDL2 tree, no network) verifying the logger redesign's claims. Each check corresponds to a property the old `#if`-based design could not hold simultaneously: compiling at `LOG_LEVEL=0` and `4`, via transitive include, and the logger's own implementation building at `LOG_LEVEL=0`. Live code on `refactor/logger-if-constexpr-gating` and `rfc/logger-if-constexpr-lifetime`. |
+
+---
+
+## 5. Linux simulator
+
+| Path | What it is |
+|---|---|
+| `Docs/Simulator-Linux.md` | **Largely superseded** — Linux build instructions were folded into upstream `Docs/Simulator.md` by PR #213. Kept because this version is longer and retains the patch-by-patch "applying patches to upstream" detail that the upstream page condenses. Tested on Ubuntu 24.04 / GCC 13 and Arch / GCC 15. |
+| `Docs/assets/screenshots/simulator-*.png`, `gpstrack-fit-map.png` | Evidence screenshots of the simulator running on Linux (HelloWorld, Sensors, Buttons, ScrollMenu, Files, GpsTrack, and a FIT track rendered on a map). These existed only on branches that have now been retired. |
+
+---
+
+## 6. Provenance and recovery
+
+Every artifact above was taken from the newest or superset version available. Where two
+branches held byte-identical copies, either was used; where they diverged, the newest was
+taken and any genuinely different document was kept alongside rather than overwritten.
+
+| Artifact | Taken from |
+|---|---|
+| `Docs/Investigations/2026-07-29-hardware-config-recovery/README.md` and BLE files | `docs/una-ble-companion-re-prompt` (superset: the seam-hunt copy plus 57 lines) |
+| ...`/REPRODUCTION-GUIDE.md` | `docs/hardware-config-recovery` (was `README.md` there) |
+| ...`/SEAM-HUNT-disassembly-prompt.md` | `docs/una-seam-hunt-re-prompt` |
+| `Docs/Investigations/2026-05-16-touchgfx-.../README.md`, `DynamicBitmapDraw.hpp` | `docs/touchgfx-drawpartialbitmap-negative-x` |
+| `Docs/touchgfx-drawpartialbitmap-y-clipping-bug-report.md` | `docs/touchgfx-drawpartialbitmap-y-clipping-bug-report` |
+| `Docs/Tutorials/RawTilesMap/Investigations/**` | `experiments` (identical on `feat/rawtilesmap-tutorial`) |
+| `Docs/companion-data-channel-analysis.md` | `docs/companion-data-channel-analysis` |
+| `Docs/units-and-display.md` | `perf/unit-label-repaint-skip` (stack tip; superset of the `refactor/running-adopt-units` copy, and both supersede the retired `refactor/sdk-units-formatting` copy whose only difference was stale flash measurements) |
+| `Docs/Simulator-Linux.md`, screenshots | `experiments` (superset of the `old-linux-simulator` copy by 23 lines) |
+| `RR_INTERVAL_PR.md` | `docs/rr-interval-pr` |
+| `proto-tests/` | `rfc/logger-if-constexpr-lifetime` (identical tree on `refactor/logger-if-constexpr-gating`) |
+
+**Nothing was destroyed.** Every branch that was deleted or rewritten in this consolidation
+was first tagged on `origin` as `archive/<original-branch-name>`. To see what a retired
+branch held, or to bring one back:
+
+```sh
+git fetch origin 'refs/tags/archive/*:refs/tags/archive/*'
+git log --stat archive/experiments                    # inspect
+git branch experiments archive/experiments             # resurrect
+```
+
+`git ls-remote --tags origin 'refs/tags/archive/*'` lists all of them. Once you are satisfied
+nothing is needed, the tags can be dropped — they are a safety net, not a permanent record.
+
+---
+
+## 7. What is deliberately *not* here
+
+- **Branches attached to a pull request** were not touched at all, in any way: `#260`
+  `refactor/timer-retire-sender`, `#249` `ci/ratcheting-warning-gate`, `#234`
+  `fix/reproducible-builds-macro-prefix-map`, `#220` `feat/rr-interval-contract`, `#214`
+  `fix/simulator-shutdown-pure-virtual`, `#167` `feat/beat-event-probe`, `#134`
+  `bug/drawpartialbitmap-y-clipping-repro`.
+- **Live code.** Research documents were *copied* here, not moved: the branches that carry the
+  corresponding implementation still carry their copy. This branch is for reading, not for
+  building or merging from.
+- **Feature documentation** that ships with unmerged work — tutorial `ARCHITECTURE.md` files,
+  the GpsLab app README, the Rust CustomGUI POC README — stayed with the feature branches it
+  documents (`feat/gpstrack-tutorial`, `feat/rawtilesmap-tutorial`,
+  `feat/gps-quality-logging`, `poc/rust-customgui-frontend`).

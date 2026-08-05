@@ -1,0 +1,1034 @@
+ 270579522 -I- Model::Model::99                    : Application is running through simulator! 
+ 270579522 -I- Model::Model::102                   : Path to files created by app:
+       [/home/toby/git/cpp/una-sdk/../../../../../Output/]
+ 270579522 -I- Model::Model::105                   : 
+       Keys:                       
+       ----------------------------
+       1   L1,                     
+       2   L2,                     
+       3   R1,                     
+       4   R2,                     
+       z   L1+R2                   
+ 270579526 -I- Model::Model::120                   : rawtiles: opening /home/toby/git/cpp/una-sdk/Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles -> ok
+ 270579526 -I- Model::Model::137                   : rawtiles header:
+       tile_dim_px      256
+       zoom_range       [12, 14]
+       tile_count       12
+       bbox (deg)       lon [-123.155000, -123.120000] lat [49.290000, 49.315000]
+ 270579526 -D- Model::Model::148                   :        tile[0]  z=12 x=646 y=1401  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[1]  z=12 x=647 y=1401  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[2]  z=13 x=1293 y=2802  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[3]  z=13 x=1293 y=2803  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[4]  z=13 x=1294 y=2802  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[5]  z=13 x=1294 y=2803  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[6]  z=14 x=2587 y=5604  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[7]  z=14 x=2587 y=5605  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[8]  z=14 x=2587 y=5606  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[9]  z=14 x=2588 y=5604  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[10]  z=14 x=2588 y=5605  65536 B
+ 270579526 -D- Model::Model::148                   :        tile[11]  z=14 x=2588 y=5606  65536 B
+ 270579526 -I- Model::Model::162                   : rawtiles: tile[0] first 32 bytes: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa 
+ 270579526 -I- Model::Model::209                   : rawtiles: viewport centre = z=14 x=2587 y=5604
+ 270579526 -I- Model::Model::245                   : EXP-A: slot (col=1,row=1) RED id=16 buf=0x4f3fc0 stored=0x4f3fc0 first_byte=0xc3 expected=0xc3
+ 270579526 -I- Model::Model::245                   : EXP-A: slot (col=2,row=1) GREEN id=17 buf=0x503fc0 stored=0x503fc0 first_byte=0xcc expected=0xcc
+ 270579526 -I- Model::Model::245                   : EXP-A: slot (col=1,row=2) BLUE id=18 buf=0x513fc0 stored=0x513fc0 first_byte=0xf0 expected=0xf0
+ 270579526 -I- Model::Model::245                   : EXP-A: slot (col=2,row=2) YELLOW id=19 buf=0x523fc0 stored=0x523fc0 first_byte=0xcf expected=0xcf
+ 270579984 -I- Service::run::76                    : thread started
+ 270579984 -I- App.Core::run::52                   : Application core is running...
+ 270579984 -I- Model::onStart::292                 : called
+ 270579984 -I- Model::onResume::297                : called
+ 270579984 -I- Inst.Sensor.Layer::init::45         : 
+---------------------------------------------------------
+|   For Simulation Wrist detect use 5 Key in keyboard. |
+---------------------------------------------------------
+ 270579984 -I- HeartRate::sdcStart::48             : start
+ 270579984 -I- Gps.Loc::sdcStart::47               : start
+ 270579984 -I- Gps.Alt::sdcStart::46               : start
+ 270579984 -I- IMU.StepCnt::sdcStart::43           : start
+ 270579984 -I- Sensor.BattLevel::sdcStart::49      : start
+ 270579984 -I- SensorHRMetrics::sdcStart::43       : start
+ 270579985 -I- Pressure::sdcStart::43              : start
+ 270579985 -I- IMU.WUP::sdcStart::44               : start
+ 270579985 -I- Gps.Speed::sdcStart::46             : start
+ 270579985 -I- Gps.Distance::sdcStart::54          : start
+ 270579985 -I- Service::run::108                   : Note: No BLE calibration at the moment. BLE calibration is required for proper sensor operation, especially for HR.
+ 270579985 -I- Service::run::172                   : GUI is now running
+ 270579985 -I- Service::onStartGUI::280            : GUI started
+ 270579985 -E- ActivityWriter::createAndOpenFile::271: Failed to create dir [Activity/202605/]
+ 270579985 -I- Service::onStartGUI::291            : GPS track recording started
+ 270580537 -D- Model::customMessageHandler::329    : hr 0.0, tl 0.0
+ 270580537 -D- Model::customMessageHandler::353    : Steps: 0
+ 270580989 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:2 msg/s (100 B/s) RX:3 msg/s (28 B/s)
+ 270580989 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 00 f6 42 00 00 f0 42 
+ 270580989 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 83 3f c7 47 c0 45 cd 47 
+ 270580989 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: b6 64 d8 40 
+ 270580989 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 00 00 00 00 
+ 270581039 -D- Model::customMessageHandler::329    : hr 122.0, tl 3.0
+ 270581039 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:2 msg/s (100 B/s) RX:3 msg/s (28 B/s)
+ 270581039 -D- Model::customMessageHandler::382    : RTC: 1
+ 270581039 -D- Model::customMessageHandler::335    : GPS: 49.234062, 28.468159, 250.5
+ 270581039 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270581039 -D- Model::customMessageHandler::353    : Steps: 6
+ 270581039 -D- Model::customMessageHandler::388    : Battery: 99.6%
+ 270581541 -D- Model::customMessageHandler::353    : Steps: 6
+ 270581993 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270581993 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 00 f9 42 00 00 f0 42 
+ 270581993 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 0e 51 c7 47 2b 56 cd 47 
+ 270581993 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 1c fd d4 40 
+ 270581993 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: d7 d9 03 41 
+ 270582043 -D- Model::customMessageHandler::329    : hr 125.0, tl 3.0
+ 270582043 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270582043 -D- Model::customMessageHandler::382    : RTC: 2
+ 270582043 -D- Model::customMessageHandler::335    : GPS: 49.234100, 28.468174, 250.3
+ 270582043 -D- Model::customMessageHandler::353    : Steps: 13
+ 270582043 -D- Model::customMessageHandler::341    : Elevation: 250.3 m
+ 270582043 -D- Model::customMessageHandler::388    : Battery: 99.4%
+ 270582545 -D- Model::customMessageHandler::353    : Steps: 13
+ 270582997 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270582997 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: ab aa fa 42 00 00 f0 42 
+ 270582997 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 5c 46 c7 47 bd 47 cd 47 
+ 270582997 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 2f a7 d2 40 
+ 270582997 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: a5 f9 75 41 
+ 270583047 -D- Model::customMessageHandler::329    : hr 128.0, tl 3.0
+ 270583047 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270583047 -D- Model::customMessageHandler::382    : RTC: 3
+ 270583047 -D- Model::customMessageHandler::335    : GPS: 49.234142, 28.468210, 249.7
+ 270583047 -D- Model::customMessageHandler::341    : Elevation: 249.7 m
+ 270583047 -D- Model::customMessageHandler::353    : Steps: 19
+ 270583047 -D- Model::customMessageHandler::388    : Battery: 99.2%
+ 270583549 -D- Model::customMessageHandler::353    : Steps: 19
+ 270584001 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270584001 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 40 fc 42 00 00 f0 42 
+ 270584001 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 5a 24 c7 47 1f 29 cd 47 
+ 270584001 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 8f 2e d2 40 
+ 270584001 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 6a 9b ab 41 
+ 270584051 -D- Model::customMessageHandler::329    : hr 128.0, tl 3.0
+ 270584051 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270584051 -D- Model::customMessageHandler::382    : RTC: 4
+ 270584051 -D- Model::customMessageHandler::335    : GPS: 49.234192, 28.468229, 250.4
+ 270584051 -D- Model::customMessageHandler::341    : Elevation: 250.4 m
+ 270584051 -D- Model::customMessageHandler::353    : Steps: 26
+ 270584051 -D- Model::customMessageHandler::388    : Battery: 99.0%
+ 270584553 -D- Model::customMessageHandler::353    : Steps: 26
+ 270585005 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270585006 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 33 33 fd 42 00 00 f0 42 
+ 270585006 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: b9 48 c7 47 0f 4c cd 47 
+ 270585006 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: ce ab cf 40 
+ 270585006 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: f8 8a ed 41 
+ 270585056 -D- Model::customMessageHandler::329    : hr 128.0, tl 3.0
+ 270585056 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270585056 -D- Model::customMessageHandler::382    : RTC: 5
+ 270585056 -D- Model::customMessageHandler::335    : GPS: 49.234245, 28.468273, 250.0
+ 270585056 -D- Model::customMessageHandler::341    : Elevation: 250.0 m
+ 270585056 -D- Model::customMessageHandler::353    : Steps: 32
+ 270585056 -D- Model::customMessageHandler::388    : Battery: 98.8%
+ 270585558 -D- Model::customMessageHandler::353    : Steps: 32
+ 270586010 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270586010 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 55 55 fe 42 00 00 f0 42 
+ 270586010 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 53 4e c7 47 7a 52 cd 47 
+ 270586010 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: b3 25 cd 40 
+ 270586010 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: df 3e 0a 42 
+ 270586060 -D- Model::customMessageHandler::329    : hr 129.0, tl 3.0
+ 270586060 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270586060 -D- Model::customMessageHandler::382    : RTC: 6
+ 270586060 -D- Model::customMessageHandler::335    : GPS: 49.234291, 28.468317, 250.1
+ 270586060 -D- Model::customMessageHandler::353    : Steps: 39
+ 270586060 -D- Model::customMessageHandler::341    : Elevation: 250.1 m
+ 270586060 -D- Model::customMessageHandler::388    : Battery: 98.6%
+ 270586562 -D- Model::customMessageHandler::353    : Steps: 39
+ 270587014 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270587014 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 49 92 ff 42 00 00 f0 42 
+ 270587014 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 00 4a c7 47 56 4b cd 47 
+ 270587014 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 25 d5 c9 40 
+ 270587014 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: a0 86 19 42 
+ 270587064 -D- Model::customMessageHandler::329    : hr 132.0, tl 3.0
+ 270587064 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270587064 -D- Model::customMessageHandler::382    : RTC: 7
+ 270587064 -D- Model::customMessageHandler::335    : GPS: 49.234329, 28.468336, 249.7
+ 270587064 -D- Model::customMessageHandler::341    : Elevation: 249.7 m
+ 270587064 -D- Model::customMessageHandler::388    : Battery: 98.4%
+ 270587064 -D- Model::customMessageHandler::353    : Steps: 45
+ 270587566 -D- Model::customMessageHandler::353    : Steps: 45
+ 270588018 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270588018 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 70 00 43 00 00 f0 42 
+ 270588018 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: a1 3e c7 47 6b 40 cd 47 
+ 270588018 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: ac ad c4 40 
+ 270588018 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: e8 a9 35 42 
+ 270588034 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270588034 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270588034 -D- Model::customMessageHandler::382    : RTC: 8
+ 270588034 -D- Model::customMessageHandler::335    : GPS: 49.234379, 28.468357, 249.8
+ 270588034 -D- Model::customMessageHandler::341    : Elevation: 249.8 m
+ 270588034 -D- Model::customMessageHandler::353    : Steps: 51
+ 270588034 -D- Model::customMessageHandler::388    : Battery: 98.2%
+ 270588570 -D- Model::customMessageHandler::353    : Steps: 51
+ 270589022 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270589022 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 55 d5 00 43 00 00 f0 42 
+ 270589022 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: c9 39 c7 47 f6 3d cd 47 
+ 270589022 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 08 fb c2 40 
+ 270589022 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 92 89 55 42 
+ 270589034 -D- Model::customMessageHandler::329    : hr 132.0, tl 3.0
+ 270589034 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270589034 -D- Model::customMessageHandler::382    : RTC: 9
+ 270589034 -D- Model::customMessageHandler::335    : GPS: 49.234421, 28.468414, 250.2
+ 270589034 -D- Model::customMessageHandler::341    : Elevation: 250.2 m
+ 270589034 -D- Model::customMessageHandler::353    : Steps: 57
+ 270589034 -D- Model::customMessageHandler::388    : Battery: 98.0%
+ 270589574 -D- Model::customMessageHandler::353    : Steps: 57
+ 270590026 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270590026 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: cd 4c 01 43 00 00 f0 42 
+ 270590026 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: b0 51 c7 47 75 58 cd 47 
+ 270590026 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 7e 80 c1 40 
+ 270590026 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: eb c4 7b 42 
+ 270590076 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270590076 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270590076 -D- Model::customMessageHandler::382    : RTC: 10
+ 270590076 -D- Model::customMessageHandler::335    : GPS: 49.234486, 28.468451, 250.5
+ 270590076 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270590076 -D- Model::customMessageHandler::353    : Steps: 63
+ 270590076 -D- Model::customMessageHandler::388    : Battery: 97.8%
+ 270590578 -D- Model::customMessageHandler::353    : Steps: 63
+ 270591030 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270591030 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 8c ae 01 43 00 00 f0 42 
+ 270591030 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 6c 53 c7 47 4d 56 cd 47 
+ 270591030 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 02 80 bf 40 
+ 270591030 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: f4 7c 83 42 
+ 270591081 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270591081 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270591081 -D- Model::customMessageHandler::382    : RTC: 11
+ 270591081 -D- Model::customMessageHandler::335    : GPS: 49.234528, 28.468485, 249.9
+ 270591081 -D- Model::customMessageHandler::341    : Elevation: 249.9 m
+ 270591081 -D- Model::customMessageHandler::353    : Steps: 69
+ 270591081 -D- Model::customMessageHandler::388    : Battery: 97.6%
+ 270591583 -D- Model::customMessageHandler::353    : Steps: 69
+ 270592035 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270592035 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 55 35 02 43 00 00 f0 42 
+ 270592035 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 95 36 c7 47 7a 3d cd 47 
+ 270592035 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 4a ee be 40 
+ 270592035 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: ca 92 94 42 
+ 270592134 -D- Model::customMessageHandler::329    : hr 135.0, tl 3.0
+ 270592134 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270592134 -D- Model::customMessageHandler::382    : RTC: 12
+ 270592134 -D- Model::customMessageHandler::335    : GPS: 49.234577, 28.468536, 250.7
+ 270592134 -D- Model::customMessageHandler::341    : Elevation: 250.7 m
+ 270592134 -D- Model::customMessageHandler::353    : Steps: 75
+ 270592134 -D- Model::customMessageHandler::388    : Battery: 97.4%
+ 270592635 -D- Model::customMessageHandler::353    : Steps: 75
+ 270593039 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270593039 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 3b b1 02 43 00 00 f0 42 
+ 270593039 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: c1 46 c7 47 dd 4c cd 47 
+ 270593039 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 68 19 bf 40 
+ 270593039 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 4e 6a a1 42 
+ 270593135 -D- Model::customMessageHandler::329    : hr 136.0, tl 3.0
+ 270593135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270593135 -D- Model::customMessageHandler::382    : RTC: 13
+ 270593135 -D- Model::customMessageHandler::335    : GPS: 49.234627, 28.468588, 250.5
+ 270593135 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270593135 -D- Model::customMessageHandler::353    : Steps: 81
+ 270593135 -D- Model::customMessageHandler::388    : Battery: 97.2%
+ 270593635 -D- Model::customMessageHandler::353    : Steps: 81
+ 270594043 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270594043 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: db 36 03 43 00 00 f0 42 
+ 270594043 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: ba 33 c7 47 5c 39 cd 47 
+ 270594043 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 0f 5c bc 40 
+ 270594043 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 8a c5 a7 42 
+ 270594134 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270594134 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270594134 -D- Model::customMessageHandler::382    : RTC: 14
+ 270594134 -D- Model::customMessageHandler::335    : GPS: 49.234661, 28.468628, 250.5
+ 270594134 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270594134 -D- Model::customMessageHandler::353    : Steps: 87
+ 270594134 -D- Model::customMessageHandler::388    : Battery: 97.0%
+ 270594634 -D- Model::customMessageHandler::353    : Steps: 87
+ 270595047 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270595047 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: cd cc 03 43 00 00 f0 42 
+ 270595047 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 41 49 c7 47 54 49 cd 47 
+ 270595047 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: b7 81 ba 40 
+ 270595047 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 66 1a b5 42 
+ 270595135 -D- Model::customMessageHandler::329    : hr 140.0, tl 3.0
+ 270595135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270595135 -D- Model::customMessageHandler::382    : RTC: 15
+ 270595135 -D- Model::customMessageHandler::335    : GPS: 49.234703, 28.468674, 249.5
+ 270595135 -D- Model::customMessageHandler::341    : Elevation: 249.5 m
+ 270595135 -D- Model::customMessageHandler::353    : Steps: 92
+ 270595135 -D- Model::customMessageHandler::388    : Battery: 96.8%
+ 270595635 -D- Model::customMessageHandler::353    : Steps: 92
+ 270596051 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270596051 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 50 04 43 00 00 f0 42 
+ 270596051 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: c2 48 c7 47 ec 4c cd 47 
+ 270596051 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 1a 41 ba 40 
+ 270596051 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 71 e7 c7 42 
+ 270596135 -D- Model::customMessageHandler::329    : hr 139.0, tl 3.0
+ 270596135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270596135 -D- Model::customMessageHandler::382    : RTC: 16
+ 270596135 -D- Model::customMessageHandler::335    : GPS: 49.234749, 28.468746, 250.2
+ 270596135 -D- Model::customMessageHandler::341    : Elevation: 250.2 m
+ 270596135 -D- Model::customMessageHandler::353    : Steps: 98
+ 270596135 -D- Model::customMessageHandler::388    : Battery: 96.6%
+ 270596635 -D- Model::customMessageHandler::353    : Steps: 98
+ 270597055 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270597055 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 4b cb 04 43 00 00 f0 42 
+ 270597055 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 5d 2a c7 47 e4 2d cd 47 
+ 270597055 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 46 c7 b6 40 
+ 270597055 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 9a f8 cc 42 
+ 270597134 -D- Model::customMessageHandler::329    : hr 140.0, tl 3.0
+ 270597134 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270597134 -D- Model::customMessageHandler::382    : RTC: 17
+ 270597134 -D- Model::customMessageHandler::335    : GPS: 49.234783, 28.468777, 250.2
+ 270597135 -D- Model::customMessageHandler::341    : Elevation: 250.2 m
+ 270597135 -D- Model::customMessageHandler::353    : Steps: 104
+ 270597135 -D- Model::customMessageHandler::388    : Battery: 96.4%
+ 270597634 -D- Model::customMessageHandler::353    : Steps: 104
+ 270598059 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270598059 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: e4 38 05 43 00 00 f0 42 
+ 270598059 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: bc 49 c7 47 db 4e cd 47 
+ 270598059 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 7f 89 b6 40 
+ 270598059 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: ba 39 d7 42 
+ 270598135 -D- Model::customMessageHandler::329    : hr 141.0, tl 3.0
+ 270598135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270598135 -D- Model::customMessageHandler::382    : RTC: 18
+ 270598135 -D- Model::customMessageHandler::335    : GPS: 49.234825, 28.468800, 250.3
+ 270598135 -D- Model::customMessageHandler::341    : Elevation: 250.3 m
+ 270598135 -D- Model::customMessageHandler::353    : Steps: 109
+ 270598135 -D- Model::customMessageHandler::388    : Battery: 96.2%
+ 270598634 -D- Model::customMessageHandler::353    : Steps: 109
+ 270599064 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270599064 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 28 af 05 43 00 00 f0 42 
+ 270599064 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 79 25 c7 47 a9 2e cd 47 
+ 270599064 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 2e 29 b7 40 
+ 270599064 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 00 dc e1 42 
+ 270599134 -D- Model::customMessageHandler::329    : hr 142.0, tl 3.0
+ 270599134 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270599134 -D- Model::customMessageHandler::382    : RTC: 19
+ 270599134 -D- Model::customMessageHandler::335    : GPS: 49.234848, 28.468849, 251.1
+ 270599134 -D- Model::customMessageHandler::341    : Elevation: 251.1 m
+ 270599134 -D- Model::customMessageHandler::353    : Steps: 115
+ 270599134 -D- Model::customMessageHandler::388    : Battery: 96.0%
+ 270599635 -D- Model::customMessageHandler::353    : Steps: 115
+ 270600068 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270600068 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 9a 19 06 43 00 00 f0 42 
+ 270600068 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 6e 4f c7 47 0f 54 cd 47 
+ 270600068 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 63 b7 b6 40 
+ 270600068 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 84 ca f5 42 
+ 270600135 -D- Model::customMessageHandler::329    : hr 142.0, tl 3.0
+ 270600135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270600135 -D- Model::customMessageHandler::382    : RTC: 20
+ 270600135 -D- Model::customMessageHandler::335    : GPS: 49.234879, 28.468933, 250.2
+ 270600135 -D- Model::customMessageHandler::341    : Elevation: 250.2 m
+ 270600135 -D- Model::customMessageHandler::353    : Steps: 121
+ 270600135 -D- Model::customMessageHandler::388    : Battery: 95.8%
+ 270600634 -D- Model::customMessageHandler::353    : Steps: 121
+ 270601072 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270601072 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 80 06 43 00 00 f0 42 
+ 270601072 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 09 34 c7 47 9e 3d cd 47 
+ 270601072 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: e9 4e b5 40 
+ 270601072 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 99 85 02 43 
+ 270601135 -D- Model::customMessageHandler::329    : hr 142.0, tl 3.0
+ 270601135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270601135 -D- Model::customMessageHandler::382    : RTC: 21
+ 270601135 -D- Model::customMessageHandler::335    : GPS: 49.234928, 28.468981, 251.1
+ 270601135 -D- Model::customMessageHandler::341    : Elevation: 251.1 m
+ 270601135 -D- Model::customMessageHandler::353    : Steps: 126
+ 270601135 -D- Model::customMessageHandler::388    : Battery: 95.6%
+ 270601634 -D- Model::customMessageHandler::353    : Steps: 126
+ 270602076 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270602076 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 8c ee 06 43 00 00 f0 42 
+ 270602076 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: f2 2b c7 47 46 31 cd 47 
+ 270602076 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 34 0e b3 40 
+ 270602076 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: e0 72 08 43 
+ 270602135 -D- Model::customMessageHandler::329    : hr 144.0, tl 3.0
+ 270602135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270602135 -D- Model::customMessageHandler::382    : RTC: 22
+ 270602135 -D- Model::customMessageHandler::335    : GPS: 49.234947, 28.469044, 250.5
+ 270602135 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270602135 -D- Model::customMessageHandler::353    : Steps: 132
+ 270602135 -D- Model::customMessageHandler::388    : Battery: 95.4%
+ 270602635 -D- Model::customMessageHandler::353    : Steps: 132
+ 270603080 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270603080 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 7a 53 07 43 00 00 f0 42 
+ 270603080 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 90 3e c7 47 3b 43 cd 47 
+ 270603080 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: ef 71 b6 40 
+ 270603080 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: fb f8 0f 43 
+ 270603135 -D- Model::customMessageHandler::329    : hr 144.0, tl 3.0
+ 270603135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270603135 -D- Model::customMessageHandler::382    : RTC: 23
+ 270603135 -D- Model::customMessageHandler::335    : GPS: 49.234978, 28.469116, 250.3
+ 270603135 -D- Model::customMessageHandler::341    : Elevation: 250.3 m
+ 270603135 -D- Model::customMessageHandler::353    : Steps: 138
+ 270603135 -D- Model::customMessageHandler::388    : Battery: 95.2%
+ 270603634 -D- Model::customMessageHandler::353    : Steps: 138
+ 270604084 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270604084 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: ab 9a 07 43 00 00 f0 42 
+ 270604084 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: cf 2a c7 47 65 2f cd 47 
+ 270604084 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: f6 37 b6 40 
+ 270604084 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: fc 53 12 43 
+ 270604135 -D- Model::customMessageHandler::329    : hr 143.0, tl 3.0
+ 270604135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270604135 -D- Model::customMessageHandler::382    : RTC: 24
+ 270604135 -D- Model::customMessageHandler::335    : GPS: 49.235001, 28.469164, 250.4
+ 270604135 -D- Model::customMessageHandler::341    : Elevation: 250.4 m
+ 270604135 -D- Model::customMessageHandler::353    : Steps: 143
+ 270604135 -D- Model::customMessageHandler::388    : Battery: 95.0%
+ 270604636 -D- Model::customMessageHandler::353    : Steps: 143
+ 270605089 -I- Service::run::218                   : Stats sent: SCPU0.1% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270605089 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 8f c2 07 43 00 00 f0 42 
+ 270605089 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: ba 5b c7 47 04 63 cd 47 
+ 270605089 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: c4 39 b8 40 
+ 270605089 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 6b 3b 1c 43 
+ 270605139 -D- Model::customMessageHandler::329    : hr 141.0, tl 3.0
+ 270605139 -D- Model::customMessageHandler::371    : Stats: S0.1% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270605139 -D- Model::customMessageHandler::382    : RTC: 25
+ 270605139 -D- Model::customMessageHandler::335    : GPS: 49.235035, 28.469246, 250.6
+ 270605139 -D- Model::customMessageHandler::341    : Elevation: 250.6 m
+ 270605139 -D- Model::customMessageHandler::353    : Steps: 149
+ 270605139 -D- Model::customMessageHandler::388    : Battery: 94.8%
+ 270605641 -D- Model::customMessageHandler::353    : Steps: 149
+ 270606093 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270606093 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: d9 c9 07 43 00 00 f0 42 
+ 270606093 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: d3 43 c7 47 cd 48 cd 47 
+ 270606093 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 4e 14 b8 40 
+ 270606093 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 8d d6 20 43 
+ 270606143 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270606143 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270606143 -D- Model::customMessageHandler::382    : RTC: 26
+ 270606143 -D- Model::customMessageHandler::335    : GPS: 49.235065, 28.469311, 250.3
+ 270606143 -D- Model::customMessageHandler::341    : Elevation: 250.3 m
+ 270606143 -D- Model::customMessageHandler::353    : Steps: 155
+ 270606143 -D- Model::customMessageHandler::388    : Battery: 94.6%
+ 270606645 -D- Model::customMessageHandler::353    : Steps: 155
+ 270607097 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270607097 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 5f c2 07 43 00 00 f0 42 
+ 270607097 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: a0 42 c7 47 9e 49 cd 47 
+ 270607097 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 16 8f b8 40 
+ 270607097 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: bb 6e 26 43 
+ 270607147 -D- Model::customMessageHandler::329    : hr 135.0, tl 3.0
+ 270607147 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270607147 -D- Model::customMessageHandler::382    : RTC: 27
+ 270607147 -D- Model::customMessageHandler::335    : GPS: 49.235092, 28.469379, 250.6
+ 270607147 -D- Model::customMessageHandler::341    : Elevation: 250.6 m
+ 270607147 -D- Model::customMessageHandler::353    : Steps: 160
+ 270607147 -D- Model::customMessageHandler::388    : Battery: 94.4%
+ 270607649 -D- Model::customMessageHandler::353    : Steps: 160
+ 270608101 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270608101 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: b7 ad 07 43 00 00 f0 42 
+ 270608101 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 94 44 c7 47 cd 4a cd 47 
+ 270608101 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 58 30 b6 40 
+ 270608101 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 5c 5d 2b 43 
+ 270608151 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270608151 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270608151 -D- Model::customMessageHandler::382    : RTC: 28
+ 270608151 -D- Model::customMessageHandler::335    : GPS: 49.235115, 28.469444, 250.5
+ 270608151 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270608151 -D- Model::customMessageHandler::353    : Steps: 166
+ 270608151 -D- Model::customMessageHandler::388    : Battery: 94.2%
+ 270608653 -D- Model::customMessageHandler::353    : Steps: 166
+ 270609105 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270609105 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 7c 9a 07 43 00 00 f0 42 
+ 270609105 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: ec 36 c7 47 58 36 cd 47 
+ 270609105 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 34 ff b6 40 
+ 270609105 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: c8 5f 34 43 
+ 270609155 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270609155 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270609155 -D- Model::customMessageHandler::382    : RTC: 29
+ 270609155 -D- Model::customMessageHandler::335    : GPS: 49.235130, 28.469538, 249.5
+ 270609155 -D- Model::customMessageHandler::341    : Elevation: 249.5 m
+ 270609155 -D- Model::customMessageHandler::353    : Steps: 172
+ 270609155 -D- Model::customMessageHandler::388    : Battery: 94.0%
+ 270609657 -D- Model::customMessageHandler::353    : Steps: 172
+ 270610109 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270610109 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 89 88 07 43 00 00 f0 42 
+ 270610109 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 84 39 c7 47 fc 3f cd 47 
+ 270610109 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 56 04 b7 40 
+ 270610109 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: a1 27 38 43 
+ 270610159 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270610159 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270610159 -D- Model::customMessageHandler::382    : RTC: 30
+ 270610159 -D- Model::customMessageHandler::335    : GPS: 49.235146, 28.469608, 250.6
+ 270610159 -D- Model::customMessageHandler::341    : Elevation: 250.6 m
+ 270610159 -D- Model::customMessageHandler::353    : Steps: 177
+ 270610159 -D- Model::customMessageHandler::388    : Battery: 93.8%
+ 270610661 -D- Model::customMessageHandler::353    : Steps: 177
+ 270611113 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270611114 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 5b 6b 07 43 00 00 f0 42 
+ 270611114 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: da 46 c7 47 a1 4a cd 47 
+ 270611114 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 2b 7a b9 40 
+ 270611114 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 54 d9 3c 43 
+ 270611164 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270611164 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270611164 -D- Model::customMessageHandler::335    : GPS: 49.235161, 28.469673, 250.1
+ 270611164 -D- Model::customMessageHandler::341    : Elevation: 250.1 m
+ 270611164 -D- Model::customMessageHandler::382    : RTC: 31
+ 270611164 -D- Model::customMessageHandler::353    : Steps: 183
+ 270611164 -D- Model::customMessageHandler::388    : Battery: 93.6%
+ 270611666 -D- Model::customMessageHandler::353    : Steps: 183
+ 270612118 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270612118 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 54 07 43 00 00 f0 42 
+ 270612118 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 5a 44 c7 47 de 4a cd 47 
+ 270612118 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 95 9f b8 40 
+ 270612118 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: fd 13 44 43 
+ 270612168 -D- Model::customMessageHandler::329    : hr 132.0, tl 3.0
+ 270612168 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270612168 -D- Model::customMessageHandler::382    : RTC: 32
+ 270612168 -D- Model::customMessageHandler::335    : GPS: 49.235184, 28.469749, 250.5
+ 270612168 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270612168 -D- Model::customMessageHandler::353    : Steps: 189
+ 270612168 -D- Model::customMessageHandler::388    : Battery: 93.4%
+ 270612670 -D- Model::customMessageHandler::353    : Steps: 189
+ 270613122 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270613122 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: f0 41 07 43 00 00 f0 42 
+ 270613122 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: a8 56 c7 47 48 5c cd 47 
+ 270613122 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 18 78 b5 40 
+ 270613122 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 28 49 47 43 
+ 270613172 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270613172 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270613172 -D- Model::customMessageHandler::382    : RTC: 33
+ 270613172 -D- Model::customMessageHandler::335    : GPS: 49.235195, 28.469810, 250.3
+ 270613172 -D- Model::customMessageHandler::341    : Elevation: 250.3 m
+ 270613172 -D- Model::customMessageHandler::353    : Steps: 194
+ 270613172 -D- Model::customMessageHandler::388    : Battery: 93.2%
+ 270613674 -D- Model::customMessageHandler::353    : Steps: 194
+ 270614126 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270614126 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: b5 34 07 43 00 00 f0 42 
+ 270614126 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 2e 5e c7 47 76 67 cd 47 
+ 270614126 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 67 3d b5 40 
+ 270614126 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 11 7c 4d 43 
+ 270614176 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270614176 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270614176 -D- Model::customMessageHandler::382    : RTC: 34
+ 270614176 -D- Model::customMessageHandler::335    : GPS: 49.235207, 28.469883, 250.9
+ 270614176 -D- Model::customMessageHandler::341    : Elevation: 250.9 m
+ 270614176 -D- Model::customMessageHandler::353    : Steps: 200
+ 270614176 -D- Model::customMessageHandler::388    : Battery: 93.0%
+ 270614678 -D- Model::customMessageHandler::353    : Steps: 200
+ 270615130 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270615130 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 3b 28 07 43 00 00 f0 42 
+ 270615130 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 7d 3b c7 47 b7 44 cd 47 
+ 270615130 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: ef 53 b6 40 
+ 270615130 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 10 c2 52 43 
+ 270615135 -D- Model::customMessageHandler::329    : hr 134.0, tl 0.0
+ 270615135 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270615135 -D- Model::customMessageHandler::382    : RTC: 35
+ 270615135 -D- Model::customMessageHandler::335    : GPS: 49.235229, 28.469946, 251.0
+ 270615135 -D- Model::customMessageHandler::341    : Elevation: 251.0 m
+ 270615135 -D- Model::customMessageHandler::353    : Steps: 206
+ 270615135 -D- Model::customMessageHandler::388    : Battery: 92.8%
+ 270615682 -D- Model::customMessageHandler::353    : Steps: 206
+ 270616134 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270616134 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 8e 23 07 43 00 00 f0 42 
+ 270616134 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 5a 2e c7 47 c1 33 cd 47 
+ 270616134 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 6b 3a b5 40 
+ 270616134 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: de df 5c 43 
+ 270616184 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270616184 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270616184 -D- Model::customMessageHandler::382    : RTC: 36
+ 270616184 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270616184 -D- Model::customMessageHandler::335    : GPS: 49.235241, 28.470047, 250.5
+ 270616184 -D- Model::customMessageHandler::353    : Steps: 211
+ 270616184 -D- Model::customMessageHandler::388    : Battery: 92.6%
+ 270616735 -D- Model::customMessageHandler::353    : Steps: 217
+ 270617138 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270617138 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: f9 2c 07 43 00 00 f0 42 
+ 270617138 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 94 54 c7 47 dc 59 cd 47 
+ 270617138 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: b8 15 b3 40 
+ 270617138 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 9d b3 5e 43 
+ 270617235 -D- Model::customMessageHandler::329    : hr 136.0, tl 3.0
+ 270617235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270617235 -D- Model::customMessageHandler::382    : RTC: 37
+ 270617235 -D- Model::customMessageHandler::335    : GPS: 49.235245, 28.470108, 250.3
+ 270617235 -D- Model::customMessageHandler::341    : Elevation: 250.3 m
+ 270617235 -D- Model::customMessageHandler::353    : Steps: 217
+ 270617235 -D- Model::customMessageHandler::388    : Battery: 92.4%
+ 270617735 -D- Model::customMessageHandler::353    : Steps: 222
+ 270618143 -I- Service::run::218                   : Stats sent: SCPU0.1% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270618143 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 43 39 07 43 00 00 f0 42 
+ 270618143 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 76 3a c7 47 84 3d cd 47 
+ 270618143 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: e3 54 b1 40 
+ 270618143 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 6d 44 67 43 
+ 270618235 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270618235 -D- Model::customMessageHandler::371    : Stats: S0.1% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270618235 -D- Model::customMessageHandler::382    : RTC: 38
+ 270618235 -D- Model::customMessageHandler::335    : GPS: 49.235264, 28.470192, 250.0
+ 270618235 -D- Model::customMessageHandler::341    : Elevation: 250.0 m
+ 270618235 -D- Model::customMessageHandler::353    : Steps: 222
+ 270618235 -D- Model::customMessageHandler::388    : Battery: 92.2%
+ 270618735 -D- Model::customMessageHandler::353    : Steps: 228
+ 270619147 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270619147 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: ec 44 07 43 00 00 f0 42 
+ 270619147 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 46 2e c7 47 ea 34 cd 47 
+ 270619147 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 8e 48 b2 40 
+ 270619147 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 6f 29 6d 43 
+ 270619235 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270619235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270619235 -D- Model::customMessageHandler::382    : RTC: 39
+ 270619235 -D- Model::customMessageHandler::335    : GPS: 49.235252, 28.470259, 250.7
+ 270619235 -D- Model::customMessageHandler::341    : Elevation: 250.7 m
+ 270619235 -D- Model::customMessageHandler::353    : Steps: 228
+ 270619235 -D- Model::customMessageHandler::388    : Battery: 92.0%
+ 270619735 -D- Model::customMessageHandler::353    : Steps: 233
+ 270620151 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270620151 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: cd 4c 07 43 00 00 f0 42 
+ 270620151 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 99 30 c7 47 7b 34 cd 47 
+ 270620151 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 26 a2 b4 40 
+ 270620151 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 40 4d 76 43 
+ 270620235 -D- Model::customMessageHandler::329    : hr 136.0, tl 3.0
+ 270620235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270620235 -D- Model::customMessageHandler::382    : RTC: 40
+ 270620235 -D- Model::customMessageHandler::335    : GPS: 49.235245, 28.470356, 250.2
+ 270620235 -D- Model::customMessageHandler::341    : Elevation: 250.2 m
+ 270620235 -D- Model::customMessageHandler::353    : Steps: 233
+ 270620235 -D- Model::customMessageHandler::388    : Battery: 91.8%
+ 270620735 -D- Model::customMessageHandler::353    : Steps: 239
+ 270621155 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270621155 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: e7 63 07 43 00 00 f0 42 
+ 270621155 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 7c 45 c7 47 80 4e cd 47 
+ 270621155 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: b8 50 b8 40 
+ 270621155 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: aa 35 7a 43 
+ 270621236 -D- Model::customMessageHandler::329    : hr 139.0, tl 3.0
+ 270621236 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270621236 -D- Model::customMessageHandler::382    : RTC: 41
+ 270621236 -D- Model::customMessageHandler::335    : GPS: 49.235252, 28.470428, 250.9
+ 270621236 -D- Model::customMessageHandler::341    : Elevation: 250.9 m
+ 270621236 -D- Model::customMessageHandler::353    : Steps: 239
+ 270621236 -D- Model::customMessageHandler::388    : Battery: 91.6%
+ 270621735 -D- Model::customMessageHandler::353    : Steps: 245
+ 270622159 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270622159 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: cf 73 07 43 00 00 f0 42 
+ 270622159 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 1f 3f c7 47 ca 43 cd 47 
+ 270622159 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: d3 19 b6 40 
+ 270622159 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 84 5b 80 43 
+ 270622235 -D- Model::customMessageHandler::329    : hr 138.0, tl 0.0
+ 270622235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270622235 -D- Model::customMessageHandler::382    : RTC: 42
+ 270622235 -D- Model::customMessageHandler::335    : GPS: 49.235245, 28.470507, 250.3
+ 270622235 -D- Model::customMessageHandler::341    : Elevation: 250.3 m
+ 270622235 -D- Model::customMessageHandler::353    : Steps: 245
+ 270622235 -D- Model::customMessageHandler::388    : Battery: 91.4%
+ 270622735 -D- Model::customMessageHandler::353    : Steps: 250
+ 270623163 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270623163 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 06 7d 07 43 00 00 f0 42 
+ 270623163 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 85 33 c7 47 f5 39 cd 47 
+ 270623163 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: c1 f2 b4 40 
+ 270623163 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 82 71 82 43 
+ 270623235 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270623235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270623235 -D- Model::customMessageHandler::382    : RTC: 43
+ 270623235 -D- Model::customMessageHandler::335    : GPS: 49.235241, 28.470573, 250.6
+ 270623235 -D- Model::customMessageHandler::341    : Elevation: 250.6 m
+ 270623235 -D- Model::customMessageHandler::353    : Steps: 250
+ 270623235 -D- Model::customMessageHandler::388    : Battery: 91.2%
+ 270623736 -D- Model::customMessageHandler::353    : Steps: 256
+ 270624167 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270624167 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: d1 85 07 43 00 00 f0 42 
+ 270624167 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 62 3e c7 47 f3 44 cd 47 
+ 270624167 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: e3 63 b4 40 
+ 270624167 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: e8 56 86 43 
+ 270624235 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270624235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270624235 -D- Model::customMessageHandler::382    : RTC: 44
+ 270624235 -D- Model::customMessageHandler::335    : GPS: 49.235237, 28.470661, 250.6
+ 270624235 -D- Model::customMessageHandler::341    : Elevation: 250.6 m
+ 270624235 -D- Model::customMessageHandler::353    : Steps: 256
+ 270624235 -D- Model::customMessageHandler::388    : Battery: 91.0%
+ 270624735 -D- Model::customMessageHandler::353    : Steps: 261
+ 270625172 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270625172 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 89 88 07 43 00 00 f0 42 
+ 270625172 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: ed 31 c7 47 27 35 cd 47 
+ 270625172 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: ed 95 b3 40 
+ 270625172 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: ba 7a 8a 43 
+ 270625235 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270625235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270625235 -D- Model::customMessageHandler::382    : RTC: 45
+ 270625235 -D- Model::customMessageHandler::335    : GPS: 49.235214, 28.470751, 250.1
+ 270625235 -D- Model::customMessageHandler::341    : Elevation: 250.1 m
+ 270625235 -D- Model::customMessageHandler::353    : Steps: 261
+ 270625235 -D- Model::customMessageHandler::388    : Battery: 90.8%
+ 270625735 -D- Model::customMessageHandler::353    : Steps: 267
+ 270626176 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270626176 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 80 07 43 00 00 f0 42 
+ 270626176 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 99 3a c7 47 43 3d cd 47 
+ 270626176 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 93 cf b7 40 
+ 270626176 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: e5 93 8d 43 
+ 270626235 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270626235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270626235 -D- Model::customMessageHandler::382    : RTC: 46
+ 270626235 -D- Model::customMessageHandler::335    : GPS: 49.235214, 28.470833, 250.0
+ 270626235 -D- Model::customMessageHandler::341    : Elevation: 250.0 m
+ 270626235 -D- Model::customMessageHandler::353    : Steps: 267
+ 270626235 -D- Model::customMessageHandler::388    : Battery: 90.6%
+ 270626736 -D- Model::customMessageHandler::353    : Steps: 273
+ 270627180 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270627180 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: d4 77 07 43 00 00 f0 42 
+ 270627180 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 1a 3f c7 47 07 4a cd 47 
+ 270627180 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: e5 d1 b7 40 
+ 270627180 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 87 59 8e 43 
+ 270627235 -D- Model::customMessageHandler::329    : hr 134.0, tl 0.0
+ 270627235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270627235 -D- Model::customMessageHandler::382    : RTC: 47
+ 270627235 -D- Model::customMessageHandler::335    : GPS: 49.235207, 28.470875, 251.3
+ 270627235 -D- Model::customMessageHandler::341    : Elevation: 251.3 m
+ 270627235 -D- Model::customMessageHandler::353    : Steps: 273
+ 270627235 -D- Model::customMessageHandler::388    : Battery: 90.4%
+ 270627735 -D- Model::customMessageHandler::353    : Steps: 278
+ 270628184 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270628184 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 55 6d 07 43 00 00 f0 42 
+ 270628184 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: d0 44 c7 47 17 49 cd 47 
+ 270628184 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 3a 03 b7 40 
+ 270628184 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 05 c1 92 43 
+ 270628235 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270628235 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270628235 -D- Model::customMessageHandler::382    : RTC: 48
+ 270628235 -D- Model::customMessageHandler::335    : GPS: 49.235184, 28.470951, 250.2
+ 270628235 -D- Model::customMessageHandler::341    : Elevation: 250.2 m
+ 270628235 -D- Model::customMessageHandler::353    : Steps: 278
+ 270628235 -D- Model::customMessageHandler::388    : Battery: 90.2%
+ 270628736 -D- Model::customMessageHandler::353    : Steps: 284
+ 270629188 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270629188 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 7d 68 07 43 00 00 f0 42 
+ 270629188 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: be 49 c7 47 5b 4b cd 47 
+ 270629188 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: b4 ea b8 40 
+ 270629188 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 97 e4 95 43 
+ 270629238 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270629238 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270629238 -D- Model::customMessageHandler::382    : RTC: 49
+ 270629238 -D- Model::customMessageHandler::335    : GPS: 49.235168, 28.471031, 249.7
+ 270629238 -D- Model::customMessageHandler::341    : Elevation: 249.7 m
+ 270629238 -D- Model::customMessageHandler::353    : Steps: 284
+ 270629238 -D- Model::customMessageHandler::388    : Battery: 90.0%
+ 270629740 -D- Model::customMessageHandler::353    : Steps: 290
+ 270630192 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270630192 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: f6 68 07 43 00 00 f0 42 
+ 270630192 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 74 3d c7 47 dd 40 cd 47 
+ 270630192 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 74 ef b6 40 
+ 270630192 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 18 f0 98 43 
+ 270630242 -D- Model::customMessageHandler::329    : hr 136.0, tl 3.0
+ 270630242 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270630242 -D- Model::customMessageHandler::382    : RTC: 50
+ 270630242 -D- Model::customMessageHandler::335    : GPS: 49.235146, 28.471102, 250.1
+ 270630242 -D- Model::customMessageHandler::341    : Elevation: 250.1 m
+ 270630242 -D- Model::customMessageHandler::353    : Steps: 290
+ 270630242 -D- Model::customMessageHandler::388    : Battery: 89.8%
+ 270630745 -D- Model::customMessageHandler::353    : Steps: 295
+ 270631197 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270631197 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 5a 5a 07 43 00 00 f0 42 
+ 270631197 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 29 36 c7 47 bd 38 cd 47 
+ 270631197 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: e8 5f b8 40 
+ 270631197 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 4e cf 9b 43 
+ 270631247 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270631247 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270631247 -D- Model::customMessageHandler::382    : RTC: 51
+ 270631247 -D- Model::customMessageHandler::335    : GPS: 49.235138, 28.471176, 250.0
+ 270631247 -D- Model::customMessageHandler::341    : Elevation: 250.0 m
+ 270631247 -D- Model::customMessageHandler::353    : Steps: 295
+ 270631247 -D- Model::customMessageHandler::388    : Battery: 89.6%
+ 270631749 -D- Model::customMessageHandler::353    : Steps: 301
+ 270632201 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270632201 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: c5 4e 07 43 00 00 f0 42 
+ 270632201 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: cb 3e c7 47 a9 44 cd 47 
+ 270632201 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 61 f4 b9 40 
+ 270632201 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: ee c8 9f 43 
+ 270632251 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270632251 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270632251 -D- Model::customMessageHandler::382    : RTC: 52
+ 270632251 -D- Model::customMessageHandler::335    : GPS: 49.235115, 28.471256, 250.5
+ 270632251 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270632251 -D- Model::customMessageHandler::353    : Steps: 301
+ 270632251 -D- Model::customMessageHandler::388    : Battery: 89.4%
+ 270632753 -D- Model::customMessageHandler::353    : Steps: 307
+ 270633205 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270633205 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: de 4a 07 43 00 00 f0 42 
+ 270633205 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: dc 43 c7 47 ca 4a cd 47 
+ 270633205 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: e0 2f b8 40 
+ 270633205 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: eb 1e a2 43 
+ 270633255 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270633255 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270633255 -D- Model::customMessageHandler::382    : RTC: 53
+ 270633255 -D- Model::customMessageHandler::335    : GPS: 49.235085, 28.471317, 250.6
+ 270633255 -D- Model::customMessageHandler::341    : Elevation: 250.6 m
+ 270633255 -D- Model::customMessageHandler::353    : Steps: 307
+ 270633255 -D- Model::customMessageHandler::388    : Battery: 89.2%
+ 270633757 -D- Model::customMessageHandler::353    : Steps: 313
+ 270634209 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270634209 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 98 50 07 43 00 00 f0 42 
+ 270634209 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 39 3d c7 47 ae 44 cd 47 
+ 270634209 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 12 47 b7 40 
+ 270634209 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 1f a7 a6 43 
+ 270634259 -D- Model::customMessageHandler::329    : hr 136.0, tl 3.0
+ 270634259 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270634259 -D- Model::customMessageHandler::382    : RTC: 54
+ 270634259 -D- Model::customMessageHandler::335    : GPS: 49.235062, 28.471409, 250.7
+ 270634259 -D- Model::customMessageHandler::341    : Elevation: 250.7 m
+ 270634259 -D- Model::customMessageHandler::353    : Steps: 313
+ 270634259 -D- Model::customMessageHandler::388    : Battery: 89.0%
+ 270634761 -D- Model::customMessageHandler::353    : Steps: 318
+ 270635213 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270635213 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 6b 5f 07 43 00 00 f0 42 
+ 270635213 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 71 3b c7 47 be 40 cd 47 
+ 270635213 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 7b 79 b5 40 
+ 270635213 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 85 c8 a8 43 
+ 270635263 -D- Model::customMessageHandler::329    : hr 138.0, tl 3.0
+ 270635263 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270635263 -D- Model::customMessageHandler::382    : RTC: 55
+ 270635263 -D- Model::customMessageHandler::335    : GPS: 49.235039, 28.471479, 250.4
+ 270635263 -D- Model::customMessageHandler::341    : Elevation: 250.4 m
+ 270635263 -D- Model::customMessageHandler::353    : Steps: 318
+ 270635263 -D- Model::customMessageHandler::388    : Battery: 88.8%
+ 270635765 -D- Model::customMessageHandler::353    : Steps: 324
+ 270636217 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270636217 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 70 07 43 00 00 f0 42 
+ 270636217 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 37 3b c7 47 dd 38 cd 47 
+ 270636217 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 5d ab b4 40 
+ 270636217 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 09 3f ab 43 
+ 270636267 -D- Model::customMessageHandler::329    : hr 140.0, tl 3.0
+ 270636267 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270636267 -D- Model::customMessageHandler::382    : RTC: 56
+ 270636267 -D- Model::customMessageHandler::335    : GPS: 49.235016, 28.471542, 249.2
+ 270636267 -D- Model::customMessageHandler::341    : Elevation: 249.2 m
+ 270636267 -D- Model::customMessageHandler::353    : Steps: 324
+ 270636267 -D- Model::customMessageHandler::388    : Battery: 88.6%
+ 270636769 -D- Model::customMessageHandler::353    : Steps: 329
+ 270637221 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270637222 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 82 7b 07 43 00 00 f0 42 
+ 270637222 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: d8 32 c7 47 e4 3b cd 47 
+ 270637222 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 56 02 b8 40 
+ 270637222 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 8b 96 ae 43 
+ 270637272 -D- Model::customMessageHandler::329    : hr 138.0, tl 3.0
+ 270637272 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270637272 -D- Model::customMessageHandler::382    : RTC: 57
+ 270637272 -D- Model::customMessageHandler::335    : GPS: 49.234997, 28.471619, 251.0
+ 270637272 -D- Model::customMessageHandler::341    : Elevation: 251.0 m
+ 270637272 -D- Model::customMessageHandler::353    : Steps: 329
+ 270637272 -D- Model::customMessageHandler::388    : Battery: 88.4%
+ 270637774 -D- Model::customMessageHandler::353    : Steps: 335
+ 270638226 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270638226 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: d4 88 07 43 00 00 f0 42 
+ 270638226 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: c7 39 c7 47 8b 3f cd 47 
+ 270638226 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 7e ed b4 40 
+ 270638226 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 19 f5 b1 43 
+ 270638276 -D- Model::customMessageHandler::329    : hr 139.0, tl 3.0
+ 270638276 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270638276 -D- Model::customMessageHandler::382    : RTC: 58
+ 270638276 -D- Model::customMessageHandler::335    : GPS: 49.234962, 28.471680, 250.5
+ 270638276 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270638276 -D- Model::customMessageHandler::353    : Steps: 335
+ 270638276 -D- Model::customMessageHandler::388    : Battery: 88.2%
+ 270638778 -D- Model::customMessageHandler::353    : Steps: 341
+ 270639230 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270639230 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 04 8d 07 43 00 00 f0 42 
+ 270639230 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 52 46 c7 47 c2 4a cd 47 
+ 270639230 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: e6 dd b3 40 
+ 270639230 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: e4 f8 b4 43 
+ 270639280 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270639280 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270639280 -D- Model::customMessageHandler::382    : RTC: 59
+ 270639280 -D- Model::customMessageHandler::335    : GPS: 49.234924, 28.471735, 250.2
+ 270639280 -D- Model::customMessageHandler::341    : Elevation: 250.2 m
+ 270639280 -D- Model::customMessageHandler::353    : Steps: 341
+ 270639280 -D- Model::customMessageHandler::388    : Battery: 88.0%
+ 270639782 -D- Model::customMessageHandler::353    : Steps: 346
+ 270640234 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270640234 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: ab 8a 07 43 00 00 f0 42 
+ 270640234 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 15 46 c7 47 8f 4d cd 47 
+ 270640234 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 42 4e b5 40 
+ 270640234 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 35 76 b7 43 
+ 270640284 -D- Model::customMessageHandler::329    : hr 135.0, tl 3.0
+ 270640284 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270640284 -D- Model::customMessageHandler::382    : RTC: 60
+ 270640284 -D- Model::customMessageHandler::335    : GPS: 49.234898, 28.471796, 250.7
+ 270640284 -D- Model::customMessageHandler::341    : Elevation: 250.7 m
+ 270640284 -D- Model::customMessageHandler::353    : Steps: 346
+ 270640284 -D- Model::customMessageHandler::388    : Battery: 87.8%
+ 270640835 -D- Model::customMessageHandler::353    : Steps: 352
+ 270641238 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270641238 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 4c 86 07 43 00 00 f0 42 
+ 270641238 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 42 54 c7 47 2a 5f cd 47 
+ 270641238 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 7b 86 b5 40 
+ 270641238 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 41 c0 b9 43 
+ 270641336 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270641336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270641336 -D- Model::customMessageHandler::382    : RTC: 61
+ 270641336 -D- Model::customMessageHandler::335    : GPS: 49.234871, 28.471848, 251.2
+ 270641336 -D- Model::customMessageHandler::341    : Elevation: 251.2 m
+ 270641336 -D- Model::customMessageHandler::353    : Steps: 352
+ 270641336 -D- Model::customMessageHandler::388    : Battery: 87.6%
+ 270641836 -D- Model::customMessageHandler::353    : Steps: 357
+ 270642242 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270642242 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 53 8a 07 43 00 00 f0 42 
+ 270642242 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 60 31 c7 47 2c 34 cd 47 
+ 270642242 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: a3 ba b4 40 
+ 270642242 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 86 c6 bc 43 
+ 270642336 -D- Model::customMessageHandler::329    : hr 136.0, tl 3.0
+ 270642336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270642336 -D- Model::customMessageHandler::382    : RTC: 62
+ 270642336 -D- Model::customMessageHandler::335    : GPS: 49.234840, 28.471905, 250.0
+ 270642336 -D- Model::customMessageHandler::341    : Elevation: 250.0 m
+ 270642336 -D- Model::customMessageHandler::353    : Steps: 357
+ 270642336 -D- Model::customMessageHandler::388    : Battery: 87.4%
+ 270642836 -D- Model::customMessageHandler::353    : Steps: 363
+ 270643246 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270643246 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 39 8e 07 43 00 00 f0 42 
+ 270643246 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 25 3b c7 47 c2 42 cd 47 
+ 270643246 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: da 2d b5 40 
+ 270643246 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 07 97 c0 43 
+ 270643336 -D- Model::customMessageHandler::329    : hr 136.0, tl 3.0
+ 270643336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270643336 -D- Model::customMessageHandler::382    : RTC: 63
+ 270643336 -D- Model::customMessageHandler::335    : GPS: 49.234802, 28.471973, 250.8
+ 270643336 -D- Model::customMessageHandler::341    : Elevation: 250.8 m
+ 270643336 -D- Model::customMessageHandler::353    : Steps: 363
+ 270643336 -D- Model::customMessageHandler::388    : Battery: 87.2%
+ 270643836 -D- Model::customMessageHandler::353    : Steps: 369
+ 270644251 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270644251 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 92 07 43 00 00 f0 42 
+ 270644251 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: c7 36 c7 47 6e 38 cd 47 
+ 270644251 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 75 47 b3 40 
+ 270644251 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: a6 fd c1 43 
+ 270644336 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270644336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270644336 -D- Model::customMessageHandler::382    : RTC: 64
+ 270644336 -D- Model::customMessageHandler::335    : GPS: 49.234776, 28.472025, 249.8
+ 270644336 -D- Model::customMessageHandler::341    : Elevation: 249.8 m
+ 270644336 -D- Model::customMessageHandler::353    : Steps: 369
+ 270644336 -D- Model::customMessageHandler::388    : Battery: 87.0%
+ 270644836 -D- Model::customMessageHandler::353    : Steps: 374
+ 270645255 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270645255 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: b9 91 07 43 00 00 f0 42 
+ 270645255 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 7a 4d c7 47 c7 57 cd 47 
+ 270645255 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 93 94 b4 40 
+ 270645255 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 00 e8 c4 43 
+ 270645335 -D- Model::customMessageHandler::329    : hr 137.0, tl 3.0
+ 270645335 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270645335 -D- Model::customMessageHandler::382    : RTC: 65
+ 270645335 -D- Model::customMessageHandler::335    : GPS: 49.234737, 28.472059, 251.1
+ 270645335 -D- Model::customMessageHandler::341    : Elevation: 251.1 m
+ 270645335 -D- Model::customMessageHandler::353    : Steps: 374
+ 270645335 -D- Model::customMessageHandler::388    : Battery: 86.8%
+ 270645835 -D- Model::customMessageHandler::353    : Steps: 380
+ 270646259 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270646259 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: a3 8b 07 43 00 00 f0 42 
+ 270646259 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: c8 2a c7 47 19 2d cd 47 
+ 270646259 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: c9 ba b1 40 
+ 270646259 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: e6 8c c8 43 
+ 270646336 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270646336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270646336 -D- Model::customMessageHandler::382    : RTC: 66
+ 270646336 -D- Model::customMessageHandler::335    : GPS: 49.234695, 28.472111, 250.0
+ 270646336 -D- Model::customMessageHandler::341    : Elevation: 250.0 m
+ 270646336 -D- Model::customMessageHandler::353    : Steps: 380
+ 270646336 -D- Model::customMessageHandler::388    : Battery: 86.6%
+ 270646836 -D- Model::customMessageHandler::353    : Steps: 385
+ 270647263 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270647263 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: e9 81 07 43 00 00 f0 42 
+ 270647263 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 54 1d c7 47 40 24 cd 47 
+ 270647263 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: dd dc af 40 
+ 270647263 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: af 22 cb 43 
+ 270647336 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270647336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270647336 -D- Model::customMessageHandler::382    : RTC: 67
+ 270647336 -D- Model::customMessageHandler::335    : GPS: 49.234653, 28.472157, 250.8
+ 270647336 -D- Model::customMessageHandler::341    : Elevation: 250.8 m
+ 270647336 -D- Model::customMessageHandler::353    : Steps: 385
+ 270647336 -D- Model::customMessageHandler::388    : Battery: 86.4%
+ 270647836 -D- Model::customMessageHandler::353    : Steps: 391
+ 270648267 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270648267 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 00 80 07 43 00 00 f0 42 
+ 270648267 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 2a 42 c7 47 7b 48 cd 47 
+ 270648267 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 25 03 b0 40 
+ 270648267 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 17 56 cd 43 
+ 270648335 -D- Model::customMessageHandler::329    : hr 134.0, tl 3.0
+ 270648335 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270648335 -D- Model::customMessageHandler::382    : RTC: 68
+ 270648335 -D- Model::customMessageHandler::335    : GPS: 49.234619, 28.472202, 250.5
+ 270648335 -D- Model::customMessageHandler::341    : Elevation: 250.5 m
+ 270648335 -D- Model::customMessageHandler::353    : Steps: 391
+ 270648335 -D- Model::customMessageHandler::388    : Battery: 86.2%
+ 270648835 -D- Model::customMessageHandler::353    : Steps: 396
+ 270649271 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270649271 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 29 71 07 43 00 00 f0 42 
+ 270649271 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 14 47 c7 47 13 4e cd 47 
+ 270649271 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 6a ef b4 40 
+ 270649271 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: f4 ee d0 43 
+ 270649336 -D- Model::customMessageHandler::329    : hr 132.0, tl 3.0
+ 270649336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270649336 -D- Model::customMessageHandler::382    : RTC: 69
+ 270649336 -D- Model::customMessageHandler::335    : GPS: 49.234581, 28.472260, 250.6
+ 270649336 -D- Model::customMessageHandler::341    : Elevation: 250.6 m
+ 270649336 -D- Model::customMessageHandler::353    : Steps: 396
+ 270649336 -D- Model::customMessageHandler::388    : Battery: 86.0%
+ 270649836 -D- Model::customMessageHandler::353    : Steps: 402
+ 270650276 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270650276 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: ea 60 07 43 00 00 f0 42 
+ 270650276 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 1a 43 c7 47 90 44 cd 47 
+ 270650276 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 6c 4f b1 40 
+ 270650276 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 7b fa d3 43 
+ 270650336 -D- Model::customMessageHandler::329    : hr 130.0, tl 3.0
+ 270650336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270650336 -D- Model::customMessageHandler::382    : RTC: 70
+ 270650336 -D- Model::customMessageHandler::335    : GPS: 49.234531, 28.472290, 249.7
+ 270650336 -D- Model::customMessageHandler::341    : Elevation: 249.7 m
+ 270650336 -D- Model::customMessageHandler::353    : Steps: 402
+ 270650336 -D- Model::customMessageHandler::388    : Battery: 85.8%
+ 270650836 -D- Model::customMessageHandler::353    : Steps: 407
+ 270651280 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270651280 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 89 56 07 43 00 00 f0 42 
+ 270651280 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 48 3c c7 47 67 40 cd 47 
+ 270651280 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 84 95 b1 40 
+ 270651280 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: cf cd d8 43 
+ 270651336 -D- Model::customMessageHandler::329    : hr 133.0, tl 3.0
+ 270651336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270651336 -D- Model::customMessageHandler::382    : RTC: 71
+ 270651336 -D- Model::customMessageHandler::335    : GPS: 49.234474, 28.472347, 250.2
+ 270651336 -D- Model::customMessageHandler::341    : Elevation: 250.2 m
+ 270651336 -D- Model::customMessageHandler::353    : Steps: 413
+ 270651336 -D- Model::customMessageHandler::388    : Battery: 85.6%
+ 270651835 -D- Model::customMessageHandler::353    : Steps: 413
+ 270652284 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270652284 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 1c 47 07 43 00 00 f0 42 
+ 270652284 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 45 4b c7 47 f8 50 cd 47 
+ 270652284 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 83 2a af 40 
+ 270652284 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: b8 d7 db 43 
+ 270652336 -D- Model::customMessageHandler::329    : hr 132.0, tl 3.0
+ 270652336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270652336 -D- Model::customMessageHandler::382    : RTC: 72
+ 270652336 -D- Model::customMessageHandler::335    : GPS: 49.234417, 28.472374, 250.4
+ 270652336 -D- Model::customMessageHandler::341    : Elevation: 250.4 m
+ 270652336 -D- Model::customMessageHandler::353    : Steps: 418
+ 270652336 -D- Model::customMessageHandler::388    : Battery: 85.4%
+ 270652836 -D- Model::customMessageHandler::353    : Steps: 418
+ 270653288 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270653288 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 5f 3d 07 43 00 00 f0 42 
+ 270653288 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 42 35 c7 47 c7 3b cd 47 
+ 270653288 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 37 21 af 40 
+ 270653288 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: 70 b1 e0 43 
+ 270653336 -D- Model::customMessageHandler::329    : hr 132.0, tl 3.0
+ 270653336 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270653336 -D- Model::customMessageHandler::382    : RTC: 73
+ 270653336 -D- Model::customMessageHandler::335    : GPS: 49.234348, 28.472410, 250.6
+ 270653336 -D- Model::customMessageHandler::341    : Elevation: 250.6 m
+ 270653336 -D- Model::customMessageHandler::353    : Steps: 423
+ 270653336 -D- Model::customMessageHandler::388    : Battery: 85.2%
+ 270653840 -D- Model::customMessageHandler::353    : Steps: 423
+ 270654292 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270654292 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: b4 2e 07 43 00 00 f0 42 
+ 270654292 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 51 5a c7 47 b0 62 cd 47 
+ 270654292 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 74 b8 af 40 
+ 270654292 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: c9 51 e2 43 
+ 270654342 -D- Model::customMessageHandler::329    : hr 131.0, tl 3.0
+ 270654342 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270654342 -D- Model::customMessageHandler::382    : RTC: 74
+ 270654342 -D- Model::customMessageHandler::335    : GPS: 49.234318, 28.472450, 250.7
+ 270654342 -D- Model::customMessageHandler::341    : Elevation: 250.7 m
+ 270654342 -D- Model::customMessageHandler::353    : Steps: 429
+ 270654342 -D- Model::customMessageHandler::388    : Battery: 85.0%
+ 270654844 -D- Model::customMessageHandler::353    : Steps: 429
+ 270655296 -I- Service::run::218                   : Stats sent: SCPU0.0% GCPU0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270655296 -D- Service::onSdlNewData::471          : Sensor: HEART_RATE_METRICS, Binary: 22 22 07 43 00 00 f0 42 
+ 270655296 -D- Service::onSdlNewData::507          : Sensor: PRESSURE, Binary: 01 44 c7 47 08 4c cd 47 
+ 270655296 -D- Service::onSdlNewData::603          : Sensor: GPS_SPEED, Binary: 85 30 b0 40 
+ 270655296 -D- Service::onSdlNewData::615          : Sensor: GPS_DISTANCE, Binary: e5 d0 e5 43 
+ 270655346 -D- Model::customMessageHandler::329    : hr 131.0, tl 3.0
+ 270655346 -D- Model::customMessageHandler::371    : Stats: S0.0% G0.0% TX:6 msg/s (320 B/s) RX:10 msg/s (148 B/s)
+ 270655346 -D- Model::customMessageHandler::382    : RTC: 75
+ 270655346 -D- Model::customMessageHandler::335    : GPS: 49.234276, 28.472492, 250.8
+ 270655346 -D- Model::customMessageHandler::341    : Elevation: 250.8 m
+ 270655346 -D- Model::customMessageHandler::353    : Steps: 434
+ 270655346 -D- Model::customMessageHandler::388    : Battery: 84.8%
