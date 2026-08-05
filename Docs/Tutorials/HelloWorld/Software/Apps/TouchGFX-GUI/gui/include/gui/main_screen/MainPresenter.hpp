@@ -31,6 +31,16 @@ public:
         model->exitApp();
     }
 
+    void rerunProbe() {
+        model->rerunProbe();
+    }
+
+    const RawTilesProbe& probe() const {
+        return model->probe();
+    }
+
+    virtual void onProbeUpdate();
+
 private:
     MainPresenter();
 

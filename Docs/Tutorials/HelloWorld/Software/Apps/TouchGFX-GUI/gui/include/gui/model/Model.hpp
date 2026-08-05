@@ -7,6 +7,7 @@
 #include "SDK/Interfaces/IGuiLifeCycleCallback.hpp"
 
 #include "gui/common/GuiConfig.hpp"
+#include "gui/model/RawTilesProbe.hpp"
 
 #include <vector>
 #include <memory>
@@ -35,6 +36,11 @@ public:
      */
     void exitApp();
 
+    /// Re-runs the rawtiles device probe (R1) and notifies the listener.
+    void rerunProbe();
+
+    const RawTilesProbe& probe() const { return mProbe; }
+
 protected:
     ModelListener* modelListener;           ///< Pointer to model listener
 
@@ -42,6 +48,10 @@ protected:
     const SDK::Kernel& mKernel;             ///< Reference to kernel interface
 
     bool mInvalidate = false;               ///< Request to redraw current screen
+
+    RawTilesProbe mProbe{mKernel};          ///< rawtiles device-feasibility probe
+    uint32_t mTickCount = 0;                ///< frames since boot
+    bool mProbeRan = false;                 ///< first probe fired
 
     // IUserApp implementation
     virtual void onStart()   override;

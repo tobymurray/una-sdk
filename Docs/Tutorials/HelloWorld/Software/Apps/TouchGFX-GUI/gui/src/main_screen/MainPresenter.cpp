@@ -16,3 +16,8 @@ void MainPresenter::deactivate()
 {
 
 }
+
+void MainPresenter::onProbeUpdate()
+{
+    view.updateProbe();
+}

@@ -18,6 +18,8 @@ public:
 
     virtual void onIdleTimeout() {}
 
+    virtual void onProbeUpdate() {}
+
 protected:
     Model* model;
 

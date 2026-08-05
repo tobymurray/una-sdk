@@ -63,6 +63,26 @@ void Model::tick()
         mInvalidate = false;
         application().invalidate();
     }
+
+    // Fire the probe ~1 s after boot rather than in the constructor: the
+    // screen is up first, so a filesystem call that stalls (or faults) is
+    // observable instead of looking like a boot hang.
+    ++mTickCount;
+    if (!mProbeRan && mTickCount == 60) {
+        mProbeRan = true;
+        mProbe.run();
+        if (modelListener) {
+            modelListener->onProbeUpdate();
+        }
+    }
+}
+
+void Model::rerunProbe()
+{
+    mProbe.run();
+    if (modelListener) {
+        modelListener->onProbeUpdate();
+    }
 }
 
 void Model::exitApp()
