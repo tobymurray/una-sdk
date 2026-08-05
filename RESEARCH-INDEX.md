@@ -97,6 +97,27 @@ was left untouched.
 
 ---
 
+## 4a. Sensor capability: can the watch produce HRV?
+
+`Docs/Investigations/2026-06-15-heart-beat-vs-ppg/`
+
+**Read this before designing anything HRV-shaped.** It records UNA's own authoritative answer
+(PR #167) to what the wrist sensor can and cannot do:
+
+- `HEART_BEAT` (0x40) emits **no events** — HR detection is a frequency-domain algorithm, not
+  per-beat detection. So RR intervals cannot be read off beat timestamps.
+- The PPG waveform is **20 Hz, single channel**, which UNA called "the low end for HRV
+  extraction." A higher-rate (higher-power) mode and on-chip HRV are both being explored, so
+  these numbers are expected to change.
+- **Optical HRV will only ever work at rest.** Mid-exercise HRV "can't be done optically — it
+  has to be an electrical measurement." This is physics, not a roadmap gap.
+
+That last point is why the chest-strap path (§3, `RR_INTERVAL_PR.md`) is structurally necessary
+rather than just convenient. The folder also keeps `BeatProbe.hpp` plus its usage guide and
+integration patch — a runnable 90-second diagnostic worth re-running once the firmware moves.
+
+---
+
 ## 5. Linux simulator
 
 | Path | What it is |
@@ -123,6 +144,7 @@ taken and any genuinely different document was kept alongside rather than overwr
 | `Docs/companion-data-channel-analysis.md` | `docs/companion-data-channel-analysis` |
 | `Docs/units-and-display.md` | `perf/unit-label-repaint-skip` (stack tip; superset of the `refactor/running-adopt-units` copy, and both supersede the retired `refactor/sdk-units-formatting` copy whose only difference was stale flash measurements) |
 | `Docs/Simulator-Linux.md`, screenshots | `experiments` (superset of the `old-linux-simulator` copy by 23 lines) |
+| `Docs/Investigations/2026-06-15-heart-beat-vs-ppg/**` | `feat/beat-event-probe`, plus the PR #167 discussion, which existed only on GitHub |
 | `RR_INTERVAL_PR.md` | `docs/rr-interval-pr` |
 | `proto-tests/` | `rfc/logger-if-constexpr-lifetime` (identical tree on `refactor/logger-if-constexpr-gating`) |
 
@@ -143,11 +165,14 @@ nothing is needed, the tags can be dropped — they are a safety net, not a perm
 
 ## 7. What is deliberately *not* here
 
-- **Branches attached to a pull request** were not touched at all, in any way: `#260`
+- **Branches attached to a live pull request** were not touched at all, in any way: `#260`
   `refactor/timer-retire-sender`, `#249` `ci/ratcheting-warning-gate`, `#234`
   `fix/reproducible-builds-macro-prefix-map`, `#220` `feat/rr-interval-contract`, `#214`
-  `fix/simulator-shutdown-pure-virtual`, `#167` `feat/beat-event-probe`, `#134`
-  `bug/drawpartialbitmap-y-clipping-repro`.
+  `fix/simulator-shutdown-pure-virtual`, `#134` `bug/drawpartialbitmap-y-clipping-repro`.
+
+  The one exception is `#167` `feat/beat-event-probe`, a declined PR whose whole purpose was to
+  ask a question. Both the probe and the answer are captured in §4a and the branch was retired;
+  GitHub keeps the PR and its discussion regardless.
 - **Live code.** Research documents were *copied* here, not moved: the branches that carry the
   corresponding implementation still carry their copy. This branch is for reading, not for
   building or merging from.
