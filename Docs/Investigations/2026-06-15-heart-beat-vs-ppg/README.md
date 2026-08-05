@@ -105,6 +105,12 @@ change every answer in §2, and re-probing is then the fastest way to find out w
 | `USAGE.md` | Build, flash, wear, and grep instructions, with an annotated sample log. Verbatim from the branch, where it lived at `Utilities/BeatProbe/README.md`. |
 | `Service.cpp.patch` | The wiring into the Sensors tutorial's `Service.cpp` — four taps in `onSdlNewData()`, a `tick()` per main-loop iteration, and a `flushFinal()` on `COMMAND_APP_STOP`. Apply against `Docs/Tutorials/Sensors/Software/Libs/Sources/Service.cpp`. |
 
+`Service.cpp.patch` was verified to apply cleanly to `upstream/main` as of `0f17b5c7`. It is
+therefore *more* usable than the retired branch was: that branch's copy of `Service.cpp` still
+called the per-app `mSender.update*()` methods, which upstream has since retired in favour of
+`SDK::send_msg<>`, so checking the branch out would have meant resolving that refactor first.
+The extracted patch touches only the probe taps and sidesteps it.
+
 To re-run: drop `BeatProbe.hpp` next to the Sensors tutorial's `Service.hpp`, apply
 `Service.cpp.patch`, then follow `USAGE.md`. Verdict **A** would mean beat events now exist;
 **B** means PPG-only (check the reported `est_rate` — if it is above 20 Hz, the higher-frequency
