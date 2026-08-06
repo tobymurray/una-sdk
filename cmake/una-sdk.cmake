@@ -36,6 +36,14 @@ set(UNA_SDK_SOURCES_TRACKMAP
     "$ENV{UNA_SDK}/Libs/Source/TrackMap/TrackMapBuilder.cpp"
 )
 
+# rawtiles binary tile-pack reader (SDK::RawTiles). No external dependency.
+# Not folded into UNA_SDK_SOURCES_SERVICE or _GUI by default -- an app opts
+# in by adding this to its own GUI (or service) source list, same as
+# UNA_SDK_SOURCES_TRACKMAP above.
+set(UNA_SDK_SOURCES_RAWTILES
+    "$ENV{UNA_SDK}/Libs/Source/RawTiles/Container.cpp"
+)
+
 # Variant-alias config reader (SDK::Variant). Needs UNA_SDK_SOURCES_JSON in
 # the same link (the GUI process must add both to read the config directly).
 set(UNA_SDK_SOURCES_VARIANT

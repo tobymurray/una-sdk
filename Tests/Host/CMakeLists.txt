@@ -62,6 +62,8 @@ add_executable(una-sdk-host-tests
     apps/Stopwatch/Stopwatch_test.cpp
     apps/Timer/TimerManager_test.cpp
     apps/Timer/Commands_test.cpp
+    rawtiles/RawTilesContainer_test.cpp
+    "${UNA_SDK_ROOT}/Libs/Source/RawTiles/Container.cpp"
     "${UNA_SDK_ROOT}/Examples/Apps/Timer/Software/Libs/Sources/TimerManager.cpp"
     "${UNA_SDK_ROOT}/Examples/Apps/Running/Software/Libs/Sources/SettingsSerializer.cpp"
     "${UNA_SDK_ROOT}/Examples/Apps/Running/Software/Libs/Sources/ActivityWriter.cpp"
