@@ -1,0 +1,6 @@
+[       OK ] StopwatchCore.SurvivesTheTickWrap (0 ms)
+[----------] 12 tests from StopwatchCore (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 224 tests from 24 test suites ran. (37 ms total)
+[  PASSED  ] 224 tests.

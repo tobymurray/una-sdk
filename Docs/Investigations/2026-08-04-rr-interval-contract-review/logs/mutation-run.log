@@ -1,0 +1,15 @@
+
+MUTATION                                                   VERDICT                  DETAIL
+--------------------------------------------------------------------------------------------------------------------------------------------
+M1 invert NO_SKIN_CONTACT                                  KILLED (10 test(s))      RrIntervalParser.AllFlagsSetAtOnce; RrIntervalParser.AllFlag
+M2 getFieldsNumber() returns 1 (the parse minimum)         KILLED (2 test(s))       RrIntervalParser.FieldsNumberIsTheFullStride; RrIntervalPars
+M3 swap SOURCE/FLAGS indices                               *** SURVIVED ***         
+M4 read rr_ms through .u instead of .f                     KILLED (10 test(s))      RrIntervalParser.BpmNeverReturnsInfinity; RrIntervalParser.B
+M5 isDataValid() drops the fieldCount>=1 short-circuit     KILLED (0 test(s))       
+M6 isDataValid() drops the isfinite/positive value guard   KILLED (2 test(s))       RrIntervalParser.UnusableRrValuesMakeTheFrameInvalid; RrInte
+M7 Source::ECG drifts 3 -> 4                               *** SURVIVED ***         
+M8 Source::EXTERNAL drifts 2 -> 5 (kernel-arbiter drift)   KILLED (compile error)   /src/Tests/Host/../../Libs/Header/SDK/SensorLayer/DataParser
+M9 swap DISCONTINUITY / ARTIFACT_SUSPECT bits              *** SURVIVED ***         
+M10 rr_ms silently reinterpreted as seconds (getBpm uses 60.0f) KILLED (4 test(s))       RrIntervalParser.ImplausibleButFiniteIntervalsArePassedThrou
+M11 getBpm() drops the infinity guard                      KILLED (2 test(s))       RrIntervalParser.BpmNeverReturnsInfinity; RrIntervalParser.B
+M12 timestamps no longer gate on validity                  KILLED (2 test(s))       RrIntervalParser.UnusableRrValuesMakeTheFrameInvalid; RrInte

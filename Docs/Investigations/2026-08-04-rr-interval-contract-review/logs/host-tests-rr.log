@@ -1,0 +1,20 @@
+[       OK ] RrIntervalParser.UnknownSourceForOutOfRangeValue (0 ms)
+[ RUN      ] RrIntervalParser.KnownFlagsCombine
+[       OK ] RrIntervalParser.KnownFlagsCombine (0 ms)
+[ RUN      ] RrIntervalParser.AllFlagsSetAtOnce
+[       OK ] RrIntervalParser.AllFlagsSetAtOnce (0 ms)
+[ RUN      ] RrIntervalParser.UndefinedFlagBitsDoNotDisturbKnownOnes
+[       OK ] RrIntervalParser.UndefinedFlagBitsDoNotDisturbKnownOnes (0 ms)
+[ RUN      ] RrIntervalParser.UnusableRrValuesMakeTheFrameInvalid
+[       OK ] RrIntervalParser.UnusableRrValuesMakeTheFrameInvalid (0 ms)
+[ RUN      ] RrIntervalParser.ImplausibleButFiniteIntervalsArePassedThrough
+[       OK ] RrIntervalParser.ImplausibleButFiniteIntervalsArePassedThrough (0 ms)
+[ RUN      ] RrIntervalParser.BpmNeverReturnsInfinity
+[       OK ] RrIntervalParser.BpmNeverReturnsInfinity (0 ms)
+[ RUN      ] RrIntervalParser.ZeroFieldFrameIsInvalid
+[       OK ] RrIntervalParser.ZeroFieldFrameIsInvalid (0 ms)
+[----------] 14 tests from RrIntervalParser (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 14 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 14 tests.

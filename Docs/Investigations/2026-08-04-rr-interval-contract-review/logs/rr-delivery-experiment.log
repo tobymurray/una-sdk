@@ -1,0 +1,43 @@
+[==========] Running 4 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 4 tests from RrDelivery
+[ RUN      ] RrDelivery.A_SharedArrivalTimestampDropsBeats
+[A] pushed=10 delivered=1 callbacks=1
+/src/Tests/Host/simulator/RrDelivery_experiment.cpp:101: Failure
+Expected equality of these values:
+  r.rr.size()
+    Which is: 1
+  kBeats.size()
+    Which is: 10
+shared-arrival burst lost beats
+
+[  FAILED  ] RrDelivery.A_SharedArrivalTimestampDropsBeats (0 ms)
+[ RUN      ] RrDelivery.B_BackdatedPerBeatTimestampsDeliverAll
+[B] pushed=10 delivered=10 callbacks=10
+[B]   beat 0 rr=812 src=2 disc=1 ts=91271
+[B]   beat 1 rr=986 src=2 disc=0 ts=92257
+[B]   beat 2 rr=1170 src=2 disc=0 ts=93427
+[       OK ] RrDelivery.B_BackdatedPerBeatTimestampsDeliverAll (0 ms)
+[ RUN      ] RrDelivery.C_BackdatedButFasterThanHalfMinPeriod
+[C] pushed=10 delivered=5 callbacks=5
+/src/Tests/Host/simulator/RrDelivery_experiment.cpp:123: Failure
+Expected equality of these values:
+  r.rr.size()
+    Which is: 5
+  fast.size()
+    Which is: 10
+sub-minPeriod/2 intervals silently dropped
+
+[  FAILED  ] RrDelivery.C_BackdatedButFasterThanHalfMinPeriod (0 ms)
+[ RUN      ] RrDelivery.D_OrderAndMetadataSurviveTheWire
+[       OK ] RrDelivery.D_OrderAndMetadataSurviveTheWire (0 ms)
+[----------] 4 tests from RrDelivery (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 2 tests.
+[  FAILED  ] 2 tests, listed below:
+[  FAILED  ] RrDelivery.A_SharedArrivalTimestampDropsBeats
+[  FAILED  ] RrDelivery.C_BackdatedButFasterThanHalfMinPeriod
+
+ 2 FAILED TESTS
