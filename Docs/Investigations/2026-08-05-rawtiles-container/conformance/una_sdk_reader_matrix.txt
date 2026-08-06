@@ -1,0 +1,103 @@
+=== golden ===
+  [PASS] golden-ancillary-tag.rawtiles -- 1 tile hashes match
+  [PASS] golden-attr.rawtiles -- 1 tile hashes match
+  [PASS] golden-canonical-uuid.rawtiles -- 1 tile hashes match
+  [PASS] golden-empty-quadtree.rawtiles -- 0 tile hashes match
+  [PASS] golden-grid.rawtiles -- 16 tile hashes match
+  [PASS] golden-minor-1.rawtiles -- 1 tile hashes match
+  [PASS] golden-names-multilocale.rawtiles -- 1 tile hashes match
+  [PASS] golden-orientation-mosaic.rawtiles -- 16 tile hashes match
+  [PASS] golden-orientation.rawtiles -- 1 tile hashes match
+  [PASS] golden-png-to-pack-1tile.rawtiles -- 1 tile hashes match
+  [PASS] golden-png-to-pack-5tiles.rawtiles -- 5 tile hashes match
+  [PASS] golden-pyramid.rawtiles -- 21 tile hashes match
+  [PASS] golden-singleimage-affn.rawtiles -- 1 tile hashes match
+  [PASS] golden-smallest.rawtiles -- 1 tile hashes match
+  [PASS] golden-supersedes.rawtiles -- 1 tile hashes match
+  [PASS] golden-tms.rawtiles -- 1 tile hashes match
+  [PASS] golden-zmax.rawtiles -- 1 tile hashes match
+
+=== negative ===
+  [PASS] neg-01-short-file.rawtiles -- rejected: file shorter than 296 bytes (§ 11 #1)
+  [PASS] neg-02-bad-magic.rawtiles -- rejected: magic ≠ 'RAWT' (§ 11 #2)
+  [PASS] neg-03-major-2.rawtiles -- rejected: format_version_major ≠ 1 (§ 11 #3)
+  [PASS] neg-05-uuid-zero.rawtiles -- rejected: pack_uuid == 0 or parent_uuid ≠ 0 (§ 11 #5/#6)
+  [PASS] neg-06-parent-nonzero.rawtiles -- rejected: pack_uuid == 0 or parent_uuid ≠ 0 (§ 11 #5/#6)
+  [PASS] neg-07a-pixfmt-0.rawtiles -- rejected: reserved enum value (§ 11 #7)
+  [PASS] neg-07b-pixfmt-5.rawtiles -- rejected: reserved enum value (§ 11 #7)
+  [PASS] neg-07c-proj-0.rawtiles -- rejected: reserved enum value (§ 11 #7)
+  [PASS] neg-07d-proj-2.rawtiles -- rejected: reserved enum value (§ 11 #7)
+  [PASS] neg-07e-addr-0.rawtiles -- rejected: reserved enum value (§ 11 #7)
+  [PASS] neg-07f-axis-0.rawtiles -- rejected: reserved enum value (§ 11 #7)
+  [PASS] neg-07g-comp-3.rawtiles -- rejected: reserved enum value (§ 11 #7)
+  [PASS] neg-08a-webmerc-singleimage.rawtiles -- rejected: illegal projection × addressing pair (§ 11 #8)
+  [PASS] neg-08b-locallinear-quadtree.rawtiles -- rejected: illegal projection × addressing pair (§ 11 #8)
+  [PASS] neg-09-tiledim-zero.rawtiles -- rejected: tile_dim_px == 0 (§ 11 #9)
+  [PASS] neg-10a-zmax-24.rawtiles -- rejected: zoom_max ≥ 24 or zoom_min > zoom_max (§ 11 #10)
+  [PASS] neg-10b-zmin-gt-zmax.rawtiles -- rejected: zoom_max ≥ 24 or zoom_min > zoom_max (§ 11 #10)
+  [PASS] neg-11a-lon-overflow.rawtiles -- rejected: bbox out of range or inverted (§ 11 #11)
+  [PASS] neg-11b-lat-overflow.rawtiles -- rejected: bbox out of range or inverted (§ 11 #11)
+  [PASS] neg-11c-lon-inverted.rawtiles -- rejected: bbox out of range or inverted (§ 11 #11)
+  [PASS] neg-11d-lat-inverted.rawtiles -- rejected: bbox out of range or inverted (§ 11 #11)
+  [PASS] neg-12a-flags-nonzero.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-12b-reserved-nonzero.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-13a-z-non-monotone.rawtiles -- rejected: tile index not strictly ascending (§ 11 #13)
+  [PASS] neg-13b-xy-not-strict.rawtiles -- rejected: tile index not strictly ascending (§ 11 #13)
+  [PASS] neg-13c-duplicate-zxy.rawtiles -- rejected: tile index not strictly ascending (§ 11 #13)
+  [PASS] neg-14a-offset-misaligned.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-14b-offset-below-blob.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-14c-offset-past-ext.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-14d-length-overrun.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-15a-z-above-zmax.rawtiles -- rejected: tile z outside [zoom_min, zoom_max] (§ 11 #15)
+  [PASS] neg-15b-z-below-zmin.rawtiles -- rejected: tile z outside [zoom_min, zoom_max] (§ 11 #15)
+  [PASS] neg-16-length-mismatch.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-17a-count-mismatch.rawtiles -- rejected: zoom_offsets[z] inconsistent with index (§ 11 #17)
+  [PASS] neg-17b-offset-mismatch.rawtiles -- rejected: zoom_offsets[z] inconsistent with index (§ 11 #17)
+  [PASS] neg-17c-offset-nonzero-empty.rawtiles -- rejected: zoom_offsets[z] inconsistent with index (§ 11 #17)
+  [PASS] neg-18a-extoff-misaligned.rawtiles -- rejected: extensions_offset misaligned or wrong (§ 11 #18)
+  [PASS] neg-18b-extoff-past-crc.rawtiles -- rejected: extensions_offset misaligned or wrong (§ 11 #18)
+  [PASS] neg-18c-extoff-below-blob.rawtiles -- rejected: extensions_offset misaligned or wrong (§ 11 #18)
+  [PASS] neg-18d-extoff-wrong-sum.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-19a-section-overruns.rawtiles -- rejected: extension-section framing violates § 7.1 (§ 11 #19)
+  [PASS] neg-19b-section-padding-nonzero.rawtiles -- rejected: extension-section framing violates § 7.1 (§ 11 #19)
+  [PASS] neg-19c-stranded-bytes.rawtiles -- rejected: extension-section framing violates § 7.1 (§ 11 #19)
+  [PASS] neg-20-unknown-uppercase-tag.rawtiles -- rejected: unknown upper-case tag or invalid tag bytes (§ 11 #20/#27/#28)
+  [PASS] neg-22-locallinear-no-affn.rawtiles -- rejected: LocalLinear without an AFFN section (§ 11 #22)
+  [PASS] neg-23a-singleimage-tilecount.rawtiles -- rejected: SingleImage structural rules violated (§ 11 #23)
+  [PASS] neg-23b-singleimage-entry-nonzero.rawtiles -- rejected: SingleImage structural rules violated (§ 11 #23)
+  [PASS] neg-23c-singleimage-zmax-nonzero.rawtiles -- rejected: SingleImage structural rules violated (§ 11 #23)
+  [PASS] neg-23d-singleimage-axis-tms.rawtiles -- rejected: SingleImage structural rules violated (§ 11 #23)
+  [PASS] neg-23e-singleimage-zoomoffsets-leak.rawtiles -- rejected: zoom_offsets[z] inconsistent with index (§ 11 #17)
+  [PASS] neg-24-crc-flipped.rawtiles -- rejected: CRC-32 footer mismatch (§ 11 #24)
+  [PASS] neg-25-index-offset-296.rawtiles -- rejected: index_offset ≠ 292 (§ 11 #25)
+  [PASS] neg-26a-name-payload-empty.rawtiles -- rejected: NAME payload too short for tag_length (§ 11 #26)
+  [PASS] neg-26b-name-tag-overruns.rawtiles -- rejected: NAME payload too short for tag_length (§ 11 #26)
+  [PASS] neg-27-tag-digit-first.rawtiles -- rejected: unknown upper-case tag or invalid tag bytes (§ 11 #20/#27/#28)
+  [PASS] neg-28-tag-nonprintable.rawtiles -- rejected: unknown upper-case tag or invalid tag bytes (§ 11 #20/#27/#28)
+  [PASS] neg-29a-duplicate-uppercase.rawtiles -- rejected: duplicate upper-case tag or NAME locale (§ 11 #29)
+  [PASS] neg-29b-duplicate-name-locale.rawtiles -- rejected: duplicate upper-case tag or NAME locale (§ 11 #29)
+  [PASS] neg-31a-x-overflow.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-31b-y-overflow.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-32a-tile-gap.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [PASS] neg-32b-tile-overlap.rawtiles -- rejected: tile-index entry violates § 11 #12/#14/#16/#31/#32
+  [FAIL] neg-33-padding-nonzero.rawtiles -- WRONGLY ACCEPTED
+  [PASS] neg-34-affn-length.rawtiles -- rejected: AFFN payload length ≠ 48 (§ 11 #34)
+  [PASS] neg-35a-affn-nan.rawtiles -- rejected: AFFN coefficient is NaN or ±∞ (§ 11 #35)
+  [PASS] neg-35b-affn-inf.rawtiles -- rejected: AFFN coefficient is NaN or ±∞ (§ 11 #35)
+  [PASS] neg-36-affn-with-webmercator.rawtiles -- rejected: AFFN present but projection ≠ LocalLinear (§ 11 #36)
+  [PASS] neg-37a-name-bad-utf8.rawtiles -- rejected: NAME name not UTF-8, or bcp47_tag outside v1 subset (§ 11 #37)
+  [PASS] neg-37b-name-bcp47-bad-case.rawtiles -- rejected: NAME name not UTF-8, or bcp47_tag outside v1 subset (§ 11 #37)
+  [PASS] neg-37c-name-bcp47-3-letter.rawtiles -- rejected: NAME name not UTF-8, or bcp47_tag outside v1 subset (§ 11 #37)
+  [PASS] neg-38a-srcd-bad-utf8.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+  [PASS] neg-38b-attr-bad-utf8.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+  [PASS] neg-38c-attr-crlf.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+  [PASS] neg-38d-attr-bare-cr.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+  [PASS] neg-38e-attr-c0-control.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+  [PASS] neg-38f-attr-nel.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+  [PASS] neg-38g-attr-ls.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+  [PASS] neg-38h-attr-trailing-lf.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+  [PASS] neg-38i-attr-empty.rawtiles -- rejected: SRCD/ATTR not UTF-8, or ATTR text rules violated (§ 11 #38)
+
+=== summary ===
+fixtures: passed 95 failed 1
+tile hashes: matched 70 mismatched 0

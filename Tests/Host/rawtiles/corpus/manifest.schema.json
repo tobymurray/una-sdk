@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rawtiles.spec/conformance/manifest.schema.json",
+  "title": "rawtiles conformance corpus manifest",
+  "description": "Machine-readable index of golden and negative fixtures. A consumer iterates fixtures[], opens each pack with the implementation under test, and compares the observed outcome against expected_outcome (plus expected_reject_rule for negatives). The pack_sha256 and hashes_sha256 fields let consumers detect corpus drift independently of running the generators.",
+  "type": "object",
+  "required": ["spec_version", "manifest_version", "generated_by", "fixtures"],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": {
+      "type": "string",
+      "description": "rawtiles spec document version this corpus targets (e.g. \"0.1\")."
+    },
+    "manifest_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Manifest schema version. Bump on backward-incompatible field changes."
+    },
+    "generated_by": {
+      "type": "string",
+      "description": "Free-form identifier of the tool that produced this manifest (e.g. \"rawtiles-conformance generators v1\")."
+    },
+    "fixtures": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Fixture" }
+    }
+  },
+  "$defs": {
+    "Fixture": {
+      "type": "object",
+      "required": ["name", "kind", "path", "description", "spec_refs", "expected_outcome", "pack_sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "Stem of the fixture filename, e.g. \"golden-smallest\" or \"neg-25-index-offset-296\"."
+        },
+        "kind": {
+          "enum": ["golden", "negative"]
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the .rawtiles file, relative to the conformance/ directory."
+        },
+        "description": {
+          "type": "string",
+          "description": "One-line human summary of what the fixture exercises."
+        },
+        "spec_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Spec sections this fixture exercises, e.g. [\"§ 4.13\", \"§ 8.6\"]. For negatives, includes the § 11 rule via expected_reject_rule, not here."
+        },
+        "expected_outcome": {
+          "enum": ["accept", "reject"],
+          "description": "What a conforming reader MUST do when opening this pack."
+        },
+        "pack_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 hex digest of the .rawtiles bytes. Drift sentinel."
+        },
+        "hashes_path": {
+          "type": "string",
+          "description": "Path to the sibling .hashes file (§ 14.5). Required for kind = golden."
+        },
+        "hashes_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 hex digest of the .hashes bytes. Required for kind = golden."
+        },
+        "expected_reject_rule": {
+          "type": "object",
+          "description": "Required for kind = negative. Identifies the § 11 rule this fixture targets.",
+          "required": ["rule_number", "summary"],
+          "additionalProperties": false,
+          "properties": {
+            "rule_number": {
+              "type": "string",
+              "pattern": "^[0-9]+[a-z]?$",
+              "description": "The § 11 rule number, e.g. \"14a\" for rule #14a."
+            },
+            "summary": {
+              "type": "string",
+              "description": "One-line restatement of the rule, e.g. \"entry offset must be 4-aligned\"."
+            }
+          }
+        },
+        "derived_from": {
+          "type": "string",
+          "description": "Required for kind = negative. Name of the golden fixture this is mutated from."
+        },
+        "mutation": {
+          "type": "string",
+          "description": "Required for kind = negative. One-line description of the byte-level mutation, e.g. \"set header[292:296] = 296 (was 292)\"."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "golden" } }, "required": ["kind"] },
+          "then": { "required": ["hashes_path", "hashes_sha256"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "negative" } }, "required": ["kind"] },
+          "then": { "required": ["expected_reject_rule", "derived_from", "mutation"] }
+        }
+      ]
+    }
+  }
+}

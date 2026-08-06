@@ -1,0 +1,3 @@
+# rawtiles per-tile hash table, § 14.5
+# format: <z> <x> <y> <sha256-hex>
+23 0 0 37939ed127a8cb94632c9db0bac7446dbb1fce3e66217efe4626ce4d7c384085

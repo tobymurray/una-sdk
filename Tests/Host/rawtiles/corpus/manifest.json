@@ -1,0 +1,1626 @@
+{
+  "spec_version": "0.6",
+  "manifest_version": 1,
+  "generated_by": "rawtiles-conformance generators v1",
+  "fixtures": [
+    {
+      "name": "golden-smallest",
+      "kind": "golden",
+      "path": "golden/golden-smallest.rawtiles",
+      "description": "Minimum-legal non-empty pack: 1 tile at (0,0,0), 8×8 px, WebMercator/Quadtree/XYZ, no extension sections.",
+      "spec_refs": [
+        "§ 4.13",
+        "§ 8.6",
+        "§ 14.3"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "1e8de2e30d566e74ed26ef0b614f64b94d51b12860bc87ad878b04c19f17aa11",
+      "hashes_path": "golden/golden-smallest.hashes",
+      "hashes_sha256": "78627ed359ed0ab84bad4cabcf66cd726901a6647346f7cb509793c9a315ed7a"
+    },
+    {
+      "name": "golden-grid",
+      "kind": "golden",
+      "path": "golden/golden-grid.rawtiles",
+      "description": "Regular 4×4 grid at z=2 (16 tiles, 8×8 px each), full WebMercator world coverage; no extension sections.",
+      "spec_refs": [
+        "§ 4.12",
+        "§ 5.2",
+        "§ 14.3",
+        "§ 14.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "40a370728f00d39d6c3ee43ad06fd1d21dfa52f09d46b57663467a5b46f5f876",
+      "hashes_path": "golden/golden-grid.hashes",
+      "hashes_sha256": "1afac5f4cf668418a3a958e5ba9bb81e7b1554cba69cc0b3bb6c013ddaaf7eb6"
+    },
+    {
+      "name": "golden-empty-quadtree",
+      "kind": "golden",
+      "path": "golden/golden-empty-quadtree.rawtiles",
+      "description": "Metadata-only Quadtree pack (§ 8.6): tile_count = 0, no tile blob, no extension sections. The smallest legal Quadtree pack at 296 bytes.",
+      "spec_refs": [
+        "§ 4.13",
+        "§ 8.6",
+        "§ 14.3"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "cb2f57242267f1bdcef32354a14b617d70ce36eba94b7e3cbbf98768cf67987a",
+      "hashes_path": "golden/golden-empty-quadtree.hashes",
+      "hashes_sha256": "85ab039fdfce4e7766fb9b6d8d9c6921339518839c67a54282c6aeea5a3b0684"
+    },
+    {
+      "name": "golden-singleimage-affn",
+      "kind": "golden",
+      "path": "golden/golden-singleimage-affn.rawtiles",
+      "description": "(LocalLinear, SingleImage) pack with 1 tile at (0,0,0), 8×8 px, AFFN extension placing the image over the 2°×2° square at origin. The only v1 path that exercises § 7.3 AFFN encoding and § 4.9 LocalLinear bbox derivation.",
+      "spec_refs": [
+        "§ 4.9",
+        "§ 7.3",
+        "§ 8.6",
+        "§ 14.3"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "941a789af77db6eae09afd992c89576bdf3dbaad849f43d80824f239ccfb94cd",
+      "hashes_path": "golden/golden-singleimage-affn.hashes",
+      "hashes_sha256": "b908ff1c2f7ff48567a4a95f2bfc0da2839fc04ef03e07d221ed4a274a1f5c73"
+    },
+    {
+      "name": "golden-attr",
+      "kind": "golden",
+      "path": "golden/golden-attr.rawtiles",
+      "description": "1-tile WebMercator pack with a single ATTR extension section (53-byte payload + 3 pad bytes) exercising § 7.1 extension framing, § 7.3 ATTR payload rules, and § 12.1 / A.4 multi-source string ordering (image-kind source attributed before url-kind source per the (zoom_min, zoom_max, kind, identity) sort key).",
+      "spec_refs": [
+        "§ 7.1",
+        "§ 7.3",
+        "§ 12.1",
+        "§ A.4",
+        "§ 14.3",
+        "§ 14.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "e2c985fdf2f92d7f63bda9b9565d2623eaac7afab6dce954efc251f4526cd3aa",
+      "hashes_path": "golden/golden-attr.hashes",
+      "hashes_sha256": "78627ed359ed0ab84bad4cabcf66cd726901a6647346f7cb509793c9a315ed7a"
+    },
+    {
+      "name": "golden-orientation",
+      "kind": "golden",
+      "path": "golden/golden-orientation.rawtiles",
+      "description": "1-tile WebMercator pack, 256×256 px, carrying a directional test pattern: RED/BLUE/GREEN/YELLOW 16-px edge stripes (top/bottom/left/right under XYZ), GREY interior, and 8×8 BLACK/WHITE/MAGENTA/CYAN corner dots (NW/NE/SW/SE) inset 8 px from the frame. The asymmetric pattern makes any vertical flip, transpose, or ABGR2222 channel-order bug visible by eye when the tile is rendered. Exercises § 6.2 row-major byte order, § 8.4 XYZ axis convention, and § 9.1 ABGR2222 saturated-palette encoding.",
+      "spec_refs": [
+        "§ 6.2",
+        "§ 8.4",
+        "§ 9.1",
+        "§ 14.3",
+        "§ 14.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "169ac6c61b9111f7865f45cd6a7c1974db30fc1d17ddc29d5d48e7dfe3a12ca9",
+      "hashes_path": "golden/golden-orientation.hashes",
+      "hashes_sha256": "a6fb67ff044967ab098c0da3339e447aa5148762ef8a03384581e85a8fb4aeb3"
+    },
+    {
+      "name": "golden-orientation-mosaic",
+      "kind": "golden",
+      "path": "golden/golden-orientation-mosaic.rawtiles",
+      "description": "4×4 mosaic at z=2 (16 tiles, 32×32 px each), full WebMercator world coverage. Each tile carries the same RED/BLUE/GREEN/YELLOW 4-px edge stripes + BLACK/WHITE/MAGENTA/CYAN 1-px corner dots as golden-orientation, plus a 24×24 interior fill whose byte encodes (x, y) as 0xD0 + (y << 2) + x. In the composed 128×128 mosaic the 16 interior bytes march 0xD0..0xDF in row-major order; tile-tile seams show paired BLUE/RED (horizontal) and YELLOW/GREEN (vertical) bands. Exercises § 5.2 multi-entry tile-index ordering, § 6.2 row-major byte order, § 8.4 XYZ axis (tile and pixel), and § 9.1 ABGR2222 encoding; complements golden-orientation (intra-tile) with inter-tile placement.",
+      "spec_refs": [
+        "§ 4.12",
+        "§ 5.2",
+        "§ 6.2",
+        "§ 8.4",
+        "§ 9.1",
+        "§ 14.3",
+        "§ 14.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "413ecb20955b7d179e64b8cd04301560c71934cf742c9ff385700fd5ef5a9162",
+      "hashes_path": "golden/golden-orientation-mosaic.hashes",
+      "hashes_sha256": "af3396d4e9df825461072da83a2e47093d977fb3ed3269fe0b41cb8b2b525758"
+    },
+    {
+      "name": "golden-minor-1",
+      "kind": "golden",
+      "path": "golden/golden-minor-1.rawtiles",
+      "description": "Minimum-legal pack identical to golden-smallest except `format_version_minor = 1`. Pins the § 11 #4 accept path: readers MUST accept (1, x) packs for any minor x, applying §§ 7.2 and 8 to whatever the pack contains.",
+      "spec_refs": [
+        "§ 4.2",
+        "§ 14.3"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "7a9b930af2e8c7dfb92a4f7df4c9d201cfce429b456225f83084c9af7ca9d4e0",
+      "hashes_path": "golden/golden-minor-1.hashes",
+      "hashes_sha256": "78627ed359ed0ab84bad4cabcf66cd726901a6647346f7cb509793c9a315ed7a"
+    },
+    {
+      "name": "golden-ancillary-tag",
+      "kind": "golden",
+      "path": "golden/golden-ancillary-tag.rawtiles",
+      "description": "1-tile pack identical to golden-smallest except for one extension section with the unknown lower-case tag `xnot` and a 4-byte ASCII payload `test`. Pins the § 11 #21 accept path: readers MUST accept and MAY ignore unknown lower-case-first tags. File size 392 bytes.",
+      "spec_refs": [
+        "§ 7.2"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "e9fa2f75f3186f85352c9292a0c7839b07a2479938552269b3df06267c41a07a",
+      "hashes_path": "golden/golden-ancillary-tag.hashes",
+      "hashes_sha256": "78627ed359ed0ab84bad4cabcf66cd726901a6647346f7cb509793c9a315ed7a"
+    },
+    {
+      "name": "golden-supersedes",
+      "kind": "golden",
+      "path": "golden/golden-supersedes.rawtiles",
+      "description": "1-tile pack identical to golden-smallest except `supersedes_uuid` (header bytes 24..40) is set to a non-zero deterministic UUID. The only v1 corpus fixture with supersedes_uuid != 0; pins the accept path for § 4.4's non-sentinel value.",
+      "spec_refs": [
+        "§ 4.4"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "3abace4e72bc35d100e79d5c230edef2f0d41fbcc802f5d3ad89809d5f7661df",
+      "hashes_path": "golden/golden-supersedes.hashes",
+      "hashes_sha256": "78627ed359ed0ab84bad4cabcf66cd726901a6647346f7cb509793c9a315ed7a"
+    },
+    {
+      "name": "golden-pyramid",
+      "kind": "golden",
+      "path": "golden/golden-pyramid.rawtiles",
+      "description": "Full pyramid for zooms 0..2: 1 + 4 + 16 = 21 tiles at 8×8 px each, WebMercator/Quadtree/XYZ, no extension sections. Exercises § 5.2 multi-zoom tile-index ordering, § 4.12 zoom_offsets with three populated slots, § 5.3 multi-level binary search, and § 14.5 multi-row .hashes table.",
+      "spec_refs": [
+        "§ 4.12",
+        "§ 5.2",
+        "§ 5.3",
+        "§ 14.3",
+        "§ 14.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "78c111ede3a8dee79ae5fb08e9fb8df02d5da96e70010dd6f2e477b0043aa55e",
+      "hashes_path": "golden/golden-pyramid.hashes",
+      "hashes_sha256": "3de49de1fd13404313c4204c5cbdc398465eb7899c80fb7339374a9e6d762e35"
+    },
+    {
+      "name": "golden-tms",
+      "kind": "golden",
+      "path": "golden/golden-tms.rawtiles",
+      "description": "1-tile pack identical to golden-smallest except `tile_axis_convention = 2` (TMS). The only v1 fixture exercising the TMS branch of § 4.9 (WebMercator y'-substitution) and § 6.2 (tile row order: first row southernmost). Single-tile at z=0 makes the y'-substitution a no-op, so the canonical bbox matches the XYZ baseline; the fixture pins the header-parse accept path.",
+      "spec_refs": [
+        "§ 6.2",
+        "§ 8.4"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "b352ca548e46730d2e716a356f0944c62490d62097a543d945159e1836151eb2",
+      "hashes_path": "golden/golden-tms.hashes",
+      "hashes_sha256": "78627ed359ed0ab84bad4cabcf66cd726901a6647346f7cb509793c9a315ed7a"
+    },
+    {
+      "name": "golden-zmax",
+      "kind": "golden",
+      "path": "golden/golden-zmax.rawtiles",
+      "description": "1-tile WebMercator/Quadtree/XYZ pack at (z=23, x=0, y=0). The only v1 fixture exercising the maximum legal zoom (§ 11 #10), the high end of zoom_offsets[24] (only slot 23 populated), and the non-canonical § 4.9 bbox derivation: `lon_east` via exact-i64 division + banker's rounding, `lat_south` via the libm-dependent atan/sinh path noted in § 14.1's deterministic-surface clause. The y=0 / x=0 special cases still apply to `lat_north` and `lon_west`.",
+      "spec_refs": [
+        "§ 4.8",
+        "§ 4.9",
+        "§ 4.12",
+        "§ 14.1",
+        "§ 14.3"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "7d6adbb8aa0648b059e39986884b291b4543ca5df2a3989d21edc4cec891f56d",
+      "hashes_path": "golden/golden-zmax.hashes",
+      "hashes_sha256": "afcfa602507642e6cce19af26dd9f21632ed6ba17e3bd8960cab988e53344c2f"
+    },
+    {
+      "name": "golden-names-multilocale",
+      "kind": "golden",
+      "path": "golden/golden-names-multilocale.rawtiles",
+      "description": "1-tile WebMercator pack with four NAME sections (tag_length=0 fallback, `en`, `zh`, `en-US`) in canonical § 12.1 byte-order. Pins the `zh` vs `en-US` byte-order trap: a writer that sorts by BCP-47 string would put `en-US` before `zh`, but the byte-order rule puts `zh` (length 2) before `en-US` (length 5) because the tag_length byte at payload offset 0 dominates. Exercises § 7.4 NAME payload layout, § 7.3 NFC text rules, and § 12.1 multi-instance section ordering. File size 456 bytes.",
+      "spec_refs": [
+        "§ 7.3",
+        "§ 7.4",
+        "§ 12.1",
+        "§ 14.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "12d70b951635baa3bce2d3e0ce2e225862c382ffd3e64ae000e30af98f057fc8",
+      "hashes_path": "golden/golden-names-multilocale.hashes",
+      "hashes_sha256": "78627ed359ed0ab84bad4cabcf66cd726901a6647346f7cb509793c9a315ed7a"
+    },
+    {
+      "name": "golden-canonical-uuid",
+      "kind": "golden",
+      "path": "golden/golden-canonical-uuid.rawtiles",
+      "description": "1-tile WebMercator/Quadtree/XYZ pack identical in shape to golden-smallest, except `pack_uuid` is derived via the Appendix A canonical pipeline (UUIDv5 over the rawtiles namespace + JCS-canonicalized descriptor): 70850b7c-62c2-56db-900b-eba2feb7b489. Module self-tests reproduce § A.5's worked example end-to-end (intermediate SHA-1 and final UUID must match the spec) before any byte is emitted; a build failure means the JCS pipeline is broken. The descriptor's lone source is `synthetic` (fixture_version=1), which skips the writer-pipeline content_hash.",
+      "spec_refs": [
+        "§ 4.3",
+        "§ A.1",
+        "§ A.2",
+        "§ A.3",
+        "§ A.4",
+        "§ A.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "7cd25a96dc231872aadff09dd9404c2efebd5e57cb07f4e8c6e26b953d52357b",
+      "hashes_path": "golden/golden-canonical-uuid.hashes",
+      "hashes_sha256": "78627ed359ed0ab84bad4cabcf66cd726901a6647346f7cb509793c9a315ed7a"
+    },
+    {
+      "name": "golden-png-to-pack-1tile",
+      "kind": "golden",
+      "path": "golden/golden-png-to-pack-1tile.rawtiles",
+      "description": "1-tile WebMercator/Quadtree/XYZ pack whose 4×4 tile carries the § 14.4 ABGR2222 quantiser test vector exactly: 16 pixels, 16 bytes. The module embeds the § 14.4 RGB888 input + expected ABGR2222 output as Python constants and asserts the canonical § 9.1.1 quantiser reproduces the expected output before any pack is emitted. The PNG-decode step is writer-implementation-specific per § 14.1 and is out of scope for the corpus; this fixture pins the deterministic post-decode RGB888 → ABGR2222 → pack path.",
+      "spec_refs": [
+        "§ 9.1.1",
+        "§ 14.3",
+        "§ 14.4",
+        "§ 14.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "0ec8644e1298bab2f8bbb601392a363867f6680a29cb4a79f1c75272fc2b21c3",
+      "hashes_path": "golden/golden-png-to-pack-1tile.hashes",
+      "hashes_sha256": "2ec581911caeeba55022a49b72b8d8d7ece23469d2af6eaa8af19d573ee17271"
+    },
+    {
+      "name": "golden-png-to-pack-5tiles",
+      "kind": "golden",
+      "path": "golden/golden-png-to-pack-5tiles.rawtiles",
+      "description": "5-tile WebMercator/Quadtree/XYZ pack at z=0..1 (1 + 4 tiles, 4×4 px each). The z=0 tile uses § 14.4's RGB888 test vector; the four z=1 tiles are solid red/green/blue/white. All tiles are quantised via § 9.1.1 from RGB888 inputs embedded in the generator module. Pairs with golden-png-to-pack-1tile to exercise the multi-tile quantiser path. File size 476 bytes.",
+      "spec_refs": [
+        "§ 9.1.1",
+        "§ 14.3",
+        "§ 14.4",
+        "§ 14.5"
+      ],
+      "expected_outcome": "accept",
+      "pack_sha256": "87abd3b400ae6ea0f5bff2681de7fa78336cbfdc01ad58330f919e2c6cd86ad7",
+      "hashes_path": "golden/golden-png-to-pack-5tiles.hashes",
+      "hashes_sha256": "fafcc11919afeefd8088217d89facc30ad74c0d9a01e20e72b22384c2e14f33b"
+    },
+    {
+      "name": "neg-01-short-file",
+      "kind": "negative",
+      "path": "negative/neg-01-short-file.rawtiles",
+      "description": "Pack truncated to 295 bytes (one less than the legal minimum 296). Header is intact in the first 292 bytes; the final 3 bytes are the first 3 bytes of the would-be tile-index entry. No CRC footer.",
+      "spec_refs": [
+        "§ 3",
+        "§ 11"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "771b931228e07cea362ef2daca70d38605432a4fadb44a85ab8db3e6c2dc720a",
+      "expected_reject_rule": {
+        "rule_number": "1",
+        "summary": "file size MUST be ≥ 296 bytes (292-byte header + 4-byte CRC footer) per § 11 #1"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "Truncated golden-smallest (380 bytes) to its first 295 bytes; CRC footer is absent. file_size 380 → 295."
+    },
+    {
+      "name": "neg-02-bad-magic",
+      "kind": "negative",
+      "path": "negative/neg-02-bad-magic.rawtiles",
+      "description": "Pack with first byte zeroed (\\x00AWT); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "1de87f31aafe16f94d4ce140dff3a63a189cd00490c857c5ecb71101f170ed3a",
+      "expected_reject_rule": {
+        "rule_number": "2",
+        "summary": "first 4 bytes MUST be ASCII \"RAWT\" (0x52 0x41 0x57 0x54)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[0] zeroed (magic RAWT → \\x00AWT); CRC recomputed."
+    },
+    {
+      "name": "neg-03-major-2",
+      "kind": "negative",
+      "path": "negative/neg-03-major-2.rawtiles",
+      "description": "Pack with format_version_major = 2; all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "d5946a80ba085e596fd75a192f22d7fc12bfd926140079aeeba5398b439176bf",
+      "expected_reject_rule": {
+        "rule_number": "3",
+        "summary": "format_version_major MUST be 1 in v1"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[4] (format_version_major) 1 → 2; CRC recomputed."
+    },
+    {
+      "name": "neg-05-uuid-zero",
+      "kind": "negative",
+      "path": "negative/neg-05-uuid-zero.rawtiles",
+      "description": "Pack with pack_uuid = 0 (the all-zero reserved sentinel); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "c165ec4bdadeb73b75753422cd36089ddca969cc05bab2b20080ad2c72077377",
+      "expected_reject_rule": {
+        "rule_number": "5",
+        "summary": "pack_uuid MUST NOT be all-zero (§ 4.3 reserves the value)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[8..24] (pack_uuid) sha256-derived → all-zero (16 zero bytes); CRC recomputed."
+    },
+    {
+      "name": "neg-06-parent-nonzero",
+      "kind": "negative",
+      "path": "negative/neg-06-parent-nonzero.rawtiles",
+      "description": "Pack with parent_uuid[0] = 1 (any non-zero value is reserved for future use in v1); CRC recomputed.",
+      "spec_refs": [
+        "§ 4.5"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "3e620348a85f6186be26173f3e2069130617e18ce9161c38c1e98800e8041ed2",
+      "expected_reject_rule": {
+        "rule_number": "6",
+        "summary": "parent_uuid MUST be all-zero in v1 (§ 4.5 reserves the field for future use)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[40] (parent_uuid byte 0) 0 → 1; CRC recomputed."
+    },
+    {
+      "name": "neg-07a-pixfmt-0",
+      "kind": "negative",
+      "path": "negative/neg-07a-pixfmt-0.rawtiles",
+      "description": "Pack with pixel_format = 0 (reserved); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 8.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "148c678a7a11538a0eca10918692c944a3bcaee279850d552c2d4a1aaf57a0e5",
+      "expected_reject_rule": {
+        "rule_number": "7",
+        "summary": "any unknown pixel_format, projection, tile_addressing_scheme, tile_axis_convention, or compression byte MUST be rejected (§ 8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "pixel_format byte (file offset 56) 1 → 0 (reserved); CRC recomputed."
+    },
+    {
+      "name": "neg-07b-pixfmt-5",
+      "kind": "negative",
+      "path": "negative/neg-07b-pixfmt-5.rawtiles",
+      "description": "Pack with pixel_format = 5 (reserved, L4 indexed); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 8.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "e966760d70763dec4cda970a4baf86489b2896a9005add7e784ffb2ff776c461",
+      "expected_reject_rule": {
+        "rule_number": "7",
+        "summary": "any unknown pixel_format, projection, tile_addressing_scheme, tile_axis_convention, or compression byte MUST be rejected (§ 8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "pixel_format byte (file offset 56) 1 → 5 (reserved, L4 indexed); CRC recomputed."
+    },
+    {
+      "name": "neg-07c-proj-0",
+      "kind": "negative",
+      "path": "negative/neg-07c-proj-0.rawtiles",
+      "description": "Pack with projection = 0 (reserved); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 8.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "090805d6b1d7247802334a2dc4b65b36c3369d60def06a95336decf22adbcb4e",
+      "expected_reject_rule": {
+        "rule_number": "7",
+        "summary": "any unknown pixel_format, projection, tile_addressing_scheme, tile_axis_convention, or compression byte MUST be rejected (§ 8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "projection byte (file offset 57) 1 → 0 (reserved); CRC recomputed."
+    },
+    {
+      "name": "neg-07d-proj-2",
+      "kind": "negative",
+      "path": "negative/neg-07d-proj-2.rawtiles",
+      "description": "Pack with projection = 2 (reserved, equirectangular); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 8.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "bba94d94716c588c0b44b705a847888b5dff904f1d03aa9395a195c389155fa9",
+      "expected_reject_rule": {
+        "rule_number": "7",
+        "summary": "any unknown pixel_format, projection, tile_addressing_scheme, tile_axis_convention, or compression byte MUST be rejected (§ 8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "projection byte (file offset 57) 1 → 2 (reserved, equirectangular); CRC recomputed."
+    },
+    {
+      "name": "neg-07e-addr-0",
+      "kind": "negative",
+      "path": "negative/neg-07e-addr-0.rawtiles",
+      "description": "Pack with tile_addressing_scheme = 0 (reserved); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 8.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "03e054a9ee436797cd6bb1be4f03f496d732d9826725ff86518812669acce5d9",
+      "expected_reject_rule": {
+        "rule_number": "7",
+        "summary": "any unknown pixel_format, projection, tile_addressing_scheme, tile_axis_convention, or compression byte MUST be rejected (§ 8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "tile_addressing_scheme byte (file offset 58) 1 → 0 (reserved); CRC recomputed."
+    },
+    {
+      "name": "neg-07f-axis-0",
+      "kind": "negative",
+      "path": "negative/neg-07f-axis-0.rawtiles",
+      "description": "Pack with tile_axis_convention = 0 (reserved); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 8.4"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "100fced381227a0256d2f38e32a4a887fb7b12d04374008b654a0e126a7d532c",
+      "expected_reject_rule": {
+        "rule_number": "7",
+        "summary": "any unknown pixel_format, projection, tile_addressing_scheme, tile_axis_convention, or compression byte MUST be rejected (§ 8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "tile_axis_convention byte (file offset 59) 1 → 0 (reserved); CRC recomputed."
+    },
+    {
+      "name": "neg-07g-comp-3",
+      "kind": "negative",
+      "path": "negative/neg-07g-comp-3.rawtiles",
+      "description": "Pack with compression = 3 (reserved, LZ4); all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 8.5"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "a21372d4fc8f921a8d2344de9196357c2ac238fe8ed99511896a780633e94e85",
+      "expected_reject_rule": {
+        "rule_number": "7",
+        "summary": "any unknown pixel_format, projection, tile_addressing_scheme, tile_axis_convention, or compression byte MUST be rejected (§ 8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "compression byte (file offset 293) 0 → 3 (reserved, LZ4); CRC recomputed."
+    },
+    {
+      "name": "neg-08a-webmerc-singleimage",
+      "kind": "negative",
+      "path": "negative/neg-08a-webmerc-singleimage.rawtiles",
+      "description": "Pack derived from golden-smallest with tile_addressing_scheme switched 1 (Quadtree) → 2 (SingleImage) while projection stays at 1 (WebMercator). golden-smallest already satisfies every SingleImage shape condition, so rule #23 stays quiet; the only violation is § 8.6's legal-pair constraint. CRC recomputed.",
+      "spec_refs": [
+        "§ 8.6"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "0a5ef420ca769d14bf51803ec5eaf6bfbd2c96aafc90457ffd49553cd1b12af5",
+      "expected_reject_rule": {
+        "rule_number": "8",
+        "summary": "the (projection, tile_addressing_scheme) pair MUST be one of the two legal v1 combinations in § 8.6: (WebMercator, Quadtree) or (LocalLinear, SingleImage); any other pairing MUST be rejected (§ 8.6 + § 11 #8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[58] (tile_addressing_scheme) 1 (Quadtree) → 2 (SingleImage); CRC recomputed."
+    },
+    {
+      "name": "neg-08b-locallinear-quadtree",
+      "kind": "negative",
+      "path": "negative/neg-08b-locallinear-quadtree.rawtiles",
+      "description": "Pack derived from golden-singleimage-affn with tile_addressing_scheme switched 2 (SingleImage) → 1 (Quadtree) while projection stays at 3 (LocalLinear). The AFFN section remains valid (rule #22, #34, #35 stay quiet); zoom_offsets and the lone entry stay consistent for Quadtree's 1-tile layout; rule #23 no longer applies. The pair is the lone violation. CRC recomputed.",
+      "spec_refs": [
+        "§ 8.6"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "9d7bd73a642b973bc6fb3d72333d58a3353477ff4487267676e65684a91ce1ba",
+      "expected_reject_rule": {
+        "rule_number": "8",
+        "summary": "the (projection, tile_addressing_scheme) pair MUST be one of the two legal v1 combinations in § 8.6: (WebMercator, Quadtree) or (LocalLinear, SingleImage); any other pairing MUST be rejected (§ 8.6 + § 11 #8)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "header[58] (tile_addressing_scheme) 2 (SingleImage) → 1 (Quadtree); CRC recomputed."
+    },
+    {
+      "name": "neg-09-tiledim-zero",
+      "kind": "negative",
+      "path": "negative/neg-09-tiledim-zero.rawtiles",
+      "description": "Pack with tile_dim_px = 0; § 4.7 requires non-zero. Built on the metadata-only base so § 11 #16 (length = tile_dim²) cannot also fire. CRC recomputed.",
+      "spec_refs": [
+        "§ 4.7"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "c4938044257cd0fac92775083fbe32487724970378eae137a77c50645b66bde3",
+      "expected_reject_rule": {
+        "rule_number": "9",
+        "summary": "tile_dim_px MUST be non-zero (§ 4.7)"
+      },
+      "derived_from": "golden-empty-quadtree",
+      "mutation": "header[60..62] (tile_dim_px, u16 LE) 8 → 0; CRC recomputed."
+    },
+    {
+      "name": "neg-10a-zmax-24",
+      "kind": "negative",
+      "path": "negative/neg-10a-zmax-24.rawtiles",
+      "description": "Pack with zoom_max = 24 (§ 4.8 requires zoom_max < 24, the size of zoom_offsets[24]); CRC recomputed.",
+      "spec_refs": [
+        "§ 4.8"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "6a3a1382d42cfe2777ae49fa1a57a4c2cb021ff672f3ed85a8ce8d56a1f5cf07",
+      "expected_reject_rule": {
+        "rule_number": "10",
+        "summary": "zoom_max MUST be < 24 and zoom_min MUST be ≤ zoom_max (§ 4.8)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[63] (zoom_max) 0 → 24; CRC recomputed."
+    },
+    {
+      "name": "neg-10b-zmin-gt-zmax",
+      "kind": "negative",
+      "path": "negative/neg-10b-zmin-gt-zmax.rawtiles",
+      "description": "Pack with zoom_min = 1 and zoom_max = 0 (inverted). Built on the metadata-only base so § 11 #15 (entry z out of [zmin, zmax]) cannot also fire. CRC recomputed.",
+      "spec_refs": [
+        "§ 4.8"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "868047ea2f2760657730f3a4aa91cfe0c3e056ed11dfdbd0dfe9d256558c336a",
+      "expected_reject_rule": {
+        "rule_number": "10",
+        "summary": "zoom_max MUST be < 24 and zoom_min MUST be ≤ zoom_max (§ 4.8)"
+      },
+      "derived_from": "golden-empty-quadtree",
+      "mutation": "header[62] (zoom_min) 0 → 1; header[63] (zoom_max) stays at 0; CRC recomputed."
+    },
+    {
+      "name": "neg-11a-lon-overflow",
+      "kind": "negative",
+      "path": "negative/neg-11a-lon-overflow.rawtiles",
+      "description": "Pack with bbox.max_lon = +180_000_001, one µ° past the +180_000_000 limit; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.9"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "ea81863263f11b25c1e5ec0ed688ae6000ab772bbc3e3c8e775dcd6e2bdbdf61",
+      "expected_reject_rule": {
+        "rule_number": "11",
+        "summary": "bbox values MUST lie within [-180M, +180M] µ° (lon) / [-90M, +90M] µ° (lat) and satisfy min ≤ max (§ 4.9)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[72..76] (bbox.max_lon) 180_000_000 → 180_000_001 (out of [-180M, +180M] µ° range); CRC recomputed."
+    },
+    {
+      "name": "neg-11b-lat-overflow",
+      "kind": "negative",
+      "path": "negative/neg-11b-lat-overflow.rawtiles",
+      "description": "Pack with bbox.min_lat = -90_000_001, one µ° past the -90_000_000 limit; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.9"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "f684f980b968b2c53b09a46383dd07b97ca1c039b440cc0a50b06d32b0e72115",
+      "expected_reject_rule": {
+        "rule_number": "11",
+        "summary": "bbox values MUST lie within [-180M, +180M] µ° (lon) / [-90M, +90M] µ° (lat) and satisfy min ≤ max (§ 4.9)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[68..72] (bbox.min_lat) -85_051_129 → -90_000_001 (out of [-90M, +90M] µ° range); CRC recomputed."
+    },
+    {
+      "name": "neg-11c-lon-inverted",
+      "kind": "negative",
+      "path": "negative/neg-11c-lon-inverted.rawtiles",
+      "description": "Pack with bbox lon endpoints swapped (min_lon > max_lon); both values still in range, so inversion is the lone violation; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.9"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "e26937058789317a099c93d82f2b49958b902ab62652399ab86cbf4fe92b3083",
+      "expected_reject_rule": {
+        "rule_number": "11",
+        "summary": "bbox values MUST lie within [-180M, +180M] µ° (lon) / [-90M, +90M] µ° (lat) and satisfy min ≤ max (§ 4.9)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[64..68] (bbox.min_lon) and header[72..76] (bbox.max_lon) swapped: min_lon -180_000_000 → +180_000_000, max_lon +180_000_000 → -180_000_000; CRC recomputed."
+    },
+    {
+      "name": "neg-11d-lat-inverted",
+      "kind": "negative",
+      "path": "negative/neg-11d-lat-inverted.rawtiles",
+      "description": "Pack with bbox lat endpoints swapped (min_lat > max_lat); both values still in range, so inversion is the lone violation; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.9"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "7a4bbe141c107afd7de61ec740a9c9f3d504387a236391def28f0596de1e69a1",
+      "expected_reject_rule": {
+        "rule_number": "11",
+        "summary": "bbox values MUST lie within [-180M, +180M] µ° (lon) / [-90M, +90M] µ° (lat) and satisfy min ≤ max (§ 4.9)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[68..72] (bbox.min_lat) and header[76..80] (bbox.max_lat) swapped: min_lat -85_051_129 → +85_051_129, max_lat +85_051_129 → -85_051_129; CRC recomputed."
+    },
+    {
+      "name": "neg-12a-flags-nonzero",
+      "kind": "negative",
+      "path": "negative/neg-12a-flags-nonzero.rawtiles",
+      "description": "Pack whose lone tile-index entry has flags = 1; v1 requires flags = 0; CRC recomputed.",
+      "spec_refs": [
+        "§ 5.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "7490605e0dd36212d110e7d93a58125c903ec27a9537bcf136c0090b1ca75c0f",
+      "expected_reject_rule": {
+        "rule_number": "12",
+        "summary": "tile-index entry flags (byte 2) and reserved (byte 3) MUST be 0 in v1 (§ 5.2)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[294] (tile-index entry 0 byte 2, flags) 0 → 1; CRC recomputed."
+    },
+    {
+      "name": "neg-12b-reserved-nonzero",
+      "kind": "negative",
+      "path": "negative/neg-12b-reserved-nonzero.rawtiles",
+      "description": "Pack whose lone tile-index entry has reserved = 1; v1 requires reserved = 0; CRC recomputed.",
+      "spec_refs": [
+        "§ 5.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "12c14844e1621d08cf08c9e619680c896041a0791e8fb99910557cb8fd11716c",
+      "expected_reject_rule": {
+        "rule_number": "12",
+        "summary": "tile-index entry flags (byte 2) and reserved (byte 3) MUST be 0 in v1 (§ 5.2)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[295] (tile-index entry 0 byte 3, reserved) 0 → 1; CRC recomputed."
+    },
+    {
+      "name": "neg-13a-z-non-monotone",
+      "kind": "negative",
+      "path": "negative/neg-13a-z-non-monotone.rawtiles",
+      "description": "Custom 3-entry pack with one tile per zoom (z ∈ {0, 1, 2}) written in physical order z = [2, 1, 0]. The z sequence across the index is strictly decreasing, violating rule #13's z-non-decreasing arm. zoom_offsets correctly target each entry with count = 1 so directory-consistency (rule #17) stays quiet.",
+      "spec_refs": [
+        "§ 5.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "ef1305457af17d76ff3bfabd7d7ad8dc6057568a9f6cd6b0389dc04f4a9297be",
+      "expected_reject_rule": {
+        "rule_number": "13",
+        "summary": "tile-index entries MUST be sorted ascending by (z, x, y): z non-decreasing across all entries; within each zoom, (x, y) strictly ascending lexicographically (§ 11 #13)"
+      },
+      "derived_from": "golden-pyramid",
+      "mutation": "Built from scratch in the shape of a 3-entry pack with one tile per zoom ∈ {0, 1, 2}. Entries written in physical order z = [2, 1, 0] so the (z) sequence across the index is strictly decreasing — violating rule #13's `z non-decreasing` arm. zoom_offsets[0..2] each point at their respective entry's byte offset with count = 1, so rule #17 stays quiet; tile_blob_start, entry offsets, and extensions_offset are sequential 4-aligned so rules #14, #32, #18 stay quiet."
+    },
+    {
+      "name": "neg-13b-xy-not-strict",
+      "kind": "negative",
+      "path": "negative/neg-13b-xy-not-strict.rawtiles",
+      "description": "Pack derived from golden-grid by swapping entry 0's and entry 1's `y` LSBs, yielding the (x, y) sequence `(0,1), (0,0), (0,2), ...`. (0,1) > (0,0) breaks strict ascending between adjacent entries. Offsets and counts are unchanged so rules #14, #17, and #32 stay quiet; CRC recomputed.",
+      "spec_refs": [
+        "§ 5.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "5ddf3cfa69bf2be9da0de3fd03abc3f630c63ebfa073f7b4b678c1d274873299",
+      "expected_reject_rule": {
+        "rule_number": "13",
+        "summary": "tile-index entries MUST be sorted ascending by (z, x, y): z non-decreasing across all entries; within each zoom, (x, y) strictly ascending lexicographically (forbids duplicate triples and underpins § 5.3's binary search) (§ 11 #13)"
+      },
+      "derived_from": "golden-grid",
+      "mutation": "file[300] (entry 0 `y` LSB) 0x00 → 0x01 and file[320] (entry 1 `y` LSB) 0x01 → 0x00 (atomic swap); CRC recomputed."
+    },
+    {
+      "name": "neg-13c-duplicate-zxy",
+      "kind": "negative",
+      "path": "negative/neg-13c-duplicate-zxy.rawtiles",
+      "description": "Pack derived from golden-grid by setting entry 1's `y` LSB to 0, so entries 0 and 1 are both `(z=2, x=0, y=0)`. Duplicate (z, x, y) violates the *strict* part of strict-ascending; CRC recomputed.",
+      "spec_refs": [
+        "§ 5.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "11f49bbdf1a9d634ca122d6f5248c35d32329fd77c69e23f6f4311b88fc0b1aa",
+      "expected_reject_rule": {
+        "rule_number": "13",
+        "summary": "tile-index entries MUST be sorted ascending by (z, x, y): z non-decreasing across all entries; within each zoom, (x, y) strictly ascending lexicographically (forbids duplicate triples and underpins § 5.3's binary search) (§ 11 #13)"
+      },
+      "derived_from": "golden-grid",
+      "mutation": "file[320] (entry 1 `y` LSB) 0x01 → 0x00; CRC recomputed."
+    },
+    {
+      "name": "neg-14a-offset-misaligned",
+      "kind": "negative",
+      "path": "negative/neg-14a-offset-misaligned.rawtiles",
+      "description": "Pack with entry 0's `offset` set to 313 (not 4-aligned). Rule #14a fires first per § 11 #14's evaluation order. Rule #32 (per-tile placement) also fires; either rejection satisfies the test. CRC recomputed.",
+      "spec_refs": [
+        "§ 5.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "d412fa5cec2b995f798f5f4645e6ce143f97687e9db66cef6cc07fcda4931892",
+      "expected_reject_rule": {
+        "rule_number": "14",
+        "summary": "for each tile-index entry, evaluated in order: (a) offset MUST be 4-aligned; (b) offset ≥ tile_blob_start; (c) offset < extensions_offset; (d) length ≤ extensions_offset − offset (§ 11 #14)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[304..308] (entry 0 `offset`, u32 LE) 312 → 313; CRC recomputed."
+    },
+    {
+      "name": "neg-14b-offset-below-blob",
+      "kind": "negative",
+      "path": "negative/neg-14b-offset-below-blob.rawtiles",
+      "description": "Pack with entry 0's `offset` set to 288 (inside the header, below tile_blob_start = 312). Rule #14b fires; #14a quiet (288 is 4-aligned), #14d quiet (64 ≤ 376 − 288). Rule #32 also fires. CRC recomputed.",
+      "spec_refs": [
+        "§ 5.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "877064333b2e697c77db4e4515f5cc3c9881a2586007df817599748028629667",
+      "expected_reject_rule": {
+        "rule_number": "14",
+        "summary": "for each tile-index entry, evaluated in order: (a) offset MUST be 4-aligned; (b) offset ≥ tile_blob_start; (c) offset < extensions_offset; (d) length ≤ extensions_offset − offset (§ 11 #14)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[304..308] (entry 0 `offset`, u32 LE) 312 → 288; CRC recomputed."
+    },
+    {
+      "name": "neg-14c-offset-past-ext",
+      "kind": "negative",
+      "path": "negative/neg-14c-offset-past-ext.rawtiles",
+      "description": "Pack with entry 0's `offset` set to 376 (= extensions_offset). Rule #14c fires first per the evaluation order; #14d would also fire (64 > 0) but the spec orders (c) before (d). Rule #32 also fires. CRC recomputed.",
+      "spec_refs": [
+        "§ 5.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "fdae7532e618c89998092f6ad53dbf5ff790b4f098c9f6eb69874435f8f7a942",
+      "expected_reject_rule": {
+        "rule_number": "14",
+        "summary": "for each tile-index entry, evaluated in order: (a) offset MUST be 4-aligned; (b) offset ≥ tile_blob_start; (c) offset < extensions_offset; (d) length ≤ extensions_offset − offset (§ 11 #14)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[304..308] (entry 0 `offset`, u32 LE) 312 → 376; CRC recomputed."
+    },
+    {
+      "name": "neg-14d-length-overrun",
+      "kind": "negative",
+      "path": "negative/neg-14d-length-overrun.rawtiles",
+      "description": "Pack with entry 0's `offset` bumped 312 → 316 while length stays at 64. 316 is aligned and within bounds, so #14a/b/c stay quiet; 64 > 376 − 316 = 60 fires #14d. Length still equals tile_dim_px² so #16 stays quiet. Rule #32 also fires. CRC recomputed.",
+      "spec_refs": [
+        "§ 5.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "69baec76f3e7b7b43100e4e04dde6f11b11ca1987a46b3025123e7d0ad6c1be5",
+      "expected_reject_rule": {
+        "rule_number": "14",
+        "summary": "for each tile-index entry, evaluated in order: (a) offset MUST be 4-aligned; (b) offset ≥ tile_blob_start; (c) offset < extensions_offset; (d) length ≤ extensions_offset − offset (§ 11 #14)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[304..308] (entry 0 `offset`, u32 LE) 312 → 316; CRC recomputed."
+    },
+    {
+      "name": "neg-15a-z-above-zmax",
+      "kind": "negative",
+      "path": "negative/neg-15a-z-above-zmax.rawtiles",
+      "description": "Pack derived from golden-smallest with entry 0 promoted to z = 1 and zoom_offsets migrated from slot 0 to slot 1 to match. Header zoom_max stays at 0, so the entry's z = 1 > zoom_max = 0 trips rule #15. The coordinated zoom_offsets shift keeps rule #17 (directory consistency) quiet; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.8"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "263a2d3e19e63bc2c0d26a7c0a7b0b88399c412537144adea66f6d9987124ed4",
+      "expected_reject_rule": {
+        "rule_number": "15",
+        "summary": "entry z MUST satisfy zoom_min ≤ z ≤ zoom_max (§ 4.8 + § 11 #15)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[292] (entry 0 `z`) 0 → 1; file[96..104] (zoom_offsets[0]) (292, 1) → (0, 0); file[104..112] (zoom_offsets[1]) (0, 0) → (292, 1); CRC recomputed."
+    },
+    {
+      "name": "neg-15b-z-below-zmin",
+      "kind": "negative",
+      "path": "negative/neg-15b-z-below-zmin.rawtiles",
+      "description": "Pack derived from golden-smallest by bumping both zoom_min and zoom_max to 1 while leaving entry 0 at z = 0. Entry's z = 0 < zoom_min = 1 trips rule #15. zoom_max also moves to 1 so #10 (zoom_min ≤ zoom_max) stays quiet; zoom_offsets[0] = (292, 1) still consistent with the entry at z = 0, so #17 also quiet. CRC recomputed.",
+      "spec_refs": [
+        "§ 4.8"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "440cf04eb1a670dd88425f9427badd949894313e2ad60af55eb4a037a0bed292",
+      "expected_reject_rule": {
+        "rule_number": "15",
+        "summary": "entry z MUST satisfy zoom_min ≤ z ≤ zoom_max (§ 4.8 + § 11 #15)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[62] (zoom_min) 0 → 1 and header[63] (zoom_max) 0 → 1; entry 0's z stays at 0; CRC recomputed."
+    },
+    {
+      "name": "neg-16-length-mismatch",
+      "kind": "negative",
+      "path": "negative/neg-16-length-mismatch.rawtiles",
+      "description": "Pack with the lone tile-index entry's `length` field decremented 64 → 63. For ABGR2222/None the format-implied tile size is tile_dim_px² = 64, so the entry's declared length no longer matches. All other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 5.2",
+        "§ 6.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "702147d14834314b9e3db99671e1fe0f00335e303fdf27dcbd0849a70c800443",
+      "expected_reject_rule": {
+        "rule_number": "16",
+        "summary": "tile-index entry `length` MUST equal tile_dim_px² for v1's only pixel/compression pair (ABGR2222 / None) per § 11 #16"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[308] (tile-index entry 0 `length` LSB) 0x40 → 0x3F (length 64 → 63); CRC recomputed."
+    },
+    {
+      "name": "neg-17a-count-mismatch",
+      "kind": "negative",
+      "path": "negative/neg-17a-count-mismatch.rawtiles",
+      "description": "Pack with zoom_offsets[0].count = 2 but only one actual tile-index entry at zoom 0; all other fields valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.12"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "504529561995d1c7adda55375e26d637392a4a43081d96988630c8774443ea43",
+      "expected_reject_rule": {
+        "rule_number": "17",
+        "summary": "zoom_offsets[z].count MUST equal the actual count of tile-index entries at zoom z; when count > 0, .offset MUST equal the byte offset of the first such entry; when count == 0, .offset MUST be 0 (§ 4.12 + § 11 #17)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[100..104] (zoom_offsets[0].count, u32 LE) 1 → 2; CRC recomputed."
+    },
+    {
+      "name": "neg-17b-offset-mismatch",
+      "kind": "negative",
+      "path": "negative/neg-17b-offset-mismatch.rawtiles",
+      "description": "Pack with zoom_offsets[0].offset = 296 but the actual first (and only) z = 0 tile-index entry starts at byte 292; count = 1 stays consistent with the one entry present, isolating the offset sub-clause; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.12"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "95836b00ea128b82d6ac61753826c1b1e7dc4705df60e27ba7db6daff667e9b6",
+      "expected_reject_rule": {
+        "rule_number": "17",
+        "summary": "zoom_offsets[z].count MUST equal the actual count of tile-index entries at zoom z; when count > 0, .offset MUST equal the byte offset of the first such entry; when count == 0, .offset MUST be 0 (§ 4.12 + § 11 #17)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "header[96..100] (zoom_offsets[0].offset, u32 LE) 292 → 296; CRC recomputed."
+    },
+    {
+      "name": "neg-17c-offset-nonzero-empty",
+      "kind": "negative",
+      "path": "negative/neg-17c-offset-nonzero-empty.rawtiles",
+      "description": "Pack derived from golden-empty-quadtree (tile_count = 0) with zoom_offsets[0].offset = 292 alongside count = 0. Rule #17's third sub-clause requires offset = 0 when count = 0; CRC recomputed.",
+      "spec_refs": [
+        "§ 4.12"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "e41529ffcd77e0db07777bfbe7cdb7c483ef4cf647e27c943cf752cb727a2b92",
+      "expected_reject_rule": {
+        "rule_number": "17",
+        "summary": "zoom_offsets[z].count MUST equal the actual count of tile-index entries at zoom z; when count > 0, .offset MUST equal the byte offset of the first such entry; when count == 0, .offset MUST be 0 (§ 4.12 + § 11 #17)"
+      },
+      "derived_from": "golden-empty-quadtree",
+      "mutation": "header[96..100] (zoom_offsets[0].offset, u32 LE) 0 → 292; CRC recomputed."
+    },
+    {
+      "name": "neg-18a-extoff-misaligned",
+      "kind": "negative",
+      "path": "negative/neg-18a-extoff-misaligned.rawtiles",
+      "description": "Pack with extensions_offset 376 → 377 (not 4-aligned). Sub-clause (a) fires; (b) and (d) also fire since 377 > 376 and 377 ≠ 376 = expected sum. Any of the three rejections satisfies the test. CRC recomputed.",
+      "spec_refs": [
+        "§ 4.13"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "2a485ba9e996b3436699b5056d6e1407fd578006cb68ce463e22746bcaad2694",
+      "expected_reject_rule": {
+        "rule_number": "18",
+        "summary": "extensions_offset MUST be 4-aligned, ≤ file_size − 4, ≥ tile_blob_start, AND equal tile_blob_start + Σ padded_length(i) over every tile-index entry (§ 4.13 + § 11 #18)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[288..292] (extensions_offset, u32 LE) 376 → 377; CRC recomputed."
+    },
+    {
+      "name": "neg-18b-extoff-past-crc",
+      "kind": "negative",
+      "path": "negative/neg-18b-extoff-past-crc.rawtiles",
+      "description": "Pack with extensions_offset 376 → 380 (aligned, but past file_size − 4 = 376). Sub-clause (b) fires; (d) also fires since 380 ≠ expected. CRC recomputed.",
+      "spec_refs": [
+        "§ 4.13"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "b58c4dfb290cdc33b2cbd83b1c36fd8cdc97277dc6ffaaa9844ccaa1061fc11d",
+      "expected_reject_rule": {
+        "rule_number": "18",
+        "summary": "extensions_offset MUST be 4-aligned, ≤ file_size − 4, ≥ tile_blob_start, AND equal tile_blob_start + Σ padded_length(i) over every tile-index entry (§ 4.13 + § 11 #18)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[288..292] (extensions_offset, u32 LE) 376 → 380; CRC recomputed."
+    },
+    {
+      "name": "neg-18c-extoff-below-blob",
+      "kind": "negative",
+      "path": "negative/neg-18c-extoff-below-blob.rawtiles",
+      "description": "Pack with extensions_offset 376 → 308 (aligned and ≤ file_size − 4, but below tile_blob_start = 312). Sub-clause (c) fires; (d) also fires since 308 ≠ expected. CRC recomputed.",
+      "spec_refs": [
+        "§ 4.13"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "e500af0a1d4df9549c6ece22a86fdb567c766f9cc0fc8efa454da96ca4639ec1",
+      "expected_reject_rule": {
+        "rule_number": "18",
+        "summary": "extensions_offset MUST be 4-aligned, ≤ file_size − 4, ≥ tile_blob_start, AND equal tile_blob_start + Σ padded_length(i) over every tile-index entry (§ 4.13 + § 11 #18)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[288..292] (extensions_offset, u32 LE) 376 → 308; CRC recomputed."
+    },
+    {
+      "name": "neg-18d-extoff-wrong-sum",
+      "kind": "negative",
+      "path": "negative/neg-18d-extoff-wrong-sum.rawtiles",
+      "description": "Pack with extensions_offset 376 → 372: aligned, ≥ tile_blob_start = 312, ≤ file_size − 4 = 376, but 372 ≠ tile_blob_start + Σ padded_length = 312 + 64 = 376. Sub-clauses (a), (b), (c) all stay quiet; only (d) fires. The only fixture in this cluster that isolates a single sub-clause of rule #18. CRC recomputed.",
+      "spec_refs": [
+        "§ 4.13"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "1d81918c5980959497ec58c75533cc73b08fbec2fba66b8f4f05708619c93913",
+      "expected_reject_rule": {
+        "rule_number": "18",
+        "summary": "extensions_offset MUST be 4-aligned, ≤ file_size − 4, ≥ tile_blob_start, AND equal tile_blob_start + Σ padded_length(i) over every tile-index entry (§ 4.13 + § 11 #18)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[288..292] (extensions_offset, u32 LE) 376 → 372; CRC recomputed."
+    },
+    {
+      "name": "neg-19a-section-overruns",
+      "kind": "negative",
+      "path": "negative/neg-19a-section-overruns.rawtiles",
+      "description": "Pack with ATTR section's length field bumped 53 → 60; the section's declared extent now exceeds file_size − 4. All other bytes unchanged; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "709ce48e837f6a482007938167185b21149055dabdde5a193f37e97279eb3d56",
+      "expected_reject_rule": {
+        "rule_number": "19",
+        "summary": "extension section's extent (tag + length + payload + alignment pad) MUST lie within [extensions_offset, file_size − 4); pad bytes MUST be 0x00; no stranded bytes may exist between the last section and the CRC footer (§ 7.1)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "bytes 380..384 (ATTR length field) 53 → 60; CRC recomputed."
+    },
+    {
+      "name": "neg-19b-section-padding-nonzero",
+      "kind": "negative",
+      "path": "negative/neg-19b-section-padding-nonzero.rawtiles",
+      "description": "Pack with the ATTR section's first alignment-pad byte set to 0xFF (was 0x00). Payload and length unchanged; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "0b7e9e5b8c338e7df9b4b0411b4fd6000f15adc0da4f8dc7a66c0ecaa500bde5",
+      "expected_reject_rule": {
+        "rule_number": "19",
+        "summary": "extension section's extent (tag + length + payload + alignment pad) MUST lie within [extensions_offset, file_size − 4); pad bytes MUST be 0x00; no stranded bytes may exist between the last section and the CRC footer (§ 7.1)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 437 (first of ATTR's 3 pad bytes) 0x00 → 0xFF; CRC recomputed."
+    },
+    {
+      "name": "neg-19c-stranded-bytes",
+      "kind": "negative",
+      "path": "negative/neg-19c-stranded-bytes.rawtiles",
+      "description": "Pack derived from golden-attr by inserting 4 zero bytes between the ATTR section's padded end and the CRC footer. The ATTR section is structurally intact; the violation is the 4 stranded bytes between the section and the (now-relocated) CRC footer. file_size 444 → 448; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "de34f3ecf07144b50b8cb0c73e7b8e0b7d99f850edcba25104bd03164060258d",
+      "expected_reject_rule": {
+        "rule_number": "19",
+        "summary": "extension section's extent (tag + length + payload + alignment pad) MUST lie within [extensions_offset, file_size − 4); pad bytes MUST be 0x00; no stranded bytes may exist between the last section and the CRC footer (§ 7.1)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "Inserted 4 zero bytes between the ATTR section's padded end (byte 440) and the CRC footer; file_size 444 → 448; CRC recomputed over the new body."
+    },
+    {
+      "name": "neg-20-unknown-uppercase-tag",
+      "kind": "negative",
+      "path": "negative/neg-20-unknown-uppercase-tag.rawtiles",
+      "description": "Pack with the ATTR section's tag renamed to `XYZQ` — an unknown 4-byte uppercase ASCII tag, not among v1's SDK-reserved set {NAME, SRCD, ATTR, AFFN}. Framing/length/padding all valid; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "d86fb0399ed5ddacedaaa46d85ea236b2229bfd4304309b7373246a08499f54a",
+      "expected_reject_rule": {
+        "rule_number": "20",
+        "summary": "unknown extension tag whose first byte is upper-case ASCII (A–Z) MUST be rejected (§ 7.2 + § 11 #20)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "bytes 376..380 (section tag) `ATTR` → `XYZQ`; CRC recomputed."
+    },
+    {
+      "name": "neg-22-locallinear-no-affn",
+      "kind": "negative",
+      "path": "negative/neg-22-locallinear-no-affn.rawtiles",
+      "description": "Pack derived from golden-singleimage-affn by removing the AFFN extension section (56 bytes: tag+length+payload). The remaining pack still declares projection = LocalLinear but carries no AFFN, directly violating § 7.3's 'AFFN MUST appear when LocalLinear'. file_size 436 → 380; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "9149719a38816e55b950da9bc0ffcb2e5d582b5d9969635502aa593e141e92f3",
+      "expected_reject_rule": {
+        "rule_number": "22",
+        "summary": "projection = LocalLinear packs MUST contain exactly one AFFN extension section (§ 7.3 + § 11 #22)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "Removed bytes 376..432 (AFFN section: 4-byte tag + 4-byte length + 48-byte payload); file_size 436 → 380; CRC recomputed over the new body."
+    },
+    {
+      "name": "neg-23b-singleimage-entry-nonzero",
+      "kind": "negative",
+      "path": "negative/neg-23b-singleimage-entry-nonzero.rawtiles",
+      "description": "SingleImage pack with the lone entry at (z=0, x=0, y=1) instead of (0, 0, 0). Header/zoom_offsets unchanged; CRC recomputed.",
+      "spec_refs": [
+        "§ 8.6"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "b0452e484ad1f21dcd8aac1e635c9576624e06b220c82317457adcd371ab174b",
+      "expected_reject_rule": {
+        "rule_number": "23",
+        "summary": "SingleImage packs MUST satisfy ALL of: tile_count == 1; the lone entry is (z=0, x=0, y=0); zoom_min == zoom_max == 0; tile_axis_convention == 1; zoom_offsets[0] == (index_offset, 1); every zoom_offsets[z ∈ [1, 23]] == (0, 0) (§ 8.6 + § 11 #23)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "file[300] (entry 0 `y` LSB) 0x00 → 0x01; CRC recomputed."
+    },
+    {
+      "name": "neg-23c-singleimage-zmax-nonzero",
+      "kind": "negative",
+      "path": "negative/neg-23c-singleimage-zmax-nonzero.rawtiles",
+      "description": "SingleImage pack with header.zoom_max bumped 0 → 5. zoom_min stays at 0 (so rule #10 stays quiet); the lone entry remains at z = 0 within [0, 5] (so rule #15 stays quiet); zoom_offsets remain consistent (so rule #17 stays quiet). CRC recomputed.",
+      "spec_refs": [
+        "§ 8.6"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "c05a4b9556aead97c033e512b13077176e9fc021a568462dd6c21d01de3350a9",
+      "expected_reject_rule": {
+        "rule_number": "23",
+        "summary": "SingleImage packs MUST satisfy ALL of: tile_count == 1; the lone entry is (z=0, x=0, y=0); zoom_min == zoom_max == 0; tile_axis_convention == 1; zoom_offsets[0] == (index_offset, 1); every zoom_offsets[z ∈ [1, 23]] == (0, 0) (§ 8.6 + § 11 #23)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "header[63] (zoom_max) 0 → 5; CRC recomputed."
+    },
+    {
+      "name": "neg-23d-singleimage-axis-tms",
+      "kind": "negative",
+      "path": "negative/neg-23d-singleimage-axis-tms.rawtiles",
+      "description": "SingleImage pack with tile_axis_convention set to 2 (TMS) instead of the SingleImage-required 1 (XYZ). 2 is a known enum value (§ 8.4 lists it for Quadtree), so rule #7 stays quiet; rule #23 is the lone violation. CRC recomputed.",
+      "spec_refs": [
+        "§ 8.4",
+        "§ 8.6"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "1ae6a51a7e41d1fc758b5b8e75d7089e8fceaa9c88448baa75f7f68186a465ab",
+      "expected_reject_rule": {
+        "rule_number": "23",
+        "summary": "SingleImage packs MUST satisfy ALL of: tile_count == 1; the lone entry is (z=0, x=0, y=0); zoom_min == zoom_max == 0; tile_axis_convention == 1; zoom_offsets[0] == (index_offset, 1); every zoom_offsets[z ∈ [1, 23]] == (0, 0) (§ 8.6 + § 11 #23)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "header[59] (tile_axis_convention) 1 (XYZ) → 2 (TMS); CRC recomputed."
+    },
+    {
+      "name": "neg-23a-singleimage-tilecount",
+      "kind": "negative",
+      "path": "negative/neg-23a-singleimage-tilecount.rawtiles",
+      "description": "Custom 2-entry SingleImage pack: shape of golden-singleimage-affn with tile_count = 2, two entries at (0,0,0) and (0,0,1), and zoom_offsets[0] = (292, 2). Rule #23's `tile_count == 1` arm fires; rules #13/#14/#17/#18/#22/#34/#35/#36 all stay quiet.",
+      "spec_refs": [
+        "§ 8.6"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "cdf20351435de9413e089f06c24e7a0a8d9d20977b6ff893387a6865dd28923f",
+      "expected_reject_rule": {
+        "rule_number": "23",
+        "summary": "SingleImage packs MUST satisfy ALL of: tile_count == 1; the lone entry is (z=0, x=0, y=0); zoom_min == zoom_max == 0; tile_axis_convention == 1; zoom_offsets[0] == (index_offset, 1); every zoom_offsets[z ∈ [1, 23]] == (0, 0) (§ 8.6 + § 11 #23)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "Built from scratch in the shape of golden-singleimage-affn but with tile_count = 2 and two tile-index entries at (z=0, x=0, y=0) and (z=0, x=0, y=1); zoom_offsets[0] = (292, 2) so rule #17 stays quiet; AFFN section retained verbatim at relocated offset 460. file_size 520."
+    },
+    {
+      "name": "neg-23e-singleimage-zoomoffsets-leak",
+      "kind": "negative",
+      "path": "negative/neg-23e-singleimage-zoomoffsets-leak.rawtiles",
+      "description": "SingleImage pack with zoom_offsets[1].offset set to 292 while zoom_offsets[1].count stays 0. Violates rule #23's `every zoom_offsets[z ∈ [1, 23]] is (0, 0)` conjunct. Rule #17(c) (offset MUST be 0 when count == 0) inherently co-fires; the same-base mutation can't isolate from #17 because any non-zero value at z ∈ [1, 23] that doesn't add a real entry breaks both. CRC recomputed.",
+      "spec_refs": [
+        "§ 4.12",
+        "§ 8.6"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "a92f0888dcedcf6039a3c378c4a77ea06579c234aaa894641b101dc83bfdbd94",
+      "expected_reject_rule": {
+        "rule_number": "23",
+        "summary": "SingleImage packs MUST satisfy ALL of: tile_count == 1; the lone entry is (z=0, x=0, y=0); zoom_min == zoom_max == 0; tile_axis_convention == 1; zoom_offsets[0] == (index_offset, 1); every zoom_offsets[z ∈ [1, 23]] == (0, 0) (§ 8.6 + § 11 #23)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "file[104..108] (zoom_offsets[1].offset, u32 LE) 0 → 292; CRC recomputed."
+    },
+    {
+      "name": "neg-24-crc-flipped",
+      "kind": "negative",
+      "path": "negative/neg-24-crc-flipped.rawtiles",
+      "description": "Pack with footer u32 XOR'd with 0x0000_0001 (LSB of CRC flipped). Body bytes identical to golden-smallest.",
+      "spec_refs": [
+        "§ 10"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "1fe9740b70c03d6e4c50cef1c215afdbbcc7466269305dce247a185f3d8aaca1",
+      "expected_reject_rule": {
+        "rule_number": "24",
+        "summary": "CRC-32/ISO-HDLC footer MUST match a fresh computation over bytes [0, file_size − 4) (§ 10)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "file[-4] (CRC footer byte 0, LSB) XOR 0x01; body bytes unchanged."
+    },
+    {
+      "name": "neg-25-index-offset-296",
+      "kind": "negative",
+      "path": "negative/neg-25-index-offset-296.rawtiles",
+      "description": "Pack with index_offset = 296 instead of the v1.0-required 292.",
+      "spec_refs": [
+        "§ 4.11"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "bdd397fd37627c4d0c2ae4d6220ced9d0aa40c3e3e9fd7b8815d5e9429cc2b07",
+      "expected_reject_rule": {
+        "rule_number": "25",
+        "summary": "index_offset must equal 292 in v1.0"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "index_offset 292 → 296; tile-index region shifted right by 4 zero bytes; zoom_offsets[0].offset, entry.offset, extensions_offset updated; CRC recomputed."
+    },
+    {
+      "name": "neg-26a-name-payload-empty",
+      "kind": "negative",
+      "path": "negative/neg-26a-name-payload-empty.rawtiles",
+      "description": "Pack derived from golden-names-multilocale by truncating section 3's payload to 0 bytes and the file accordingly. The section's `length` field is 0, so no byte is available for the mandatory `tag_length` per § 7.4. file_size 456 → 440; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.4"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "68fe7ffaf75b8d71c29bd5ab458da4b000e7aea5b0646739f925b94d3fe29c1b",
+      "expected_reject_rule": {
+        "rule_number": "26",
+        "summary": "NAME section payload length MUST be ≥ 1 (one byte for `tag_length`); additionally `1 + tag_length` MUST be ≤ payload length (§ 7.4 + § 11 #26)"
+      },
+      "derived_from": "golden-names-multilocale",
+      "mutation": "Truncated golden-names-multilocale's section 3 (`bcp47=en-US`) to a zero-length payload: section length field 16 → 0; section payload (16 bytes) and CRC dropped; new CRC appended. file_size 456 → 440."
+    },
+    {
+      "name": "neg-26b-name-tag-overruns",
+      "kind": "negative",
+      "path": "negative/neg-26b-name-tag-overruns.rawtiles",
+      "description": "Pack with section 1's `tag_length` byte (file offset 400) bumped 2 → 8. Payload length is 8, so `1 + tag_length = 9 > 8` — the declared bcp47_tag exceeds the payload's bounds. CRC recomputed.",
+      "spec_refs": [
+        "§ 7.4"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "06c7965eac3fdaa136fe09db63ffbeef8ceaf17474350f1ff46e7cc7323fa095",
+      "expected_reject_rule": {
+        "rule_number": "26",
+        "summary": "NAME section payload length MUST be ≥ 1 AND `1 + tag_length` MUST be ≤ payload length (§ 7.4 + § 11 #26)"
+      },
+      "derived_from": "golden-names-multilocale",
+      "mutation": "file[400] (section 1 `tag_length`) 0x02 → 0x08; CRC recomputed."
+    },
+    {
+      "name": "neg-27-tag-digit-first",
+      "kind": "negative",
+      "path": "negative/neg-27-tag-digit-first.rawtiles",
+      "description": "Pack with the ATTR section's tag's first byte set to '1' (0x31), yielding the tag `1TTR`. Bytes 2–4 are still printable ASCII so rule #28 doesn't fire; the digit first byte is outside [A-Z, a-z] so rule #20 (unknown uppercase) doesn't apply. CRC recomputed.",
+      "spec_refs": [
+        "§ 7.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "25882e1e14eda25b1571d0c0d0b15a39cc330119facce701e2af5ee8ea5d2407",
+      "expected_reject_rule": {
+        "rule_number": "27",
+        "summary": "extension tag's first byte MUST be in [A-Z, a-z]; any other byte (digit, punctuation, control char, non-ASCII) MUST be rejected (§ 7.2 + § 11 #27)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 376 (section tag byte 1) 0x41 ('A') → 0x31 ('1'); tag becomes `1TTR`; CRC recomputed."
+    },
+    {
+      "name": "neg-28-tag-nonprintable",
+      "kind": "negative",
+      "path": "negative/neg-28-tag-nonprintable.rawtiles",
+      "description": "Pack with the ATTR section's tag rewritten as `a\\x01TR`: byte 1 lower-cased to 'a' (dodges rule #20's upper-case-first scope) and byte 2 replaced with SOH (0x01), a C0 control character outside the [0x20, 0x7E] printable-ASCII range required for tag bytes 2–4. First byte 'a' is in [A-Z, a-z] so rule #27 also stays quiet. CRC recomputed.",
+      "spec_refs": [
+        "§ 7.2"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "36ba4a349b3ee21cbe5659930d79ef4700e934ff9ff85e49a6a9f0c6341a74e7",
+      "expected_reject_rule": {
+        "rule_number": "28",
+        "summary": "extension tag bytes 2–4 MUST be printable ASCII (0x20–0x7E); any other byte (control char, non-ASCII) MUST be rejected (§ 7.2 + § 11 #28)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 376 (section tag byte 1) 0x41 ('A') → 0x61 ('a'); byte 377 (section tag byte 2) 0x54 ('T') → 0x01 (SOH); tag becomes `a\\x01TR`; CRC recomputed."
+    },
+    {
+      "name": "neg-29a-duplicate-uppercase",
+      "kind": "negative",
+      "path": "negative/neg-29a-duplicate-uppercase.rawtiles",
+      "description": "Pack derived from golden-attr by appending a second ATTR section (payload 'Other source', 12 bytes, 4-aligned). Both sections are individually well-formed; the violation is the duplicate upper-case tag. file_size 444 → 464; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3",
+        "§ 11"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "0cec75af2d41c79aeca4e7f88bf6b96bab412770bc7bc50f4350c0058421ae2e",
+      "expected_reject_rule": {
+        "rule_number": "29",
+        "summary": "each upper-case (SDK-reserved) extension tag MUST appear at most once per pack, except NAME (which has its own bcp47_tag-based uniqueness rule per § 7.4)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "Appended a second ATTR section with payload 'Other source' (12 bytes) directly after the existing ATTR section; file_size 444 → 464; CRC recomputed."
+    },
+    {
+      "name": "neg-29b-duplicate-name-locale",
+      "kind": "negative",
+      "path": "negative/neg-29b-duplicate-name-locale.rawtiles",
+      "description": "Pack derived from golden-names-multilocale by inserting a byte-identical copy of the `en` NAME section. Two NAME sections now share `bcp47 = en`, violating § 7.4's uniqueness rule for bcp47_tag values. Section 1's duplicate is placed immediately after the original (tied under § 12.1's byte-order sort, so ordering is locally consistent). file_size 456 → 472; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.4",
+        "§ 11"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "30e24aa4f721d07814dbfc620d773e15f7a2860488aa980362cc2e47e2cd7acf",
+      "expected_reject_rule": {
+        "rule_number": "29",
+        "summary": "any two NAME sections sharing the same bcp47_tag value MUST be rejected (§ 7.4 + § 11 #29)"
+      },
+      "derived_from": "golden-names-multilocale",
+      "mutation": "Inserted a byte-identical copy of section 1 (`bcp47 = en`, 16 bytes) at file offset 408, between the original section 1 and section 2. Sections 2 and 3 shifted right by 16 bytes; file_size 456 → 472; CRC recomputed."
+    },
+    {
+      "name": "neg-31a-x-overflow",
+      "kind": "negative",
+      "path": "negative/neg-31a-x-overflow.rawtiles",
+      "description": "Pack derived from golden-grid with the last (entry 15) tile's x bumped 3 → 4 = 2^2. Strict (x, y) order vs entry 14's (3, 3) is preserved (4 > 3), so rule #13 stays quiet; CRC recomputed.",
+      "spec_refs": [
+        "§ 5.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "a9fa41052dccdb300cb7c1b3f41e06fdd0ca7f409ddd6626ae8861cbaec25226",
+      "expected_reject_rule": {
+        "rule_number": "31",
+        "summary": "for tile_addressing_scheme = Quadtree, every tile-index entry MUST satisfy x < 2^z AND y < 2^z (§ 5.1 + § 11 #31)"
+      },
+      "derived_from": "golden-grid",
+      "mutation": "file[596] (entry 15 `x` LSB) 0x03 → 0x04; CRC recomputed."
+    },
+    {
+      "name": "neg-31b-y-overflow",
+      "kind": "negative",
+      "path": "negative/neg-31b-y-overflow.rawtiles",
+      "description": "Pack derived from golden-grid with the last (entry 15) tile's y bumped 3 → 4 = 2^2. (3, 4) > (3, 3) keeps strict ordering intact; CRC recomputed.",
+      "spec_refs": [
+        "§ 5.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "0480b659b21397894faf4f7d8236a8ce7ea418bad7865180caf05ecd45fabe08",
+      "expected_reject_rule": {
+        "rule_number": "31",
+        "summary": "for tile_addressing_scheme = Quadtree, every tile-index entry MUST satisfy x < 2^z AND y < 2^z (§ 5.1 + § 11 #31)"
+      },
+      "derived_from": "golden-grid",
+      "mutation": "file[600] (entry 15 `y` LSB) 0x03 → 0x04; CRC recomputed."
+    },
+    {
+      "name": "neg-32a-tile-gap",
+      "kind": "negative",
+      "path": "negative/neg-32a-tile-gap.rawtiles",
+      "description": "Pack derived from golden-grid with entry 1's `offset` field bumped 676 → 680, leaving a 4-byte gap between tile 0 (612..676) and tile 1 (now 680..744). Subsequent entries' offsets are untouched, so entry 1 alone is misplaced. CRC recomputed.",
+      "spec_refs": [
+        "§ 12.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "d7fe39758ef303b05278355bd3ff28c515cc58f009639ed5963e45c82bb4a250",
+      "expected_reject_rule": {
+        "rule_number": "32",
+        "summary": "for each tile-index entry i, offset(i) MUST equal tile_blob_start + Σ padded_length(j) for j < i; tiles MUST sit consecutively in the blob with no gap and no overlap (§ 12 #8 + § 11 #32)"
+      },
+      "derived_from": "golden-grid",
+      "mutation": "file[324..328] (entry 1 `offset`, u32 LE) 676 → 680; CRC recomputed."
+    },
+    {
+      "name": "neg-32b-tile-overlap",
+      "kind": "negative",
+      "path": "negative/neg-32b-tile-overlap.rawtiles",
+      "description": "Pack derived from golden-grid with entry 1's `offset` field decremented 676 → 672, so tile 1's declared range (672..736) overlaps tile 0 (612..676) by 4 bytes. CRC recomputed.",
+      "spec_refs": [
+        "§ 12.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "f364edcc730cefadd25c1d77b942b2483ae405b772b56e0e670e08b5138dd921",
+      "expected_reject_rule": {
+        "rule_number": "32",
+        "summary": "for each tile-index entry i, offset(i) MUST equal tile_blob_start + Σ padded_length(j) for j < i; tiles MUST sit consecutively in the blob with no gap and no overlap (§ 12 #8 + § 11 #32)"
+      },
+      "derived_from": "golden-grid",
+      "mutation": "file[324..328] (entry 1 `offset`, u32 LE) 676 → 672; CRC recomputed."
+    },
+    {
+      "name": "neg-33-padding-nonzero",
+      "kind": "negative",
+      "path": "negative/neg-33-padding-nonzero.rawtiles",
+      "description": "1-tile Quadtree pack with tile_dim_px = 3 (length = 9, requiring 3 per-tile pad bytes to 4-align extensions_offset). The first pad byte at file offset 321 is set to 0xFF, violating § 6.1's zero-fill requirement. file_size 328.",
+      "spec_refs": [
+        "§ 6.1"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "c8142c3ad2f964f066b956a597be08dfe308aa61c1932f2adfea8b87b82fbaf6",
+      "expected_reject_rule": {
+        "rule_number": "33",
+        "summary": "per-tile alignment padding bytes in the tile blob MUST be 0x00 (§ 6.1 + § 11 #33)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "Built from scratch in the shape of golden-smallest but with tile_dim_px = 3 (so tile length = 9 is not 4-aligned and 3 padding bytes follow the tile in the blob). The first per-tile pad byte at file offset 321 is set to 0xFF; the other 2 pad bytes remain 0x00. file_size 328; CRC fresh."
+    },
+    {
+      "name": "neg-34-affn-length",
+      "kind": "negative",
+      "path": "negative/neg-34-affn-length.rawtiles",
+      "description": "Pack derived from golden-singleimage-affn by dropping the last AFFN coefficient and updating the section's length field 48 → 40. Section framing and CRC remain consistent (file truncated to match), so rule #19 stays quiet and rule #34 is the lone violation. file_size 436 → 428.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "8c5fc82c8045ee4e5157e795a211bb117b84059a1bd61338651ecdab75b0fb32",
+      "expected_reject_rule": {
+        "rule_number": "34",
+        "summary": "AFFN section's length field MUST be 48 (§ 7.3 + § 11 #34)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "AFFN length field (file[380..384]) 48 → 40; AFFN payload (file[384..432]) truncated from 48 to 40 bytes (drops coef `f`); file_size 436 → 428; CRC recomputed over the new body."
+    },
+    {
+      "name": "neg-35a-affn-nan",
+      "kind": "negative",
+      "path": "negative/neg-35a-affn-nan.rawtiles",
+      "description": "Pack with AFFN coefficient `f` (the y-offset) overwritten with the 8-byte LE encoding of a quiet NaN (0x7FF8_0000_0000_0000). Section framing, length field, projection, and bbox are all unchanged; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "b00d8fc5b1c1f78bfa0a82a2dbe9e17b77332745c3bdca5fbcc7cda753f45b86",
+      "expected_reject_rule": {
+        "rule_number": "35",
+        "summary": "all six AFFN coefficients MUST be finite IEEE-754 binary64 values (no NaN, no ±∞); readers MUST reject violations (§ 7.3 + § 11 #35)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "bytes 424..432 (AFFN payload coef[5] `f`, IEEE-754 binary64 LE) 1.0 → 0x7FF8_0000_0000_0000 (quiet NaN); CRC recomputed."
+    },
+    {
+      "name": "neg-35b-affn-inf",
+      "kind": "negative",
+      "path": "negative/neg-35b-affn-inf.rawtiles",
+      "description": "Pack with AFFN coefficient `f` overwritten with the 8-byte LE encoding of +∞ (0x7FF0_0000_0000_0000). Section framing, length field, projection, and bbox are all unchanged; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "0b1666b45168d16c8baef3297ca1a65d24c8f5b898316c93ae4ed34e8c585fad",
+      "expected_reject_rule": {
+        "rule_number": "35",
+        "summary": "all six AFFN coefficients MUST be finite IEEE-754 binary64 values (no NaN, no ±∞); readers MUST reject violations (§ 7.3 + § 11 #35)"
+      },
+      "derived_from": "golden-singleimage-affn",
+      "mutation": "bytes 424..432 (AFFN payload coef[5] `f`, IEEE-754 binary64 LE) 1.0 → 0x7FF0_0000_0000_0000 (+∞); CRC recomputed."
+    },
+    {
+      "name": "neg-36-affn-with-webmercator",
+      "kind": "negative",
+      "path": "negative/neg-36-affn-with-webmercator.rawtiles",
+      "description": "WebMercator/Quadtree pack with a valid 48-byte AFFN extension section (six finite zero coefficients). AFFN must only appear when projection = LocalLinear (§ 7.3); its presence here trips rule #36. Rules #34 (length = 48), #35 (coefs finite), and #8 (legal proj×scheme pair) all stay quiet. file_size 440.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "3143247f572cc20219828a7c0634e3e0af8c429ba284afc09885bb0cdf6cf878",
+      "expected_reject_rule": {
+        "rule_number": "36",
+        "summary": "AFFN MUST NOT appear in packs whose projection is not LocalLinear (§ 7.3 + § 11 #36)"
+      },
+      "derived_from": "golden-smallest",
+      "mutation": "Built from scratch in the shape of golden-smallest (WebMercator/Quadtree/XYZ, 1 tile at 0,0,0) with a valid AFFN section appended at extensions_offset = 376 (tag + length=48 + six finite zero f64 coefficients). file_size 380 → 436."
+    },
+    {
+      "name": "neg-37a-name-bad-utf8",
+      "kind": "negative",
+      "path": "negative/neg-37a-name-bad-utf8.rawtiles",
+      "description": "Pack with section 2's `name` UTF-8 lead byte (file offset 419, first byte of `瓦`) replaced by 0xFF — never a legal UTF-8 byte. Section framing and bcp47 unchanged; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.4"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "4152158681aa44e5fef7128a82dbaaff68f603043b131414e0ebb06e831b3106",
+      "expected_reject_rule": {
+        "rule_number": "37",
+        "summary": "NAME `name` MUST be valid UTF-8; when tag_length > 0, `bcp47_tag` MUST match the v1 restricted BCP-47 subset (`[a-z]{2}` or `[a-z]{2}-[A-Z]{2}`) (§ 7.4 + § 11 #37)"
+      },
+      "derived_from": "golden-names-multilocale",
+      "mutation": "file[419] (section 2 `name` first UTF-8 byte) 0xE7 → 0xFF; CRC recomputed."
+    },
+    {
+      "name": "neg-37b-name-bcp47-bad-case",
+      "kind": "negative",
+      "path": "negative/neg-37b-name-bcp47-bad-case.rawtiles",
+      "description": "Pack with section 3's bcp47 (`en-US`, bytes 437..442) rewritten as `EN-us`: language uppercased, region lowercased. § 7.4's case requirement is normative; the resulting tag matches neither permitted shape. CRC recomputed.",
+      "spec_refs": [
+        "§ 7.4"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "cb54be354a552243b83991ccfae436f0cc12f2835fcd83e2ed99d4f6d1bfe953",
+      "expected_reject_rule": {
+        "rule_number": "37",
+        "summary": "NAME `name` MUST be valid UTF-8; when tag_length > 0, `bcp47_tag` MUST match the v1 restricted BCP-47 subset (`[a-z]{2}` or `[a-z]{2}-[A-Z]{2}`) (§ 7.4 + § 11 #37)"
+      },
+      "derived_from": "golden-names-multilocale",
+      "mutation": "file[437..442] (section 3 `bcp47_tag`) `en-US` → `EN-us` (4-byte case swap, byte 439 `-` unchanged); CRC recomputed."
+    },
+    {
+      "name": "neg-37c-name-bcp47-3-letter",
+      "kind": "negative",
+      "path": "negative/neg-37c-name-bcp47-3-letter.rawtiles",
+      "description": "Pack with section 1's payload rewritten so bcp47 is `eng` (3 letters): tag_length 2 → 3 and payload byte 3 'T' → 'g'. The name shrinks from `Tiles` to `iles` (still valid UTF-8); payload length stays at 8 so rule #26 stays quiet. The 3-letter tag is outside the v1 restricted subset (`[a-z]{2}` or `[a-z]{2}-[A-Z]{2}`). CRC recomputed.",
+      "spec_refs": [
+        "§ 7.4"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "6ad418b8430146922c432a85bb5d36f92244614fe50315d896dd139a6095cf57",
+      "expected_reject_rule": {
+        "rule_number": "37",
+        "summary": "NAME `name` MUST be valid UTF-8; when tag_length > 0, `bcp47_tag` MUST match the v1 restricted BCP-47 subset (`[a-z]{2}` or `[a-z]{2}-[A-Z]{2}`) (§ 7.4 + § 11 #37)"
+      },
+      "derived_from": "golden-names-multilocale",
+      "mutation": "file[400] (section 1 `tag_length`) 0x02 → 0x03; file[403] (section 1 `bcp47[2]` / former first byte of name) 'T' → 'g'; CRC recomputed."
+    },
+    {
+      "name": "neg-38a-srcd-bad-utf8",
+      "kind": "negative",
+      "path": "negative/neg-38a-srcd-bad-utf8.rawtiles",
+      "description": "Pack with golden-attr's ATTR section re-tagged 'SRCD' and the lead byte 0xC2 of the first '©' codepoint set to 0xFF, making the SRCD payload invalid UTF-8; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "7d9be990c174aa170375a3272e21920b55dd989b9dc0467ca6e0e12ad78eb8b9",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "bytes 376..380 (section tag) 'ATTR' → 'SRCD'; byte 400 (payload[16], lead byte of first '©') 0xC2 → 0xFF; CRC recomputed."
+    },
+    {
+      "name": "neg-38b-attr-bad-utf8",
+      "kind": "negative",
+      "path": "negative/neg-38b-attr-bad-utf8.rawtiles",
+      "description": "Pack with the lead byte 0xC2 of the first '©' codepoint in ATTR's payload set to 0xFF, making the payload invalid UTF-8; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "a998d4f52f74dda52fa1bd230509f2299ad139327b65e71d9e2ef6adbb6f2155",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 400 (payload[16], lead byte of first '©') 0xC2 → 0xFF; CRC recomputed."
+    },
+    {
+      "name": "neg-38c-attr-crlf",
+      "kind": "negative",
+      "path": "negative/neg-38c-attr-crlf.rawtiles",
+      "description": "Pack with ATTR payload's '6' (last byte of '2026', immediately preceding the LF separator) set to CR, producing a CRLF line break; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "19ae5b82bb0a8826f9efcbed05042b6ea7a85ef2631679dd6916ef60d88c6c28",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 406 (payload[22], '6' before the LF separator) 0x36 → 0x0D; CRC recomputed."
+    },
+    {
+      "name": "neg-38d-attr-bare-cr",
+      "kind": "negative",
+      "path": "negative/neg-38d-attr-bare-cr.rawtiles",
+      "description": "Pack with an ATTR payload space byte (not adjacent to the LF separator) set to CR, producing a bare CR; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "4f5e7b23a3d9ba245968b12f3ee8774d3206bb9ac2d530ca264dc1119bb672bc",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 399 (payload[15], space before first '©') 0x20 → 0x0D; CRC recomputed."
+    },
+    {
+      "name": "neg-38e-attr-c0-control",
+      "kind": "negative",
+      "path": "negative/neg-38e-attr-c0-control.rawtiles",
+      "description": "Pack with an ATTR payload space byte set to BEL (0x07), a C0 control codepoint other than LF; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "1b1ff5938e53747c4b2987ad29875fc471dea99db0ced82604edcb7f87ac7322",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 399 (payload[15], space before first '©') 0x20 → 0x07 (BEL); CRC recomputed."
+    },
+    {
+      "name": "neg-38f-attr-nel",
+      "kind": "negative",
+      "path": "negative/neg-38f-attr-nel.rawtiles",
+      "description": "Pack with the trailing byte 0xA9 of the first '©' set to 0x85, yielding 0xC2 0x85 (U+0085, NEL) in ATTR's payload; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "9c789f56d937d357ea2d31c898a136d894450e35087a9c25bc63edb5ff1ce05f",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 401 (payload[17], trailer of first '©') 0xA9 → 0x85; combined with the unchanged lead 0xC2 this encodes U+0085 (NEL); CRC recomputed."
+    },
+    {
+      "name": "neg-38g-attr-ls",
+      "kind": "negative",
+      "path": "negative/neg-38g-attr-ls.rawtiles",
+      "description": "Pack with bytes 0xC2 0xA9 0x20 (first '©' plus the following space) in ATTR's payload replaced by 0xE2 0x80 0xA8 (U+2028, LINE SEPARATOR); CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "1fa46cede08b186d2e5c72e3ce4ed3316c20333ed5a1b1e8b499602fac03fcdc",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "bytes 400..403 (payload[16..19], first '©' UTF-8 plus the following space) 0xC2 0xA9 0x20 → 0xE2 0x80 0xA8 (U+2028); CRC recomputed."
+    },
+    {
+      "name": "neg-38h-attr-trailing-lf",
+      "kind": "negative",
+      "path": "negative/neg-38h-attr-trailing-lf.rawtiles",
+      "description": "Pack with the ATTR section's declared payload length bumped 53 → 54 and the first alignment-pad byte (file 437) promoted to 0x0A. The now-54-byte payload ends with LF, violating § 11 #38(c) (no trailing LF after the last string). The 2 remaining pad bytes stay 0x00, so § 11 #19's pad-zero rule stays quiet; total framed size (8 + 54 + 2 = 64) and section/CRC offsets are unchanged. CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "458ee1d838d8072aa31d5e6025ff211623a333caf6e2f1e1e923467b049dfefc",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "byte 380 (ATTR length field LSB) 0x35 → 0x36 (53 → 54); byte 437 (first alignment-pad byte, now repurposed as the last payload byte) 0x00 → 0x0A; CRC recomputed."
+    },
+    {
+      "name": "neg-38i-attr-empty",
+      "kind": "negative",
+      "path": "negative/neg-38i-attr-empty.rawtiles",
+      "description": "Pack derived from golden-attr by truncating the ATTR section's payload to zero bytes and the file accordingly. The section's declared length field is 0; § 11 #38(b) (spec 0.3) requires non-zero ATTR payload length. file_size 444 → 388; CRC recomputed.",
+      "spec_refs": [
+        "§ 7.3"
+      ],
+      "expected_outcome": "reject",
+      "pack_sha256": "993f7149d24fe9f9133bc9ddd4d4284ba7fb6cccc7b969d41a821fed2bd162ae",
+      "expected_reject_rule": {
+        "rule_number": "38",
+        "summary": "SRCD and ATTR payloads MUST be valid UTF-8. ATTR additionally MUST (a) contain no C0 control codepoint other than LF, no DEL (U+007F), no NEL (U+0085), no LS (U+2028), and no PS (U+2029); (b) have non-zero declared length; (c) not end with byte 0x0A (no trailing LF after the last string) (§ 7.3 + § 11 #38)"
+      },
+      "derived_from": "golden-attr",
+      "mutation": "ATTR section length field 53 → 0; the section's 53-byte payload and 3 pad bytes are dropped from the file; original CRC dropped and a new CRC appended. file_size 444 → 388."
+    }
+  ]
+}

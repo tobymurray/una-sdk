@@ -1,0 +1,41 @@
+1065063629 -I- Model::Model::28                    : Application is running through simulator! 
+1065063629 -I- Model::Model::31                    : Path to files created by app:
+       [/tmp/rawtiles-probe-rebase/Docs/Tutorials/HelloWorld/Software/Apps/TouchGFX-GUI/build/bin/../../../../../Output/]
+1065063629 -I- Model::Model::34                    : 
+---------------------------------------------------
+|   For Simulation Button use keybaord Keys.      |
+|       Keys Keybaord:                            |
+|       1   L1,                                   |
+|       2   L2,                                   |
+|       3   R1,                                   |
+|       4   R2                                    |
+|                  /---------\                    |
+|                 /           \                   |
+| BUTTON UP   L1 |             | R1 BUTTON SELECT |
+|                |     UNA     |                  |
+|                |    WATCH    |                  |
+| BUTTON DOWN L2 |             | R2 BUTTON BACK   |
+|                 \           /                   |
+|                  \---------/                    |
+---------------------------------------------------
+1065063633 -I- Service::run::17                    : thread started
+1065063633 -I- App.Core::run::52                   : Application core is running...
+1065063633 -I- Service::run::33                    : GUI is now running
+1065063633 -I- Service::onStartGUI::55             : GUI started
+1065063733 -I- Model::onStart::108                 : called
+1065063733 -I- Model::onResume::113                : called
+1065069683 -I- RawTilesProbe::run::72              : exist stanley.rawtiles -> 1
+1065069693 -I- RawTilesProbe::run::113             : open stanley.rawtiles ok, 787008 bytes, 9ms
+1065069693 -I- RawTilesProbe::run::119             : header ok: z12..14, 12 tiles, 9ms
+1065069693 -I- RawTilesProbe::run::142             : first z14 tile: x2587 y5604 at 393748
+1065069695 -I- RawTilesProbe::run::173             : tile 64K: cold 0ms, warm 0ms, crc 0x26E5979B (stanley OK)
+1065071638 -I- App.Core::run::61                   : Stop requested, exiting application core loop...
+1065071638 -I- Model::onSuspend::126               : called
+1065071698 -I- Service::run::38                    : GUI has stopped
+1065071698 -I- Service::onStopGUI::61              : GUI stopped
+1065071708 -I- Model::onStop::121                  : called
+1065071708 -D- Mock.System::exit::56               : status = 0
+1065071718 -I- Service::run::27                    : Force exit from the application
+pure virtual method called
+terminate called without an active exception
+timeout: the monitored command dumped core

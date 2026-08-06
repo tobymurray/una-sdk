@@ -63,6 +63,7 @@ add_executable(una-sdk-host-tests
     apps/Timer/TimerManager_test.cpp
     apps/Timer/Commands_test.cpp
     rawtiles/RawTilesContainer_test.cpp
+    rawtiles/RawTilesConformance_test.cpp
     "${UNA_SDK_ROOT}/Libs/Source/RawTiles/Container.cpp"
     "${UNA_SDK_ROOT}/Examples/Apps/Timer/Software/Libs/Sources/TimerManager.cpp"
     "${UNA_SDK_ROOT}/Examples/Apps/Running/Software/Libs/Sources/SettingsSerializer.cpp"
@@ -98,6 +99,14 @@ target_link_libraries(una-sdk-host-tests PRIVATE
     sdk_host_test_support
     GTest::gtest_main
     GTest::gmock
+)
+
+# Vendored rawtiles conformance corpus (see rawtiles/corpus/README.md for the
+# upstream commit and refresh procedure) -- a compile-time path, not a
+# runtime-discovered one, so the test fails loudly if the corpus is missing
+# rather than silently skipping.
+target_compile_definitions(una-sdk-host-tests PRIVATE
+    RAWTILES_CORPUS_DIR="${CMAKE_CURRENT_LIST_DIR}/rawtiles/corpus"
 )
 
 enable_testing()

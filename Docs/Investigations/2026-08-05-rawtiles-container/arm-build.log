@@ -1,0 +1,180 @@
+-- The ASM compiler identification is GNU
+-- Found assembler: /opt/st/stm32cubeide_1.19.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.linux64_1.0.0.202410170706/tools/bin/arm-none-eabi-gcc
+-- The C compiler identification is GNU 13.3.1
+-- The CXX compiler identification is GNU 13.3.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /opt/st/stm32cubeide_1.19.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.linux64_1.0.0.202410170706/tools/bin/arm-none-eabi-gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /opt/st/stm32cubeide_1.19.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.linux64_1.0.0.202410170706/tools/bin/arm-none-eabi-g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+[2026-08-05 22:00:53] Starting una-version.sh script
+[2026-08-05 22:00:53] Default BUILD_VERSION set to: 0.0.0-dev
+[2026-08-05 22:00:53] Argument provided, UNA_GIT_DIR set to: /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake
+[2026-08-05 22:00:53] Tag prefix from argument: apps-
+[2026-08-05 22:00:53] Workspace: /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake
+[2026-08-05 22:00:53] Successfully changed directory to: /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake
+[2026-08-05 22:00:53] Attempting to get git directory
+[2026-08-05 22:00:53] git rev-parse --git-dir output: 'fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+fatal: git rev-parse failed'
+[2026-08-05 22:00:53] Detected dubious ownership or unsafe repository, configuring safe.directory
+[2026-08-05 22:00:53] Set global safe.directory to '*' 
+[2026-08-05 22:00:53] git rev-parse --show-toplevel output after config: 'fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+fatal: git rev-parse failed'
+[2026-08-05 22:00:53] Set global safe.directory to 'fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+fatal: git rev-parse failed'
+[2026-08-05 22:00:53] toplevel: fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+fatal: git rev-parse failed
+[2026-08-05 22:00:53] Not in a git repository, using default version
+[2026-08-05 22:00:53] Script completed with default version
+Detected BUILD_VERSION: 0.0.0-dev
+UNA_APP_SERVICE_STACK_SIZE: 10*1024
+UNA_APP_SERVICE_RAM_LENGTH: 500K
+APP_ID: A159B1C005CFD2A5
+APP_NAME: Stopwatch
+DEV_ID: UNA
+-- Performing Test UNA_HAVE_FCYCLOMATIC_COMPLEXITY_C
+-- Performing Test UNA_HAVE_FCYCLOMATIC_COMPLEXITY_C - Success
+-- Performing Test UNA_HAVE_FCYCLOMATIC_COMPLEXITY_CXX
+-- Performing Test UNA_HAVE_FCYCLOMATIC_COMPLEXITY_CXX - Success
+UNA_APP_GUI_STACK_SIZE: 10*1024
+UNA_APP_GUI_RAM_LENGTH: 600K
+App autostart is OFF
+App icons are ON
+-- Configuring done (0.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build
+=== BUILD ===
+Wrapper for /opt/st/stm32cubeide_1.19.0/plugins/com.st.stm32cube.ide.mpu.linux.toolchain_2.2.0.202409171043/tools/bin/make
+FIP_DEPLOYDIR_ROOT: /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/../../FIP_artifacts
+/opt/st/stm32cubeide_1.19.0/plugins/com.st.stm32cube.ide.mpu.linux.toolchain_2.2.0.202409171043/tools/bin/make: line 10: /environment-setup-*: No such file or directory
++ case "$command" in
++ exec make -j16
+Wrapper for /opt/st/stm32cubeide_1.19.0/plugins/com.st.stm32cube.ide.mpu.linux.toolchain_2.2.0.202409171043/tools/bin/make
+FIP_DEPLOYDIR_ROOT: /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/../../FIP_artifacts
+/opt/st/stm32cubeide_1.19.0/plugins/com.st.stm32cube.ide.mpu.linux.toolchain_2.2.0.202409171043/tools/bin/make: line 10: /environment-setup-*: No such file or directory
++ case "$command" in
++ exec make -j16
+[  4%] Building CXX object CMakeFiles/StopwatchService.elf.dir/src/Libs/Source/AppSystem/system.cpp.obj
+[  4%] Building CXX object CMakeFiles/StopwatchService.elf.dir/src/Libs/Source/UnaLogger/Logger.cpp.obj
+[  4%] Building CXX object CMakeFiles/StopwatchService.elf.dir/src/Libs/Source/AppSystem/AtExitImpl.cpp.obj
+[  4%] Building CXX object CMakeFiles/StopwatchService.elf.dir/src/Examples/Apps/Stopwatch/Software/Libs/Sources/Service.cpp.obj
+[  6%] Building ASM object CMakeFiles/StopwatchService.elf.dir/src/Libs/Source/AppSystem/startup_user_app.s.obj
+[  7%] Building CXX object CMakeFiles/StopwatchService.elf.dir/src/Libs/Source/Timer/Timer.cpp.obj
+[  8%] Building CXX object CMakeFiles/StopwatchService.elf.dir/src/Libs/Source/AppSystem/EntryPoint/Service/main.cpp.obj
+[  9%] Building CXX object CMakeFiles/StopwatchService.elf.dir/src/Libs/Source/Kernel/KernelBuilder.cpp.obj
+[ 14%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/FontCache.cpp.obj
+[ 14%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/ApplicationFontProvider.cpp.obj
+[ 14%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/CompressedUnmappedFontCache.cpp.obj
+[ 14%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/CompressedFontCache.cpp.obj
+[ 15%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/CachedFont.cpp.obj
+[ 18%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_Italic_18_2bpp_0.cpp.obj
+[ 18%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_Medium_16_2bpp_0.cpp.obj
+[ 19%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_Italic_18_2bpp_4.cpp.obj
+[ 20%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_Medium_16_2bpp_4.cpp.obj
+[ 21%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_SemiBold_20_2bpp_0.cpp.obj
+[ 23%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_SemiBold_35_2bpp_0.cpp.obj
+[ 24%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_SemiBold_20_2bpp_4.cpp.obj
+[ 25%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_SemiBold_35_2bpp_4.cpp.obj
+[ 26%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_SemiBold_40_2bpp_0.cpp.obj
+[ 28%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_SemiBold_40_2bpp_4.cpp.obj
+[ 29%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_SemiBold_60_2bpp_0.cpp.obj
+[ 30%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Font_Poppins_SemiBold_60_2bpp_4.cpp.obj
+[ 31%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/GeneratedFont.cpp.obj
+[ 32%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Kerning_Poppins_Italic_18_2bpp.cpp.obj
+[ 34%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Kerning_Poppins_Medium_16_2bpp.cpp.obj
+[ 35%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Kerning_Poppins_SemiBold_20_2bpp.cpp.obj
+[ 36%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Kerning_Poppins_SemiBold_35_2bpp.cpp.obj
+[ 37%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Kerning_Poppins_SemiBold_40_2bpp.cpp.obj
+[ 39%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Kerning_Poppins_SemiBold_60_2bpp.cpp.obj
+[ 40%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Table_Poppins_Italic_18_2bpp.cpp.obj
+[ 41%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Table_Poppins_Medium_16_2bpp.cpp.obj
+[ 42%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Table_Poppins_SemiBold_20_2bpp.cpp.obj
+[ 43%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Table_Poppins_SemiBold_35_2bpp.cpp.obj
+[ 45%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Table_Poppins_SemiBold_40_2bpp.cpp.obj
+[ 46%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/Table_Poppins_SemiBold_60_2bpp.cpp.obj
+[ 47%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/UnmappedDataFont.cpp.obj
+[ 48%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/fonts/src/VectorFontRendererBuffers.cpp.obj
+[ 50%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/gui_generated/src/common/FrontendApplicationBase.cpp.obj
+[ 51%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/gui_generated/src/containers/ButtonsBase.cpp.obj
+[ 52%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/gui_generated/src/containers/LapListItemBase.cpp.obj
+[ 53%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/gui_generated/src/containers/ScrollIndicatorBase.cpp.obj
+[ 54%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/gui_generated/src/containers/TitleBase.cpp.obj
+[ 56%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/gui_generated/src/main_screen/MainViewBase.cpp.obj
+[ 57%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/images/src/BitmapDatabase.cpp.obj
+[ 58%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/images/src/SVGDatabase.cpp.obj
+[ 59%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/images/src/image_Icon_Lap.cpp.obj
+[ 60%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/images/src/image_Icon_Pause.cpp.obj
+[ 62%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/images/src/image_Icon_Play.cpp.obj
+[ 63%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/images/src/image_Icon_Reset.cpp.obj
+[ 64%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/texts/src/Texts.cpp.obj
+[ 65%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/texts/src/LanguageGb.cpp.obj
+[ 67%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/generated/texts/src/TypedTextDatabase.cpp.obj
+[ 69%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/gui/src/containers/Buttons.cpp.obj
+[ 69%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/gui/src/common/FrontendApplication.cpp.obj
+[ 70%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/gui/src/containers/LapListItem.cpp.obj
+[ 71%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/gui/src/containers/ScrollIndicator.cpp.obj
+[ 74%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/gui/src/containers/Title.cpp.obj
+[ 74%] Linking CXX executable StopwatchService.elf
+[ 75%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/gui/src/main_screen/MainPresenter.cpp.obj
+Packing StopwatchService.elf
+[ 76%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/gui/src/main_screen/MainView.cpp.obj
+[ 78%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Examples/Apps/Stopwatch/Software/Apps/TouchGFX-GUI/gui/src/model/Model.cpp.obj
+[ 79%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/AppSystem/AtExitImpl.cpp.obj
+INFO:root:ELF-file    : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/StopwatchService.elf
+INFO:root:Out         : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/Tmp
+INFO:root:Version     : 1.0
+INFO:root:Output file : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/Tmp/StopwatchService.srv
+
+[ 79%] Built target StopwatchService.elf
+[ 80%] Building ASM object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/AppSystem/startup_user_app.s.obj
+[ 81%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/AppSystem/system.cpp.obj
+[ 82%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Kernel/KernelBuilder.cpp.obj
+[ 85%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Timer/Timer.cpp.obj
+[ 85%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/UnaLogger/Logger.cpp.obj
+[ 87%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/AppSystem/EntryPoint/TouchGFX/main.cpp.obj
+[ 87%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Port/TouchGFX/TouchGFXCommandProcessor.cpp.obj
+[ 89%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Port/TouchGFX/STM32TouchController.cpp.obj
+[ 90%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Port/TouchGFX/TouchGFXGPIO.cpp.obj
+[ 91%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Port/TouchGFX/TouchGFXHAL.cpp.obj
+[ 92%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Port/TouchGFX/generated/OSWrappers.cpp.obj
+[ 93%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Port/TouchGFX/generated/STM32DMA.cpp.obj
+[ 95%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Port/TouchGFX/generated/TouchGFXConfiguration.cpp.obj
+[ 96%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/Port/TouchGFX/generated/TouchGFXGeneratedHAL.cpp.obj
+[ 97%] Building CXX object CMakeFiles/StopwatchGUI.elf.dir/src/Libs/Source/RawTiles/Container.cpp.obj
+[ 98%] Linking CXX executable StopwatchGUI.elf
+Packing StopwatchGUI.elf
+INFO:root:ELF-file    : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/StopwatchGUI.elf
+INFO:root:Out         : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/Tmp
+INFO:root:Version     : 1.0
+
+INFO:root:Output file : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/Tmp/StopwatchGUI.gui
+[ 98%] Built target StopwatchGUI.elf
+[100%] Merging Stopwatch application
+INFO:root:Normal icon    : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/../../../Resources/icon_60x60.png
+INFO:root:Small icon     : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/../../../Resources/icon_30x30.png
+INFO:root:Merge          : complete
+INFO:root:Service file   : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/Tmp/StopwatchService.srv
+INFO:root:GUI file       : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/Tmp/StopwatchGUI.gui
+INFO:root:Name           : Stopwatch
+INFO:root:ID             : A159B1C005CFD2A5
+INFO:root:App Version    : 0.0.0
+INFO:root:LibC Version   : 0.0.3
+INFO:root:Flags          : 0x00000021
+INFO:root:Glance-capable : yes
+INFO:root:CRC            : 0x2508D213
+INFO:root:Image          : /src/Examples/Apps/Stopwatch/Software/Apps/Stopwatch-CMake/build/Stopwatch_0.0.0-dev.uapp (160712 bytes)
+
+[100%] Built target StopwatchApp
+=== ARTIFACTS ===
+-rwxr-xr-x 1 root root 265468 Aug  5 22:00 ../build/StopwatchGUI.elf
+-rwxr-xr-x 1 root root  13048 Aug  5 22:00 ../build/StopwatchService.elf
+-rw-r--r-- 1 root root 160712 Aug  5 22:00 ../build/Stopwatch_0.0.0-dev.uapp
