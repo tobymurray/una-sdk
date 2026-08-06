@@ -1,0 +1,11 @@
+make[1]: warning: -j4 forced in submake: resetting jobserver mode.
+Reading ./application.config
+Reading ./target.config
+make[2]: warning: -j4 forced in submake: resetting jobserver mode.
+Compiling /src/Libs/Source/Simulator/Components/Sensors/Imu/ImuRunningCadence.cpp
+Linking build/bin/simulator.out
+MAKE_EXIT=0
+total 5052
+drwxr-xr-x 3 root root      96 Aug  5 18:34 .
+drwxr-xr-x 4 root root     128 Aug  5 18:34 ..
+-rwxr-xr-x 1 root root 5171536 Aug  5 18:34 simulator.out

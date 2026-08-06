@@ -1,0 +1,296 @@
+make[1]: warning: -j4 forced in submake: resetting jobserver mode.
+Reading ./application.config
+Reading ./target.config
+Generating generated/images/src/image_Button_L1.cpp
+Generating generated/images/src/image_Button_L1A.cpp
+Generating generated/images/src/image_Button_L1R.cpp
+Generating generated/images/src/image_Button_L2.cpp
+Generating generated/images/src/image_Button_L2A.cpp
+Generating generated/images/src/image_Button_L2R_.cpp
+Generating generated/images/src/image_Button_R1.cpp
+Generating generated/images/src/image_Button_R1A.cpp
+Generating generated/images/src/image_Button_R1R.cpp
+Generating generated/images/src/image_Button_R2.cpp
+Generating generated/images/src/image_Button_R2A.cpp
+Generating generated/images/src/image_Button_R2R.cpp
+Generating generated/images/src/image_Heart.cpp
+Generating generated/images/src/image_MenuAssets_Cross.cpp
+Generating generated/images/src/image_MenuAssets_CrossYellow.cpp
+Generating generated/images/src/image_MenuAssets_Tick.cpp
+Cleaning generated files from generated/texts and generated/fonts.
+Downgrading typography Poppins_Regular_9 from 4bpp to 2bpp
+Downgrading typography Poppins_Medium_10 from 4bpp to 2bpp
+Downgrading typography Poppins_Medium_18 from 4bpp to 2bpp
+Downgrading typography Poppins_Medium_25 from 4bpp to 2bpp
+Downgrading typography Poppins_Medium_50 from 4bpp to 2bpp
+Downgrading typography Poppins_Medium_60 from 4bpp to 2bpp
+Downgrading typography Poppins_SemiBold_18 from 4bpp to 2bpp
+Downgrading typography Poppins_SemiBold_20 from 4bpp to 2bpp
+Downgrading typography Poppins_SemiBold_25 from 4bpp to 2bpp
+Downgrading typography Poppins_SemiBold_30 from 4bpp to 2bpp
+Downgrading typography Poppins_SemiBold_35 from 4bpp to 2bpp
+Downgrading typography Poppins_SemiBold_40 from 4bpp to 2bpp
+Downgrading typography Poppins_SemiBold_60 from 4bpp to 2bpp
+Downgrading typography Poppins_Italic_18 from 4bpp to 2bpp
+Downgrading typography Poppins_Italic_20 from 4bpp to 2bpp
+Downgrading typography Poppins_LightItalic_18 from 4bpp to 2bpp
+Downgrading typography Poppins_Light_60 from 4bpp to 2bpp
+Generating generated/fonts/include/fonts/GeneratedFont.hpp
+Generating generated/fonts/src/GeneratedFont.cpp
+Generating generated/fonts/include/fonts/UnmappedDataFont.hpp
+Generating generated/fonts/src/UnmappedDataFont.cpp
+Generating generated/fonts/include/fonts/CachedFont.hpp
+Generating generated/fonts/src/CachedFont.cpp
+Generating generated/fonts/include/fonts/FontCache.hpp
+Generating generated/fonts/src/FontCache.cpp
+Generating generated/fonts/src/CompressedFontCache.cpp
+Generating generated/fonts/src/CompressedUnmappedFontCache.cpp
+Generating generated/fonts/include/fonts/CompressedFontCache.hpp
+Generating generated/fonts/include/fonts/CompressedUnmappedFontCache.hpp
+Generating generated/fonts/src/ApplicationFontProvider.cpp
+Generating generated/fonts/include/fonts/ApplicationFontProvider.hpp
+Generating generated/texts/include/texts/TextKeysAndLanguages.hpp
+Generating generated/texts/include/texts/TypedTextDatabase.hpp
+Generating generated/texts/src/TypedTextDatabase.cpp
+Generating generated/texts/src/Texts.cpp
+Generating generated/texts/src/LanguageGb.cpp
+Generating generated/fonts/src/Font_Poppins_Italic_18_2bpp_0.cpp
+Generating generated/fonts/src/Font_Poppins_Italic_18_2bpp_4.cpp
+Generating generated/fonts/src/Table_Poppins_Italic_18_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_Italic_18_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_Italic_20_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_Italic_20_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_Italic_20_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_Light_60_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_Light_60_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_Light_60_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_LightItalic_18_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_LightItalic_18_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_LightItalic_18_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_Medium_10_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_Medium_10_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_Medium_10_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_Medium_18_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_Medium_18_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_Medium_18_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_Medium_50_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_Medium_50_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_Medium_50_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_Regular_9_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_Regular_9_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_Regular_9_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_SemiBold_18_2bpp_0.cpp
+Generating generated/fonts/src/Font_Poppins_SemiBold_18_2bpp_4.cpp
+Generating generated/fonts/src/Table_Poppins_SemiBold_18_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_SemiBold_18_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_SemiBold_20_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_SemiBold_20_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_SemiBold_20_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_SemiBold_25_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_SemiBold_25_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_SemiBold_25_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_SemiBold_30_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_SemiBold_30_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_SemiBold_30_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_SemiBold_35_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_SemiBold_35_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_SemiBold_35_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_SemiBold_40_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_SemiBold_40_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_SemiBold_40_2bpp.cpp
+Generating generated/fonts/src/Font_Poppins_SemiBold_60_2bpp_0.cpp
+Generating generated/fonts/src/Table_Poppins_SemiBold_60_2bpp.cpp
+Generating generated/fonts/src/Kerning_Poppins_SemiBold_60_2bpp.cpp
+Generating generated/fonts/src/VectorFontRendererBuffers.cpp
+make[2]: warning: -j4 forced in submake: resetting jobserver mode.
+Compiling gui/src/containers/ButtonsSet.cpp
+Compiling gui/src/main_screen/MainView.cpp
+Compiling gui/src/common/FrontendApplication.cpp
+Compiling gui/src/main_screen/MainPresenter.cpp
+gui/src/main_screen/MainView.cpp: In member function 'void MainView::refreshDisplay()':
+gui/src/main_screen/MainView.cpp:139:75: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  139 |             len += snprintf(buffer + len, sizeof(buffer) - len, "Steps: %lu\n", steps);
+      |                                                                         ~~^     ~~~~~
+      |                                                                           |     |
+      |                                                                           |     uint32_t {aka unsigned int}
+      |                                                                           long unsigned int
+      |                                                                         %u
+gui/src/main_screen/MainView.cpp:145:76: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  145 |             len += snprintf(buffer + len, sizeof(buffer) - len, "Floors: %lu\n", floors);
+      |                                                                          ~~^     ~~~~~~
+      |                                                                            |     |
+      |                                                                            |     uint32_t {aka unsigned int}
+      |                                                                            long unsigned int
+      |                                                                          %u
+gui/src/main_screen/MainView.cpp:166:79: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  166 |                 len += snprintf(buffer + len, sizeof(buffer) - len, "Steps: %lu\n", steps);
+      |                                                                             ~~^     ~~~~~
+      |                                                                               |     |
+      |                                                                               |     uint32_t {aka unsigned int}
+      |                                                                               long unsigned int
+      |                                                                             %u
+gui/src/main_screen/MainView.cpp:169:80: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  169 |                 len += snprintf(buffer + len, sizeof(buffer) - len, "Floors: %lu\n", floors);
+      |                                                                              ~~^     ~~~~~~
+      |                                                                                |     |
+      |                                                                                |     uint32_t {aka unsigned int}
+      |                                                                                long unsigned int
+      |                                                                              %u
+gui/src/main_screen/MainView.cpp:152:16: warning: enumeration value 'BASIC' not handled in switch [-Wswitch]
+  152 |         switch (verbosity) {
+      |                ^
+gui/src/main_screen/MainView.cpp:152:16: warning: enumeration value 'DETAILED' not handled in switch [-Wswitch]
+gui/src/main_screen/MainView.cpp:152:16: warning: enumeration value 'FULL' not handled in switch [-Wswitch]
+gui/src/main_screen/MainView.cpp:152:16: warning: enumeration value 'VERB_LEVEL_MAX' not handled in switch [-Wswitch]
+gui/src/main_screen/MainView.cpp: In member function 'void MainView::refreshBattery()':
+gui/src/main_screen/MainView.cpp:202:62: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  202 |     len += snprintf(buffer + len, sizeof(buffer) - len, "# %lu\nTime: %lu\n", mFrameCounter, rtcTime);
+      |                                                            ~~^                ~~~~~~~~~~~~~
+      |                                                              |                |
+      |                                                              |                uint32_t {aka unsigned int}
+      |                                                              long unsigned int
+      |                                                            %u
+gui/src/main_screen/MainView.cpp:202:73: warning: format '%lu' expects argument of type 'long unsigned int', but argument 5 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  202 |     len += snprintf(buffer + len, sizeof(buffer) - len, "# %lu\nTime: %lu\n", mFrameCounter, rtcTime);
+      |                                                                       ~~^                    ~~~~~~~
+      |                                                                         |                    |
+      |                                                                         long unsigned int    uint32_t {aka unsigned int}
+      |                                                                       %u
+Compiling gui/src/map_screen/MapPresenter.cpp
+Compiling gui/src/map_screen/MapView.cpp
+Compiling gui/src/map_screen/TileCanvas.cpp
+Compiling gui/src/model/Model.cpp
+Compiling generated/gui_generated/src/common/FrontendApplicationBase.cpp
+Compiling generated/gui_generated/src/containers/ButtonsSetBase.cpp
+Compiling generated/gui_generated/src/main_screen/MainViewBase.cpp
+Compiling generated/simulator/src/video/SoftwareMJPEGDecoder.cpp
+Compiling generated/simulator/src/mainBase.cpp
+Compiling generated/fonts/src/ApplicationFontProvider.cpp
+Compiling generated/fonts/src/CachedFont.cpp
+Compiling generated/fonts/src/CompressedFontCache.cpp
+Compiling generated/fonts/src/CompressedUnmappedFontCache.cpp
+Compiling generated/fonts/src/FontCache.cpp
+Compiling generated/fonts/src/Font_Poppins_Italic_18_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_Italic_18_2bpp_4.cpp
+Compiling generated/fonts/src/Font_Poppins_Italic_20_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_LightItalic_18_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_Light_60_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_Medium_10_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_Medium_18_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_Medium_50_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_SemiBold_18_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_Regular_9_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_SemiBold_18_2bpp_4.cpp
+Compiling generated/fonts/src/Font_Poppins_SemiBold_20_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_SemiBold_25_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_SemiBold_30_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_SemiBold_35_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_SemiBold_40_2bpp_0.cpp
+Compiling generated/fonts/src/Font_Poppins_SemiBold_60_2bpp_0.cpp
+Compiling generated/fonts/src/GeneratedFont.cpp
+Compiling generated/fonts/src/Kerning_Poppins_Italic_18_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_Italic_20_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_LightItalic_18_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_Light_60_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_Medium_10_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_Medium_18_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_Medium_50_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_Regular_9_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_SemiBold_18_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_SemiBold_20_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_SemiBold_25_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_SemiBold_30_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_SemiBold_35_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_SemiBold_40_2bpp.cpp
+Compiling generated/fonts/src/Kerning_Poppins_SemiBold_60_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_Italic_18_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_Italic_20_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_LightItalic_18_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_Light_60_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_Medium_10_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_Medium_18_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_Medium_50_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_Regular_9_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_SemiBold_18_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_SemiBold_20_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_SemiBold_25_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_SemiBold_30_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_SemiBold_35_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_SemiBold_40_2bpp.cpp
+Compiling generated/fonts/src/Table_Poppins_SemiBold_60_2bpp.cpp
+Compiling generated/fonts/src/UnmappedDataFont.cpp
+Compiling generated/fonts/src/VectorFontRendererBuffers.cpp
+Compiling generated/images/src/BitmapDatabase.cpp
+Compiling generated/images/src/SVGDatabase.cpp
+Compiling generated/images/src/image_Button_L1.cpp
+Compiling generated/images/src/image_Button_L1A.cpp
+Compiling generated/images/src/image_Button_L1R.cpp
+Compiling generated/images/src/image_Button_L2.cpp
+Compiling generated/images/src/image_Button_L2A.cpp
+Compiling generated/images/src/image_Button_L2R_.cpp
+Compiling generated/images/src/image_Button_R1.cpp
+Compiling generated/images/src/image_Button_R1A.cpp
+Compiling generated/images/src/image_Button_R1R.cpp
+Compiling generated/images/src/image_Button_R2.cpp
+Compiling generated/images/src/image_Button_R2A.cpp
+Compiling generated/images/src/image_Button_R2R.cpp
+Compiling generated/images/src/image_Heart.cpp
+Compiling generated/images/src/image_MenuAssets_Cross.cpp
+Compiling generated/images/src/image_MenuAssets_CrossYellow.cpp
+Compiling generated/images/src/image_MenuAssets_Tick.cpp
+Compiling generated/texts/src/LanguageGb.cpp
+Compiling generated/texts/src/Texts.cpp
+Compiling generated/texts/src/TypedTextDatabase.cpp
+Compiling ../../../../../../ThirdParty/touchgfx/framework/source/platform/hal/simulator/sdl2/HALSDL2.cpp
+Compiling ../../../../../../ThirdParty/touchgfx/framework/source/platform/hal/simulator/sdl2/HALSDL2_icon.cpp
+Compiling ../../../../../../ThirdParty/touchgfx/framework/source/platform/hal/simulator/sdl2/OSWrappers.cpp
+Compiling simulator/main.cpp
+Compiling ../../../../../../ThirdParty/touchgfx/framework/source/platform/driver/touch/SDL2TouchController.cpp
+../../../../../../ThirdParty/touchgfx/framework/source/platform/hal/simulator/sdl2/HALSDL2.cpp: In member function 'void touchgfx::HALSDL2::saveScreenshot()':
+../../../../../../ThirdParty/touchgfx/framework/source/platform/hal/simulator/sdl2/HALSDL2.cpp:1335:38: warning: '%02d' directive output may be truncated writing between 2 and 11 bytes into a region of size between 5 and 12 [-Wformat-truncation=]
+ 1335 |     sprintf_s(baseName, 20, "img_%04d%02d%02d_%02d%02d%02d",
+      |                                      ^~~~
+../../../../../../ThirdParty/touchgfx/framework/source/platform/hal/simulator/sdl2/HALSDL2.cpp:1335:29: note: directive argument in the range [-2147483647, 2147483647]
+ 1335 |     sprintf_s(baseName, 20, "img_%04d%02d%02d_%02d%02d%02d",
+      |                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../../../../../../ThirdParty/touchgfx/framework/source/platform/hal/simulator/sdl2/HALSDL2.cpp:1335:14: note: 'snprintf' output between 20 and 72 bytes into a destination of size 20
+ 1335 |     sprintf_s(baseName, 20, "img_%04d%02d%02d_%02d%02d%02d",
+      |              ^
+Compiling /src/Libs/Source/Simulator/Kernel/Mock/Backlight.cpp
+Compiling /src/Libs/Source/Simulator/Kernel/Mock/Buzzer.cpp
+Compiling /src/Libs/Source/Simulator/Kernel/Mock/FileSystem.cpp
+Compiling /src/Libs/Source/Simulator/Kernel/Mock/Vibro.cpp
+Compiling /src/Libs/Source/UnaLogger/Logger.cpp
+Compiling /src/Libs/Source/JSON/JsonStreamReader.cpp
+Compiling /src/Libs/Source/JSON/JsonStreamWriter.cpp
+/src/Libs/Source/JSON/JsonStreamReader.cpp: In member function 'bool SDK::JsonStreamReader::getArrayLength(const char*, size_t&) const':
+/src/Libs/Source/JSON/JsonStreamReader.cpp:278:61: warning: format '%u' expects argument of type 'unsigned int', but argument 4 has type 'size_t' {aka 'long unsigned int'} [-Wformat=]
+  278 |         size_t ql = snprintf(subquery, sizeof(subquery), "[%u]", i++);
+      |                                                            ~^    ~~~
+      |                                                             |     |
+      |                                                             |     size_t {aka long unsigned int}
+      |                                                             unsigned int
+      |                                                            %lu
+Compiling /src/Libs/Source/TrackMap/TrackMapBuilder.cpp
+Compiling /src/Libs/Source/RawTiles/Container.cpp
+make[2]: *** No rule to make target 'build/Linux/Libs/Source/FitHelper/FitHelper.o', needed by 'build/bin/simulator.out'.  Stop.
+make[2]: *** Waiting for unfinished jobs....
+Compiling /src/Libs/Source/Kernel/KernelBuilder.cpp
+/src/Libs/Source/JSON/JsonStreamWriter.cpp: In member function 'void SDK::JsonStreamWriter::writeInt(int32_t)':
+/src/Libs/Source/JSON/JsonStreamWriter.cpp:526:45: warning: format '%ld' expects argument of type 'long int', but argument 4 has type 'int32_t' {aka 'int'} [-Wformat=]
+  526 |     int len = snprintf(buf, sizeof(buf), "%ld", value);
+      |                                           ~~^   ~~~~~
+      |                                             |   |
+      |                                             |   int32_t {aka int}
+      |                                             long int
+      |                                           %d
+/src/Libs/Source/JSON/JsonStreamWriter.cpp: In member function 'void SDK::JsonStreamWriter::writeUint(uint32_t)':
+/src/Libs/Source/JSON/JsonStreamWriter.cpp:533:45: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  533 |     int len = snprintf(buf, sizeof(buf), "%lu", value);
+      |                                           ~~^   ~~~~~
+      |                                             |   |
+      |                                             |   uint32_t {aka unsigned int}
+      |                                             long unsigned int
+      |                                           %u
+make[1]: *** [una/Makefile:189: generate_assets] Error 2
+make: *** [simulator/gcc/Makefile:98: all] Error 2

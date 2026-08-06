@@ -1,0 +1,216 @@
+make[1]: warning: -j4 forced in submake: resetting jobserver mode.
+Reading ./application.config
+Reading ./target.config
+make[2]: warning: -j4 forced in submake: resetting jobserver mode.
+Compiling /src/Libs/Source/Fit/FitWriter.cpp
+Compiling /src/Libs/Source/Fit/FitCrc.cpp
+Compiling /src/Libs/Source/Fit/FitRecordCadence.cpp
+Compiling /src/Libs/Source/Fit/RecordingMarker.cpp
+Compiling /src/Libs/Source/Timer/Timer.cpp
+Compiling /src/Libs/Source/Port/TouchGFX/TouchGFXCommandProcessor.cpp
+Compiling /src/Libs/Source/SensorLayer/SensorConnection.cpp
+Compiling /src/Libs/Source/Simulator/App/DualAppComm.cpp
+Compiling /src/Libs/Source/Simulator/App/AppCore.cpp
+Compiling /src/Libs/Source/Simulator/App/AppMessageCore.cpp
+Compiling /src/Libs/Source/Simulator/App/KernelMessageDispatcher.cpp
+Compiling /src/Libs/Source/Simulator/App/MessageManager.cpp
+Compiling /src/Libs/Source/Simulator/Kernel/Kernel.cpp
+Compiling /src/Libs/Source/Simulator/Kernel/Mock/System.cpp
+Compiling /src/Libs/Source/Simulator/OS/OS.cpp
+In file included from /src/Libs/Source/Simulator/App/KernelMessageDispatcher.cpp:8:
+/src/Libs/Header/SDK/Simulator/App/KernelMessageDispatcher.hpp: In constructor 'SDK::App::KernelMessageDispatcher::KernelMessageDispatcher(SDK::App::DualAppComm&, App::MessageManager&, SDK::Interface::IVibro&, SDK::Interface::IBacklight&, SDK::Interface::IBuzzer&)':
+/src/Libs/Header/SDK/Simulator/App/KernelMessageDispatcher.hpp:278:33: warning: 'SDK::App::KernelMessageDispatcher::mAppComm' will be initialized after [-Wreorder]
+  278 |     SDK::App::DualAppComm&      mAppComm;
+      |                                 ^~~~~~~~
+/src/Libs/Header/SDK/Simulator/App/KernelMessageDispatcher.hpp:277:33: warning:   'App::MessageManager& SDK::App::KernelMessageDispatcher::mMessageMgr' [-Wreorder]
+  277 |     ::App::MessageManager&      mMessageMgr;
+      |                                 ^~~~~~~~~~~
+/src/Libs/Source/Simulator/App/KernelMessageDispatcher.cpp:27:1: warning:   when initialized here [-Wreorder]
+   27 | KernelMessageDispatcher::KernelMessageDispatcher(SDK::App::DualAppComm& appComm,
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/src/Libs/Source/Simulator/App/KernelMessageDispatcher.cpp: In member function 'void SDK::App::KernelMessageDispatcher::appLifeCycleHandler(SDK::MessageBase*)':
+/src/Libs/Source/Simulator/App/KernelMessageDispatcher.cpp:91:18: warning: unused variable 'isGuiWasRun' [-Wunused-variable]
+   91 |             bool isGuiWasRun = true;
+      |                  ^~~~~~~~~~~
+/src/Libs/Source/Simulator/App/KernelMessageDispatcher.cpp: In member function 'void SDK::App::KernelMessageDispatcher::appMsgHandler(SDK::MessageBase*)':
+/src/Libs/Source/Simulator/App/KernelMessageDispatcher.cpp:127:17: warning: type qualifiers ignored on cast result type [-Wignored-qualifiers]
+  127 |                 static_cast<const uint32_t>(HeartRateZones::kMaxThreshold)
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/src/Libs/Source/Simulator/App/KernelMessageDispatcher.cpp:238:19: warning: unused variable 'gl' [-Wunused-variable]
+  238 |             auto* gl = static_cast<SDK::Message::RequestGlanceUpdate*>(msg);
+      |                   ^~
+Compiling /src/Libs/Source/Simulator/OS/SwTimer.cpp
+In file included from /src/Libs/Source/Simulator/OS/OS.cpp:13:
+/src/Libs/Header/SDK/Simulator/OS/OS.hpp: In constructor 'OS::Semaphore::Semaphore(uint32_t, uint32_t)':
+/src/Libs/Header/SDK/Simulator/OS/OS.hpp:96:31: warning: 'OS::Semaphore::mCount' will be initialized after [-Wreorder]
+   96 |         std::atomic<uint32_t> mCount;
+      |                               ^~~~~~
+/src/Libs/Header/SDK/Simulator/OS/OS.hpp:94:31: warning:   'sem_t OS::Semaphore::mSem' [-Wreorder]
+   94 |         sem_t                 mSem;
+      |                               ^~~~
+/src/Libs/Source/Simulator/OS/OS.cpp:65:1: warning:   when initialized here [-Wreorder]
+   65 | Semaphore::Semaphore(uint32_t max, uint32_t init)
+      | ^~~~~~~~~
+Compiling /src/Libs/Source/Simulator/OS/OneShotTimer.cpp
+Compiling /src/Libs/Source/Simulator/Components/SensorManager.cpp
+Compiling /src/Libs/Source/Simulator/Components/SensorDataSample.cpp
+Compiling /src/Libs/Source/Simulator/Components/SensorDataQueue.cpp
+Compiling /src/Libs/Source/Simulator/Components/SampleRateAdapter.cpp
+Compiling /src/Libs/Source/Simulator/Components/InstanceSensorLayer.cpp
+Compiling /src/Libs/Source/Simulator/Components/Sensors/Gps/GpsSpeed.cpp
+/src/Libs/Source/Simulator/Components/SensorDataQueue.cpp: In member function 'void Sensor::DataQueue::reinit(float, uint32_t)':
+/src/Libs/Source/Simulator/Components/SensorDataQueue.cpp:120:35: warning: cast from type 'const uint8_t*' {aka 'const unsigned char*'} to type 'SDK::Sensor::Data*' casts away qualifiers [-Wcast-qual]
+  120 |         SDK::Sensor::Data* item = (SDK::Sensor::Data*) &oldQueue[idx * mStride];
+      |                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/src/Libs/Source/Simulator/Components/SensorDataQueue.cpp:124:23: warning: cast from type 'const uint8_t*' {aka 'const unsigned char*'} to type 'void*' casts away qualifiers [-Wcast-qual]
+  124 |     ::operator delete((void*)oldQueue, std::align_val_t(4));
+      |                       ^~~~~~~~~~~~~~~
+Compiling /src/Libs/Source/Simulator/Components/Sensors/Gps/GpsLocation.cpp
+Compiling /src/Libs/Source/Simulator/Components/Sensors/Gps/GpsDistance.cpp
+In file included from /src/Libs/Source/Simulator/Components/Sensors/Gps/GpsSpeed.cpp:17:
+/src/Libs/Header/SDK/Simulator/Components/Sensors/Gps/GpsSpeed.hpp: In constructor 'Sensor::GpsSpeed::GpsSpeed()':
+/src/Libs/Header/SDK/Simulator/Components/Sensors/Gps/GpsSpeed.hpp:47:26: warning: 'Sensor::GpsSpeed::mGps' will be initialized after [-Wreorder]
+   47 |         Interface::IGps& mGps;
+      |                          ^~~~
+/src/Libs/Header/SDK/Simulator/Components/Sensors/Gps/GpsSpeed.hpp:45:27: warning:   'Sensor::Driver Sensor::GpsSpeed::mDriver' [-Wreorder]
+   45 |         Sensor::Driver    mDriver;
+      |                           ^~~~~~~
+/src/Libs/Source/Simulator/Components/Sensors/Gps/GpsSpeed.cpp:26:1: warning:   when initialized here [-Wreorder]
+   26 | GpsSpeed::GpsSpeed()
+      | ^~~~~~~~
+Compiling /src/Libs/Source/Simulator/Components/Sensors/Gps/GpsAltimeter.cpp
+In file included from /src/Libs/Source/Simulator/Components/InstanceSensorLayer.cpp:5:
+/src/Libs/Header/SDK/Simulator/Components/InstanceSensorLayer.hpp: In constructor 'Instance::SensorLayer::SensorLayer()':
+/src/Libs/Header/SDK/Simulator/Components/InstanceSensorLayer.hpp:36:41: warning: 'Instance::SensorLayer::mSensorHR' will be initialized after [-Wreorder]
+   36 |         Sensor::HeartRate               mSensorHR;
+      |                                         ^~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/InstanceSensorLayer.hpp:35:41: warning:   'Sensor::HeartRateMetrics Instance::SensorLayer::mSensorHRMetrics' [-Wreorder]
+   35 |         Sensor::HeartRateMetrics        mSensorHRMetrics;
+      |                                         ^~~~~~~~~~~~~~~~
+/src/Libs/Source/Simulator/Components/InstanceSensorLayer.cpp:69:5: warning:   when initialized here [-Wreorder]
+   69 |     SensorLayer::SensorLayer()
+      |     ^~~~~~~~~~~
+In file included from /src/Libs/Source/Simulator/Components/Sensors/Gps/GpsDistance.cpp:17:
+/src/Libs/Header/SDK/Simulator/Components/Sensors/Gps/GpsDistance.hpp: In constructor 'Sensor::GpsDistance::GpsDistance()':
+/src/Libs/Header/SDK/Simulator/Components/Sensors/Gps/GpsDistance.hpp:153:32: warning: 'Sensor::GpsDistance::mPoints' will be initialized after [-Wreorder]
+  153 |         OS::Queue<GpsPoint, 5> mPoints;
+      |                                ^~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Sensors/Gps/GpsDistance.hpp:146:28: warning:   'Interface::IGps& Sensor::GpsDistance::mGps' [-Wreorder]
+  146 |         Interface::IGps&   mGps;
+      |                            ^~~~
+/src/Libs/Source/Simulator/Components/Sensors/Gps/GpsDistance.cpp:29:1: warning:   when initialized here [-Wreorder]
+   29 | GpsDistance::GpsDistance()
+      | ^~~~~~~~~~~
+/src/Libs/Source/Simulator/Components/Sensors/Gps/GpsDistance.cpp: In member function 'virtual void Sensor::GpsDistance::sensorRefresh()':
+/src/Libs/Source/Simulator/Components/Sensors/Gps/GpsDistance.cpp:95:18: warning: unused variable 'distance' [-Wunused-variable]
+   95 |     static float distance = 0.0;
+      |                  ^~~~~~~~
+Compiling /src/Libs/Source/Simulator/Components/Sensors/HeartRate/SensorHeartRateMetrics.cpp
+Compiling /src/Libs/Source/Simulator/Components/Sensors/SensorBatteryLevel.cpp
+Compiling /src/Libs/Source/Simulator/Components/Sensors/HeartRate/SensorHeartRate.cpp
+Compiling /src/Libs/Source/Simulator/Components/Sensors/SensorPressure.cpp
+In file included from /src/Libs/Source/Simulator/Components/Sensors/SensorBatteryLevel.cpp:17:
+/src/Libs/Header/SDK/Simulator/Components/Sensors/SensorBatteryLevel.hpp: In constructor 'Sensor::BatteryLevel::BatteryLevel()':
+/src/Libs/Header/SDK/Simulator/Components/Sensors/SensorBatteryLevel.hpp:51:32: warning: 'Sensor::BatteryLevel::mDataMutex' will be initialized after [-Wreorder]
+   51 |         OS::Mutex              mDataMutex;
+      |                                ^~~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Sensors/SensorBatteryLevel.hpp:49:32: warning:   'float Sensor::BatteryLevel::mPrevLevel' [-Wreorder]
+   49 |         float                  mPrevLevel;
+      |                                ^~~~~~~~~~
+/src/Libs/Source/Simulator/Components/Sensors/SensorBatteryLevel.cpp:29:5: warning:   when initialized here [-Wreorder]
+   29 |     BatteryLevel::BatteryLevel()
+      |     ^~~~~~~~~~~~
+Compiling /src/Libs/Source/Simulator/Components/Sensors/Imu/ImuWristMotion.cpp
+Compiling /src/Libs/Source/Simulator/Components/Sensors/Imu/ImuStepCounter.cpp
+Compiling /src/Libs/Source/Simulator/Components/ComponentSimulator.cpp
+In file included from /src/Libs/Source/Simulator/Components/Sensors/Imu/ImuStepCounter.cpp:17:
+/src/Libs/Header/SDK/Simulator/Components/Sensors/IMU/ImuStepCounter.hpp: In constructor 'Sensor::ImuStepCounter::ImuStepCounter()':
+/src/Libs/Header/SDK/Simulator/Components/Sensors/IMU/ImuStepCounter.hpp:56:27: warning: 'Sensor::ImuStepCounter::mDataMutex' will be initialized after [-Wreorder]
+   56 |         OS::Mutex         mDataMutex;
+      |                           ^~~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Sensors/IMU/ImuStepCounter.hpp:53:27: warning:   'Interface::IStepCounter& Sensor::ImuStepCounter::mStepCounterSim' [-Wreorder]
+   53 |         IStepCounter&     mStepCounterSim;
+      |                           ^~~~~~~~~~~~~~~
+/src/Libs/Source/Simulator/Components/Sensors/Imu/ImuStepCounter.cpp:24:5: warning:   when initialized here [-Wreorder]
+   24 |     ImuStepCounter::ImuStepCounter()
+      |     ^~~~~~~~~~~~~~
+Compiling /src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp
+Compiling /src/Libs/Source/Simulator/Components/SensorListener.cpp
+Compiling /src/Libs/Source/Simulator/Components/SensorDriver.cpp
+Compiling ../../Libs/Sources/Service.cpp
+In file included from /src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp:10:
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp: In constructor 'Simulator::GpsStepCounterSimulator::GpsStepCounterSimulator()':
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:128:36: warning: 'Simulator::GpsStepCounterSimulator::mGen' will be initialized after [-Wreorder]
+  128 |         std::default_random_engine mGen;
+      |                                    ^~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:91:28: warning:   'Driver::SwTimer Simulator::GpsStepCounterSimulator::mTimerGpsFix' [-Wreorder]
+   91 |         ::Driver::SwTimer  mTimerGpsFix;
+      |                            ^~~~~~~~~~~~
+/src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp:21:5: warning:   when initialized here [-Wreorder]
+   21 |     GpsStepCounterSimulator::GpsStepCounterSimulator()
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:133:47: warning: 'Simulator::GpsStepCounterSimulator::mPrecisionNoise' will be initialized after [-Wreorder]
+  133 |         std::uniform_real_distribution<float> mPrecisionNoise; ///< Noise for precision
+      |                                               ^~~~~~~~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:132:47: warning:   'std::uniform_real_distribution<float> Simulator::GpsStepCounterSimulator::mGpsLoss' [-Wreorder]
+  132 |         std::uniform_real_distribution<float> mGpsLoss;  ///< Simulate GPS signal loss
+      |                                               ^~~~~~~~
+/src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp:21:5: warning:   when initialized here [-Wreorder]
+   21 |     GpsStepCounterSimulator::GpsStepCounterSimulator()
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:132:47: warning: 'Simulator::GpsStepCounterSimulator::mGpsLoss' will be initialized after [-Wreorder]
+  132 |         std::uniform_real_distribution<float> mGpsLoss;  ///< Simulate GPS signal loss
+      |                                               ^~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:111:15: warning:   'float Simulator::GpsStepCounterSimulator::mCurrentSpeed' [-Wreorder]
+  111 |         float mCurrentSpeed;                    ///< Current simulated speed
+      |               ^~~~~~~~~~~~~
+/src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp:21:5: warning:   when initialized here [-Wreorder]
+   21 |     GpsStepCounterSimulator::GpsStepCounterSimulator()
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:125:15: warning: 'Simulator::GpsStepCounterSimulator::mAltDrift' will be initialized after [-Wreorder]
+  125 |         float mAltDrift;
+      |               ^~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:86:38: warning:   'Sensor::DataSample Simulator::GpsStepCounterSimulator::mDataSample' [-Wreorder]
+   86 |         Sensor::DataSample           mDataSample;
+      |                                      ^~~~~~~~~~~
+/src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp:21:5: warning:   when initialized here [-Wreorder]
+   21 |     GpsStepCounterSimulator::GpsStepCounterSimulator()
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:112:15: warning: 'Simulator::GpsStepCounterSimulator::mTrackPosition' will be initialized after [-Wreorder]
+  112 |         float mTrackPosition;
+      |               ^~~~~~~~~~~~~~
+/src/Libs/Header/SDK/Simulator/Components/Simulator/GpsStepCounterSimulator.hpp:90:28: warning:   'Interface::IGps::LocationInfo Simulator::GpsStepCounterSimulator::mLoc' [-Wreorder]
+   90 |         IGps::LocationInfo mLoc;
+      |                            ^~~~
+/src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp:21:5: warning:   when initialized here [-Wreorder]
+   21 |     GpsStepCounterSimulator::GpsStepCounterSimulator()
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+/src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp: In member function 'void Simulator::GpsStepCounterSimulator::task()':
+/src/Libs/Source/Simulator/Components/Simulator/GpsStepCounterSimulator.cpp:97:32: warning: variable 'loc' set but not used [-Wunused-but-set-variable]
+   97 |             IGps::LocationInfo loc = getLocation();
+      |                                ^~~
+Compiling ../../Libs/Sources/ActivityWriter.cpp
+/src/Libs/Source/Simulator/Components/SensorListener.cpp: In member function 'virtual void App::SensorListener::onSdlNewData(uint16_t, const SDK::Sensor::Data*, uint16_t, uint16_t)':
+/src/Libs/Source/Simulator/Components/SensorListener.cpp:69:37: warning: cast from type 'const uint8_t*' {aka 'const unsigned char*'} to type 'void*' casts away qualifiers [-Wcast-qual]
+   69 |         memcpy((void*) event->data, (void*) dataPtr, strideCount * stride);
+      |                                     ^~~~~~~~~~~~~~~
+Compiling /src/Libs/Source/Wrappers/StdLibWrappers.c
+Compiling /src/ThirdParty/coreJSON/source/core_json.c
+/src/ThirdParty/coreJSON/source/core_json.c: In function 'JSONStatus_t JSON_SearchT(char*, size_t, const char*, size_t, char**, size_t*, JSONTypes_t*)':
+/src/ThirdParty/coreJSON/source/core_json.c:1761:77: warning: cast from type 'char**' to type 'const char**' casts away qualifiers [-Wcast-qual]
+ 1761 |     return JSON_SearchConst( ( const char * ) buf, max, query, queryLength, ( const char ** ) outValue, outValueLength, outType );
+      |                                                                             ^~~~~~~~~~~~~~~~~~~~~~~~~~
+Linking build/bin/simulator.out
+/usr/bin/ld: build/Linux/Libs/Source/Simulator/Components/InstanceSensorLayer.o: in function `Instance::SensorLayer::SensorLayer()':
+/src/Libs/Source/Simulator/Components/InstanceSensorLayer.cpp:80: undefined reference to `Sensor::ImuRunningCadence::ImuRunningCadence()'
+/usr/bin/ld: build/Linux/Libs/Source/Simulator/Components/InstanceSensorLayer.o: in function `Sensor::ImuRunningCadence::~ImuRunningCadence()':
+/src/Libs/Header/SDK/Simulator/Components/Sensors/IMU/ImuRunningCadence.hpp:18: undefined reference to `vtable for Sensor::ImuRunningCadence'
+/usr/bin/ld: /src/Libs/Header/SDK/Simulator/Components/Sensors/IMU/ImuRunningCadence.hpp:18: undefined reference to `vtable for Sensor::ImuRunningCadence'
+collect2: error: ld returned 1 exit status
+make[2]: *** [una/Makefile:198: build/bin/simulator.out] Error 1
+make[1]: *** [una/Makefile:189: generate_assets] Error 2
+make: *** [simulator/gcc/Makefile:97: all] Error 2
+MAKE_EXIT=2
+total 0
+drwxr-xr-x 2 root root  64 Aug  5 18:13 .
+drwxr-xr-x 5 root root 160 Aug  5 18:13 ..
