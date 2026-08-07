@@ -98,5 +98,24 @@ target_link_libraries(una-sdk-host-tests PRIVATE
     GTest::gmock
 )
 
+# AthensRun is a standalone copy of the Running app (PoC map screen), so its
+# service classes collide with Running's at link time -- second executable,
+# same pattern as the GpsLab branch. Only the app's pure map math is tested
+# here; the vendored rawtiles Container carries its own conformance evidence
+# on the branch it was vendored from.
+add_executable(una-sdk-athensrun-tests
+    apps/AthensRun/MapMath_test.cpp
+    apps/AthensRun/TraceBuffer_test.cpp
+)
+
+target_include_directories(una-sdk-athensrun-tests PRIVATE
+    "${UNA_SDK_ROOT}/Examples/Apps/AthensRun/Software/Apps/TouchGFX-GUI/gui/include"
+)
+
+target_link_libraries(una-sdk-athensrun-tests PRIVATE
+    GTest::gtest_main
+)
+
 enable_testing()
 add_test(NAME una-sdk-host-tests COMMAND una-sdk-host-tests)
+add_test(NAME una-sdk-athensrun-tests COMMAND una-sdk-athensrun-tests)
