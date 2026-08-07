@@ -4,10 +4,13 @@
  * @brief   Fixed-slot LRU cache of decoded map tiles for the AthensRun map.
  *
  * SLOTS x 64 KiB of static storage (.bss, so the linker enforces the GUI
- * RAM budget at build time). A 240x240 viewport over 256 px tiles touches
- * at most a 2x2 mosaic, so 4 slots hold a full frame; a pan crossing a
- * tile boundary evicts one LRU slot and pays one ~6-9 ms read (measured
- * on hardware) -- imperceptible at the 1 Hz fix-driven redraw cadence.
+ * RAM budget at build time -- and it did: 4 slots overflowed the device
+ * RAM region by 160 KB on top of the Running GUI's existing statics, so
+ * exactly one slot fits). With one slot a full-viewport redraw re-reads
+ * up to the whole 2x2 mosaic at ~6-9 ms per tile (measured): ~30 ms
+ * worst case at the 1 Hz fix-driven cadence, acceptable for the PoC and
+ * the first datapoint for the cache-sweep experiment (E1) -- more slots
+ * need RAM reclaimed from the inherited Running GUI, not this constant.
  *
  * Absent tiles (outside pack coverage) are resolved by findTile() alone
  * (index lookup, no I/O) and never occupy a slot.
@@ -27,7 +30,7 @@ namespace AthensRun
 class TileCache
 {
 public:
-    static constexpr uint32_t SLOTS      = 4;
+    static constexpr uint32_t SLOTS      = 1;
     static constexpr uint32_t TILE_BYTES = 256 * 256; // ABGR2222, 1 B/px
 
     /// Returns the decoded tile pixels for (z, x, y), reading through the
