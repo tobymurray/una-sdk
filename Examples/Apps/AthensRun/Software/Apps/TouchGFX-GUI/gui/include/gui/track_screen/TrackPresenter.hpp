@@ -34,10 +34,17 @@ public:
     virtual void onIntervalsPhaseAlert() override;
     virtual void onIntervalsWorkoutCompleted() override;
     virtual void onGpsFix(bool acquired) override;
+    virtual void onGpsPosition() override;
     virtual void onAccessoryStatus(uint8_t state, const char* name) override;
 
     void saveLap();
     void intervalsNextPhase();
+
+    // Live map plumbing: the view borrows the model's map data every
+    // setupScreen (screens are transient; the model is not).
+    Model::MapState& mapState();
+    AthensRun::TileCache& tileCache();
+    void cycleMapZoom();
 
 private:
     TrackPresenter();

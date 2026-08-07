@@ -4,6 +4,15 @@
 #include <gui/common/FrontendApplication.hpp>
 
 #include "SDK/Kernel/KernelProviderGUI.hpp"
+
+#include <cmath>
+
+namespace
+{
+// 4 x 64 KiB tile slots. File-static so the linker (not the heap)
+// arbitrates the GUI RAM budget, same as the device spike's tile buffer.
+AthensRun::TileCache sTileCache;
+}
 #include "SDK/Port/TouchGFX/TouchGFXCommandProcessor.hpp"
 
 #define LOG_MODULE_PRX      "Model"
@@ -398,10 +407,35 @@ bool Model::customMessageHandler(SDK::MessageBase* message)
             }
         } break;
 
+        case CustomMessage::GPS_POSITION: {
+            auto* msg = static_cast<CustomMessage::GpsPosition*>(message);
+            ensureMapPack();
+            mMap.fix = msg->fix;
+            if (msg->fix) {
+                const int32_t latU = static_cast<int32_t>(std::lround(
+                    static_cast<double>(msg->latitude) * 1e6));
+                const int32_t lonU = static_cast<int32_t>(std::lround(
+                    static_cast<double>(msg->longitude) * 1e6));
+                mMap.centerX16 = AthensRun::MapMath::lonToWorldX(lonU, 16);
+                mMap.centerY16 = AthensRun::MapMath::latToWorldY(latU, 16);
+                // Breadcrumb only while actively recording (paused runs
+                // don't draw a teleport line, matching the service-side
+                // TrackMap behaviour).
+                if (mTrackState == Track::State::ACTIVE) {
+                    mMap.trace.append(static_cast<int32_t>(mMap.centerX16),
+                                      static_cast<int32_t>(mMap.centerY16));
+                }
+            }
+            modelListener->onGpsPosition();
+        } break;
+
         case CustomMessage::TRACK_STATE_UPDATE: {
             LOG_DEBUG("TRACK_STATE_UPDATE\n");
             auto* msg = static_cast<CustomMessage::TrackStateUpd*>(message);
             if (mTrackState != msg->state) {
+                if (mTrackState == Track::State::INACTIVE) {
+                    mMap.trace.clear(); // new activity, new breadcrumb
+                }
                 mTrackState = msg->state;
                 modelListener->onTrackState(mTrackState);
             }
@@ -455,4 +489,48 @@ bool Model::customMessageHandler(SDK::MessageBase* message)
     }
 
     return true;
+}
+
+
+// ---------------------------------------------------------------------------
+// Live map (AthensRun)
+// ---------------------------------------------------------------------------
+AthensRun::TileCache& Model::tileCache()
+{
+    return sTileCache;
+}
+
+void Model::cycleMapZoom()
+{
+    // z12..z16 are what the Athens pack carries (Container rejects nothing
+    // here -- absent zooms just render as background).
+    mMap.zoom = (mMap.zoom >= 16) ? 12 : (mMap.zoom + 1);
+}
+
+void Model::ensureMapPack()
+{
+    if (mMap.packTried) {
+        return;
+    }
+    mMap.packTried = true;
+    // Sandbox-relative paths only (absolute volume paths never resolve on
+    // hardware). Try the maps/ convention first, then the sandbox root so
+    // a bare USB copy also works.
+    mMap.openResult = mMap.container.openFromFile(mKernel.fs, "maps/athens.rawtiles");
+    if (mMap.openResult != SDK::RawTiles::OpenResult::Ok) {
+        mMap.openResult = mMap.container.openFromFile(mKernel.fs, "athens.rawtiles");
+    }
+    if (mMap.packOpen()) {
+        // Centre on the pack until the first fix arrives.
+        const auto& h = mMap.container.header();
+        mMap.centerX16 = AthensRun::MapMath::lonToWorldX(
+            (h.bboxMinLonUDeg + h.bboxMaxLonUDeg) / 2, 16);
+        mMap.centerY16 = AthensRun::MapMath::latToWorldY(
+            (h.bboxMinLatUDeg + h.bboxMaxLatUDeg) / 2, 16);
+        LOG_INFO("map pack open: %lu tiles\n",
+                 static_cast<unsigned long>(h.tileCount));
+    } else {
+        LOG_INFO("map pack unavailable: %s\n",
+                 SDK::RawTiles::Container::describeResult(mMap.openResult));
+    }
 }

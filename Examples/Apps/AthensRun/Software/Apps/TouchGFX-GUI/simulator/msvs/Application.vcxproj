@@ -173,6 +173,9 @@
     <ClCompile Include="..\..\gui\src\containers\TrackFaceLap.cpp"/>
     <ClCompile Include="..\..\generated\gui_generated\src\containers\TrackFaceLapBase.cpp"/>
     <ClCompile Include="..\..\gui\src\containers\TrackFaceStatus.cpp"/>
+    <ClCompile Include="..\..\gui\src\containers\TrackFaceMap.cpp"/>
+    <ClCompile Include="..\..\gui\src\map\MapTileView.cpp"/>
+    <ClCompile Include="..\..\gui\src\rawtiles\Container.cpp"/>
     <ClCompile Include="..\..\generated\gui_generated\src\containers\TrackFaceStatusBase.cpp"/>
     <ClCompile Include="..\..\gui\src\containers\TrackFaceTotal.cpp"/>
     <ClCompile Include="..\..\generated\gui_generated\src\containers\TrackFaceTotalBase.cpp"/>

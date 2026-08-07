@@ -13,6 +13,12 @@ void TrackView::setupScreen()
 {
     TrackViewBase::setupScreen();
 
+    mFaceMap.setSources(&presenter->mapState().container,
+                        &presenter->tileCache(),
+                        &presenter->mapState().trace);
+    mFaceMap.setVisible(false);
+    add(mFaceMap);
+
     buttons.setL1(Buttons::NONE);
     buttons.setL2(Buttons::NONE);
     buttons.setR1(Buttons::NONE);
@@ -49,6 +55,7 @@ void TrackView::setPositionId(uint16_t id)
     trackFaceTotal.setVisible(false);
     trackFaceLap.setVisible(false);
     trackFaceStatus.setVisible(false);
+    mFaceMap.setVisible(false);
 
     // Visual index: in normal mode shift down by 1 because ID_INTERVALS is not shown.
     const uint16_t visualIdx = mIntervalsMode ? id : (id - 1u);
@@ -59,6 +66,10 @@ void TrackView::setPositionId(uint16_t id)
         case FaceId::ID_TRACK1:     trackFaceTotal.setVisible(true);      break;
         case FaceId::ID_TRACK2:     trackFaceLap.setVisible(true);        break;
         case FaceId::ID_TRACK3:     trackFaceStatus.setVisible(true);     break;
+        case FaceId::ID_MAP:
+            mFaceMap.setVisible(true);
+            updateMapFace();
+            break;
         default: break;
     }
 
@@ -66,6 +77,7 @@ void TrackView::setPositionId(uint16_t id)
     trackFaceTotal.invalidate();
     trackFaceLap.invalidate();
     trackFaceStatus.invalidate();
+    mFaceMap.invalidate();
 }
 
 uint16_t TrackView::getPositionId()
@@ -170,8 +182,16 @@ void TrackView::handleKeyEvent(uint8_t key)
         // not the currently shown face (which the user can scroll away from). When
         // the workout completes the Service drops intervalsMode, so R2 then records
         // a manual lap. A free (non-intervals) run always records a manual lap.
+        //
+        // PoC exception, documented loudly: on the MAP face of a free run,
+        // R2 cycles the zoom (z12..z16) instead of recording a lap — all
+        // four buttons are spoken for, and zoom needs one. Lap remains one
+        // L1/L2 press away on every other face; intervals workouts keep R2
+        // as next-phase everywhere (zoom is unavailable on their map face).
         if (mIntervalsMode) {
             presenter->intervalsNextPhase();
+        } else if (mCurrentFaceId == FaceId::ID_MAP) {
+            presenter->cycleMapZoom();
         } else {
             presenter->saveLap();
             application().gotoTrackLapScreenNoTransition();
@@ -195,4 +215,28 @@ void TrackView::updateHrIcon()
     // In-activity: icon follows the live HR source, not the raw link state.
     trackFaceStatus.setHr(SDK::Gui::SensorStatusRow::hrStateFromSource(
             mAccessoryState, mHrSource));
+}
+
+void TrackView::updateMapFace()
+{
+    if (mCurrentFaceId != FaceId::ID_MAP) {
+        return;
+    }
+    Model::MapState& map = presenter->mapState();
+    const char* packError = map.packOpen()
+        ? nullptr
+        : SDK::RawTiles::Container::describeResult(map.openResult);
+    bool offCoverage = false;
+    if (map.packOpen()) {
+        // Centre tile absent at this zoom == runner left pack coverage.
+        offCoverage = !map.container
+                           .findTile(map.zoom,
+                                     static_cast<uint32_t>(AthensRun::MapMath::tileCoord(
+                                         AthensRun::MapMath::rescale(map.centerX16, 16, map.zoom))),
+                                     static_cast<uint32_t>(AthensRun::MapMath::tileCoord(
+                                         AthensRun::MapMath::rescale(map.centerY16, 16, map.zoom))))
+                           .valid();
+    }
+    mFaceMap.update(map.centerX16, map.centerY16, map.zoom, map.fix,
+                    packError, offCoverage);
 }

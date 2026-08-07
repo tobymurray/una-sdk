@@ -3,6 +3,7 @@
 
 #include <gui_generated/track_screen/TrackViewBase.hpp>
 #include <gui/track_screen/TrackPresenter.hpp>
+#include <gui/containers/TrackFaceMap.hpp>
 
 class TrackView : public TrackViewBase
 {
@@ -21,6 +22,7 @@ public:
     void setTrackData(const Track::Data& data);
 
     void setTime(uint8_t h, uint8_t m);
+    void updateMapFace();
     void setBatteryLevel(uint8_t level);
     void setGpsFix(bool state);
     void setAccessoryStatus(uint8_t state);
@@ -41,6 +43,11 @@ protected:
     uint8_t  mHrThresholdCount = 0;
     uint8_t  mAccessoryState = 0;  // last SDK::Accessory::State (engaged?)
     uint8_t  mHrSource       = 0;  // last HR-sample source (steady vs flashing)
+
+    // The live-map face is a hand-written extra next to the generated
+    // faces (member of this subclass, not of TrackViewBase, so no
+    // Designer round-trip is needed).
+    TrackFaceMap mFaceMap;
 };
 
 #endif // TRACKVIEW_HPP

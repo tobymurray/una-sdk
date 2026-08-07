@@ -259,6 +259,12 @@ void Service::run()
                     SDK::send_msg<CustomMessage::GpsFix>(mKernel, mGps.fix);
                 }
 
+                // Live position for the map face, 1 Hz regardless of track
+                // state (the map should centre and follow before the
+                // activity starts, and report no-fix honestly).
+                SDK::send_msg<CustomMessage::GpsPosition>(
+                    mKernel, mGps.latitude, mGps.longitude, mGps.fix);
+
                 if (mTrackState != Track::State::INACTIVE) {
                     mTimeCounter.add(utc);
                     processTrack();

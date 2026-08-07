@@ -129,7 +129,7 @@ struct Root {
 // Root::Intervals::START), so it is not nested inside Root.
 // TrackAction is always an overlay of TrackView, so it lives inside it.
 struct TrackView {
-    enum Id { ID_INTERVALS = 0, ID_TRACK1, ID_TRACK2, ID_TRACK3,
+    enum Id { ID_INTERVALS = 0, ID_TRACK1, ID_TRACK2, ID_TRACK3, ID_MAP,
               ID_COUNT, ID_DEFAULT = ID_INTERVALS };
 
     struct Action {

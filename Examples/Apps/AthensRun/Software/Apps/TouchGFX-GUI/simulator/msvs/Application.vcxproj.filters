@@ -1440,6 +1440,15 @@
     <ClCompile Include="..\..\gui\src\containers\TrackFaceStatus.cpp">
       <Filter>Source Files\gui\containers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\gui\src\containers\TrackFaceMap.cpp">
+      <Filter>Source Files\gui\containers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gui\src\map\MapTileView.cpp">
+      <Filter>Source Files\gui\containers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gui\src\rawtiles\Container.cpp">
+      <Filter>Source Files\gui\containers</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\generated\gui_generated\src\containers\TrackFaceStatusBase.cpp">
       <Filter>Source Files\generated\gui_generated\containers</Filter>
     </ClCompile>

@@ -101,3 +101,24 @@ void TrackPresenter::intervalsNextPhase()
 {
     model->intervalsNextPhase();
 }
+
+void TrackPresenter::onGpsPosition()
+{
+    view.updateMapFace();
+}
+
+Model::MapState& TrackPresenter::mapState()
+{
+    return model->mapState();
+}
+
+AthensRun::TileCache& TrackPresenter::tileCache()
+{
+    return model->tileCache();
+}
+
+void TrackPresenter::cycleMapZoom()
+{
+    model->cycleMapZoom();
+    view.updateMapFace();
+}

@@ -35,6 +35,7 @@ namespace CustomMessage {
     constexpr SDK::MessageType::Type INTERVALS_PHASE_ALERT      = 0x00000009;
     constexpr SDK::MessageType::Type INTERVALS_WORKOUT_COMPLETED = 0x00000010;
     constexpr SDK::MessageType::Type ACCESSORY_STATUS          = 0x00000012;
+    constexpr SDK::MessageType::Type GPS_POSITION               = 0x00000013;
 
     // GUI --> Service
     constexpr SDK::MessageType::Type SETTINGS_SAVE         = 0x0000000A;
@@ -116,6 +117,29 @@ namespace CustomMessage {
             : GpsFix()
         {
             this->state = state;
+        }
+    };
+
+    struct GpsPosition : public SDK::MessageBase {
+        // Decimal degrees, straight from the GPS_LOCATION parser (float is
+        // the parser's native width; ~1e-5 deg resolution, about a metre —
+        // the map quantises to ~1.7 m pixels at z16, so nothing is lost).
+        float latitude;
+        float longitude;
+        bool  fix;
+        GpsPosition()
+            : SDK::MessageBase(GPS_POSITION)
+            , latitude(0.0F)
+            , longitude(0.0F)
+            , fix(false)
+        {}
+
+        GpsPosition(float latitude, float longitude, bool fix)
+            : GpsPosition()
+        {
+            this->latitude  = latitude;
+            this->longitude = longitude;
+            this->fix       = fix;
         }
     };
 

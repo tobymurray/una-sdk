@@ -97,8 +97,11 @@ namespace Simulator
         float mStepAccumulator = 0.0f;
 
         // Track geometry
-        const float mCenterLat = 49.2331f; ///< Track center latitude
-        const float mCenterLon = 28.4682f; ///< Track center longitude
+        // PoC branch: the synthetic 400 m oval orbits Athens, Ontario so
+        // the AthensRun map face has real tiles under the simulated run
+        // (was 49.2331 / 28.4682, Vinnytsia). Sim-only file.
+        const float mCenterLat = 44.6259f; ///< Track center latitude
+        const float mCenterLon = -75.9523f; ///< Track center longitude
         const float mStraight = 84.39f;    ///< Length of a straight segment (meters)
         const float mRadius = 36.5f;       ///< Radius of curved segment (meters)
         const float mCurveLen = 3.14159265f * mRadius; ///< Length of a semicircle (meters)

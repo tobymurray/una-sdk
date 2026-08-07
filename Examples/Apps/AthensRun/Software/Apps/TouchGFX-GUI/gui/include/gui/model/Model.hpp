@@ -15,6 +15,10 @@
 #include <SDK/GUI/Button.hpp>
 
 #include "Commands.hpp"
+#include <gui/map/MapMath.hpp>
+#include <gui/map/TraceBuffer.hpp>
+#include <gui/map/TileCache.hpp>
+#include <SDK/RawTiles/Container.hpp>
 #include "Settings.hpp"
 #include "ActivitySummary.hpp"
 #include "Track.hpp"
@@ -113,6 +117,27 @@ public:
     bool isTrackSummaryAvailable() const;
     const ActivitySummary& getTrackSummary() const;
 
+    // -----------------------------------------------------------------
+    // Live map (AthensRun). All map data lives here because TouchGFX
+    // destroys screens on every transition; the Track screen's map face
+    // only renders it. The tile cache's 256 KiB of slots are file-static
+    // in Model.cpp (kept out of the FrontendHeap object).
+    // -----------------------------------------------------------------
+    struct MapState {
+        SDK::RawTiles::Container   container;
+        AthensRun::TraceBuffer     trace;
+        int64_t                    centerX16 = 0;   // world px @ z16
+        int64_t                    centerY16 = 0;
+        uint8_t                    zoom      = 16;
+        bool                       fix       = false;
+        bool                       packTried = false;
+        SDK::RawTiles::OpenResult  openResult = SDK::RawTiles::OpenResult::FileNotFound;
+        bool packOpen() const { return openResult == SDK::RawTiles::OpenResult::Ok; }
+    };
+    MapState& mapState() { return mMap; }
+    AthensRun::TileCache& tileCache();
+    void cycleMapZoom();
+
 private:
     // Fields required for GUI <-> Service communication
     ModelListener*           modelListener;
@@ -144,6 +169,10 @@ private:
     uint8_t mHrThresholds[App::Config::kHrThresholdsCount] = {};
     uint8_t mHrThresholdsCount = App::Config::kHrThresholdsCount;
     Settings mSettings {};
+
+    void ensureMapPack();
+
+    MapState mMap {};
 
     // Kernel state
     bool    mGpsFix         = false;
