@@ -6,6 +6,7 @@
 #include "SDK/Kernel/KernelProviderGUI.hpp"
 
 #include <cmath>
+#include <cstdio>
 
 namespace
 {
@@ -22,6 +23,7 @@ AthensRun::TileCache sTileCache;
 Model::Model()
     : modelListener(nullptr)
     , mKernel(SDK::KernelProviderGUI::GetInstance().getKernel())
+    , mMapPackLog(mKernel)
 {
     SDK::TouchGFXCommandProcessor::GetInstance().setAppLifeCycleCallback(this);
     SDK::TouchGFXCommandProcessor::GetInstance().setCustomMessageHandler(this);
@@ -509,28 +511,79 @@ void Model::cycleMapZoom()
 
 void Model::ensureMapPack()
 {
-    if (mMap.packTried) {
-        return;
+    // Phase 1 (once): structural-only open. skipCrcVerify=true skips the
+    // O(pack-size) CRC scan (see Container::openFromFile's doc comment) --
+    // safe to call synchronously here even at 200MB+, since it never
+    // touches that path. Every other § 11 structural rule still runs
+    // unconditionally, so a genuinely malformed pack (bad magic, truncated,
+    // ...) still surfaces immediately, same as before this change. A
+    // structural result is a pure function of the on-disk bytes, so unlike
+    // the CRC-trust check below, it's not worth retrying.
+    if (!mMap.containerOpenTried) {
+        mMap.containerOpenTried = true;
+        for (const char* path : AthensRun::kMapPackCandidatePaths) {
+            mMap.openResult = mMap.container.openFromFile(mKernel.fs, path, /*skipCrcVerify=*/true);
+            if (mMap.openResult == SDK::RawTiles::OpenResult::Ok) {
+                mMap.resolvedPath = path;
+                break;
+            }
+        }
+        if (mMap.structurallyOk()) {
+            const auto& h = mMap.container.header();
+            mMap.centerX16 = AthensRun::MapMath::lonToWorldX(
+                (h.bboxMinLonUDeg + h.bboxMaxLonUDeg) / 2, 16);
+            mMap.centerY16 = AthensRun::MapMath::latToWorldY(
+                (h.bboxMinLatUDeg + h.bboxMaxLatUDeg) / 2, 16);
+            LOG_INFO("map pack structurally open (CRC not yet confirmed): %lu tiles\n",
+                     static_cast<unsigned long>(h.tileCount));
+            mMapPackLog.logf("GUI", "ensureMapPack() structural open Ok, resolved=%s tiles=%lu\n",
+                              mMap.resolvedPath, static_cast<unsigned long>(h.tileCount));
+        } else {
+            LOG_INFO("map pack unavailable: %s\n",
+                     SDK::RawTiles::Container::describeResult(mMap.openResult));
+            mMapPackLog.logf("GUI", "ensureMapPack() structural open failed: %s\n",
+                              SDK::RawTiles::Container::describeResult(mMap.openResult));
+        }
     }
-    mMap.packTried = true;
-    // Sandbox-relative paths only (absolute volume paths never resolve on
-    // hardware). Try the maps/ convention first, then the sandbox root so
-    // a bare USB copy also works.
-    mMap.openResult = mMap.container.openFromFile(mKernel.fs, "maps/athens.rawtiles");
-    if (mMap.openResult != SDK::RawTiles::OpenResult::Ok) {
-        mMap.openResult = mMap.container.openFromFile(mKernel.fs, "athens.rawtiles");
-    }
-    if (mMap.packOpen()) {
-        // Centre on the pack until the first fix arrives.
-        const auto& h = mMap.container.header();
-        mMap.centerX16 = AthensRun::MapMath::lonToWorldX(
-            (h.bboxMinLonUDeg + h.bboxMaxLonUDeg) / 2, 16);
-        mMap.centerY16 = AthensRun::MapMath::latToWorldY(
-            (h.bboxMinLatUDeg + h.bboxMaxLatUDeg) / 2, 16);
-        LOG_INFO("map pack open: %lu tiles\n",
-                 static_cast<unsigned long>(h.tileCount));
-    } else {
-        LOG_INFO("map pack unavailable: %s\n",
-                 SDK::RawTiles::Container::describeResult(mMap.openResult));
+
+    // Phase 2 (every tick while structurally OK and not yet resolved):
+    // cheap trust check against Service's background MapPackCrcVerifier
+    // marker -- never re-runs the expensive CRC scan itself. Stops ticking
+    // the instant trusted or corrupt is decided, so this doesn't run
+    // forever once resolved.
+    if (mMap.structurallyOk() && !mMap.trusted && !mMap.corrupt) {
+        uint32_t declaredCrc = 0;
+        if (mMap.container.declaredCrc32(declaredCrc)) {
+            char markerPath[SDK::Interface::IFileSystem::skMaxPathLen];
+            std::snprintf(markerPath, sizeof(markerPath), "%s%s",
+                          mMap.resolvedPath, AthensRun::kMapPackTrustSuffix);
+            MapPackTrustMarker marker(mKernel, markerPath);
+            uint64_t markedSize = 0;
+            uint32_t markedCrc  = 0;
+            const MapPackTrustMarker::Trust trust = marker.read(markedSize, markedCrc);
+
+            if (trust == MapPackTrustMarker::Trust::Good
+                    && markedSize == mMap.container.packSize() && markedCrc == declaredCrc) {
+                mMap.trusted = true;
+                LOG_INFO("map pack CRC-trusted via cached marker\n");
+                mMapPackLog.logf("GUI", "ensureMapPack() marker Good and matches -- trusted\n");
+            } else if (trust == MapPackTrustMarker::Trust::Bad
+                    && markedSize == mMap.container.packSize() && markedCrc == declaredCrc) {
+                mMap.corrupt = true;
+                LOG_ERROR("map pack confirmed corrupt by background CRC scan\n");
+                mMapPackLog.logf("GUI", "ensureMapPack() marker Bad and matches -- corrupt\n");
+            } else {
+                // Absent, or a marker whose (size, crc) no longer match this
+                // exact pack (redeployed since the marker was written) --
+                // keep waiting for Service's next pass, no scan of our own.
+                mMapPackLog.logf("GUI", "ensureMapPack() marker not yet trustworthy "
+                                        "(trust=%d markedSize=%llu markedCrc=0x%08lX "
+                                        "declaredCrc=0x%08lX) -- still waiting\n",
+                                  static_cast<int>(trust),
+                                  static_cast<unsigned long long>(markedSize),
+                                  static_cast<unsigned long>(markedCrc),
+                                  static_cast<unsigned long>(declaredCrc));
+            }
+        }
     }
 }

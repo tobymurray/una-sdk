@@ -223,9 +223,14 @@ void TrackView::updateMapFace()
         return;
     }
     Model::MapState& map = presenter->mapState();
-    const char* packError = map.packOpen()
-        ? nullptr
-        : SDK::RawTiles::Container::describeResult(map.openResult);
+    // packError covers both a structural failure AND a background-confirmed
+    // corrupt pack (map.corrupt) -- both are real errors worth surfacing the
+    // same way; only the in-between "opened fine, CRC not confirmed yet"
+    // state (validating) is not an error.
+    const char* packError = (!map.structurallyOk() || map.corrupt)
+        ? SDK::RawTiles::Container::describeResult(map.openResult)
+        : nullptr;
+    bool validating = map.structurallyOk() && !map.trusted && !map.corrupt;
     bool offCoverage = false;
     if (map.packOpen()) {
         // Centre tile absent at this zoom == runner left pack coverage.
@@ -238,5 +243,5 @@ void TrackView::updateMapFace()
                            .valid();
     }
     mFaceMap.update(map.centerX16, map.centerY16, map.zoom, map.fix,
-                    packError, offCoverage);
+                    packError, validating, offCoverage);
 }

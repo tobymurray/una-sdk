@@ -260,8 +260,11 @@ public:
      * @param data: Pointer to pack bytes; borrowed, not copied — must outlive
      *        the Container.
      * @param size: Length of @p data in bytes.
+     * @param skipCrcVerify: see openFromFile()'s doc comment — same
+     *        Caller-asserted-trust semantics apply here.
      */
-    OpenResult openFromMemory(const uint8_t *data, std::size_t size);
+    OpenResult openFromMemory(const uint8_t *data, std::size_t size,
+                               bool skipCrcVerify = false);
 
     /**
      * @brief Opens a pack from a filesystem path, streaming via @c IFile.
@@ -271,9 +274,25 @@ public:
      *        applied here. On hardware an app's filesystem is sandboxed —
      *        absolute volume paths (e.g. "N:/...") do not resolve from an
      *        app, so callers pass sandbox-relative paths.
+     * @param skipCrcVerify: when @c true, skips the O(file-size) CRC-32
+     *        footer check (spec § 11 #24) — "Caller-asserted trust" per
+     *        rawtiles spec § 10. Every other § 11 structural rule (magic,
+     *        version, uuid, enums, bbox, zoom range, tile-index bounds/
+     *        order/entries, extension framing/payloads) still runs
+     *        unconditionally, so a genuinely malformed pack is still
+     *        rejected immediately regardless of this flag — only the CRC
+     *        scan itself is skippable. Only pass @c true when the caller
+     *        has independently established that the exact same bytes
+     *        already passed a full CRC scan (e.g. a cached verification
+     *        result keyed on file size + the footer's declared CRC, see
+     *        declaredCrc32()) — an unconditionally-skipped CRC on an
+     *        unverified byte stream is not a conforming use of this
+     *        parameter. Defaults to @c false (eager verify, unchanged
+     *        behavior for any caller that doesn't opt in).
      * @return @c OpenResult::Ok on success; the container is closed on failure.
      */
-    OpenResult openFromFile(SDK::Interface::IFileSystem &fs, const char *path);
+    OpenResult openFromFile(SDK::Interface::IFileSystem &fs, const char *path,
+                             bool skipCrcVerify = false);
 
     /**
      * @brief Releases the backend (closing the file, if any) and resets
@@ -290,6 +309,25 @@ public:
      * @brief Returns the decoded header. Only valid when @c isOpen() is true.
      */
     const Header& header() const { return mHeader; }
+
+    /**
+     * @brief Total on-disk size of the currently-open pack, in bytes.
+     * @return 0 if @c !isOpen().
+     */
+    uint64_t packSize() const { return isOpen() ? backendSize() : 0; }
+
+    /**
+     * @brief Reads the footer's declared CRC-32 (spec § 10) into @p out.
+     *        Cheap: reads only the trailing 4 bytes, not the full-body scan
+     *        verifyCrc() performs. Intended for callers implementing their
+     *        own Caller-asserted-trust cache (see openFromFile()'s
+     *        @p skipCrcVerify) — compare this value (plus packSize()) against
+     *        a previously-recorded good result instead of trusting blindly.
+     * @return @c false if @c !isOpen() or the read fails (defensive; should
+     *         not happen on a Container that already passed
+     *         parseAndValidate()).
+     */
+    bool declaredCrc32(uint32_t &out) const;
 
     /**
      * @brief Byte size of one fully-decoded (compression = None) tile for
@@ -380,7 +418,7 @@ private:
 
     uint64_t backendSize() const { return mBackend == Backend::Memory ? mMemSize : mFileSize; }
 
-    OpenResult parseAndValidate();
+    OpenResult parseAndValidate(bool skipCrcVerify);
     OpenResult verifyCrc() const;
     OpenResult walkExtensions(uint32_t extensionsOffset, uint32_t crcStart) const;
     OpenResult validateAffn(uint32_t payloadOffset, uint32_t length) const;

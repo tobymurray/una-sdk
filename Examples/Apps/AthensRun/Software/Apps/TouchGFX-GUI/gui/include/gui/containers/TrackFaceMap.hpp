@@ -29,10 +29,14 @@ public:
                     const AthensRun::TraceBuffer* trace);
 
     /// Refresh from the model's current map state.
-    /// packResult is Container::describeResult(openResult) when the pack
-    /// failed to open, nullptr when the pack is fine.
+    /// packError is Container::describeResult(openResult) when the pack
+    /// failed to open structurally (or was confirmed corrupt by the
+    /// background CRC pass), nullptr otherwise. validating is true when the
+    /// pack opened structurally but Service's background CRC verification
+    /// hasn't confirmed it trustworthy yet -- tiles are withheld and a
+    /// neutral status shown until that resolves.
     void update(int64_t centerX16, int64_t centerY16, uint8_t zoom, bool fix,
-                const char* packError, bool offCoverage);
+                const char* packError, bool validating, bool offCoverage);
 
 private:
     static constexpr uint16_t kStatusBufSize = 32;

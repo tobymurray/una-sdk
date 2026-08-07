@@ -21,6 +21,8 @@
 #include "ActivitySummarySerializer.hpp"
 #include "ActivityWriter.hpp"
 #include "Commands.hpp"
+#include "MapPackCrcVerifier.hpp"
+#include "MapPackVerifyLog.hpp"
 #include "WristTiltDetector.hpp"
 
 class Service : public WristTiltDetector::IListener
@@ -66,6 +68,14 @@ private:
     ActivitySummarySerializer mActivitySummarySerializer;
     ActivityWriter            mActivityWriter;
     SDK::TrackMapBuilder      mTrackMapBuilder;
+
+    // -- Background map-pack CRC verification (see design doc:
+    // Background CRC verification for the AthensRun map pack) -----------------
+
+    MapPackCrcVerifier mMapPackVerifier;
+    MapPackVerifyLog   mDebugLog; // loop-cadence diagnostics; mMapPackVerifier owns its own instance for its own log lines
+    uint32_t           mLoopIterCount     = 0;
+    uint32_t           mLoopLastLoggedMs  = 0;
 
     // -- Sensors --------------------------------------------------------------
 

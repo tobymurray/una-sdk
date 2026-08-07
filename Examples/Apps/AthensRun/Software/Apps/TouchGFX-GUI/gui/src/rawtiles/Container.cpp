@@ -33,7 +33,12 @@ constexpr std::size_t kMinFileSize    = kHeaderSize + kFooterSize; // § 11 #1
 constexpr std::size_t kIndexEntrySize = 20;                        // § 5.1
 constexpr std::size_t kZoomDirCount   = 24;                        // § 4.12
 constexpr uint64_t    kMaxFileSize    = 0xFFFFFFFFu;                // § 11 #30
-constexpr std::size_t kChunkSize      = 128; ///< Bounded scratch for streamed reads.
+constexpr std::size_t kChunkSize      = 4096; ///< Bounded scratch for streamed reads.
+// Local-only bump from the vendored 128B: verifyCrc() was doing ~352,000
+// 128B reads over the app<->kernel filesystem IPC to scan a 45MB pack,
+// which froze the app for ~10s on first GPS_POSITION (see ensureMapPack()
+// in Model.cpp). Not yet ported upstream to feat/rawtiles-container --
+// this file stays out of sync with that branch until someone does.
 
 inline uint32_t align4(uint32_t n)
 {
@@ -227,7 +232,8 @@ bool Container::readAt(uint64_t offset, void *dst, size_t len) const
     return false;
 }
 
-OpenResult Container::openFromMemory(const uint8_t *data, std::size_t size)
+OpenResult Container::openFromMemory(const uint8_t *data, std::size_t size,
+                                      bool skipCrcVerify)
 {
     close();
     if (static_cast<uint64_t>(size) > kMaxFileSize) {
@@ -236,14 +242,15 @@ OpenResult Container::openFromMemory(const uint8_t *data, std::size_t size)
     mMemData = data;
     mMemSize = size;
     mBackend = Backend::Memory;
-    OpenResult r = parseAndValidate();
+    OpenResult r = parseAndValidate(skipCrcVerify);
     if (r != OpenResult::Ok) {
         close();
     }
     return r;
 }
 
-OpenResult Container::openFromFile(SDK::Interface::IFileSystem &fs, const char *path)
+OpenResult Container::openFromFile(SDK::Interface::IFileSystem &fs, const char *path,
+                                    bool skipCrcVerify)
 {
     close();
     mFile = fs.file(path);
@@ -260,7 +267,7 @@ OpenResult Container::openFromFile(SDK::Interface::IFileSystem &fs, const char *
         return OpenResult::FileTooLarge;
     }
     mBackend = Backend::File;
-    OpenResult r = parseAndValidate();
+    OpenResult r = parseAndValidate(skipCrcVerify);
     if (r != OpenResult::Ok) {
         close();
     }
@@ -280,7 +287,7 @@ void Container::close()
     mHeader   = Header { };
 }
 
-OpenResult Container::parseAndValidate()
+OpenResult Container::parseAndValidate(bool skipCrcVerify)
 {
     const uint64_t size = backendSize();
 
@@ -592,8 +599,11 @@ OpenResult Container::parseAndValidate()
         return extRes;
     }
 
-    // § 11 #24: CRC-32 footer.
-    return verifyCrc();
+    // § 11 #24: CRC-32 footer. Caller-asserted trust (spec § 10) when
+    // skipCrcVerify was set by an explicit opt-in -- see openFromFile()'s
+    // doc comment. Every other § 11 rule above still ran unconditionally;
+    // only this O(file_size) scan is skippable.
+    return skipCrcVerify ? OpenResult::Ok : verifyCrc();
 }
 
 OpenResult Container::walkExtensions(uint32_t extensionsOffset, uint32_t crcStart) const
@@ -903,6 +913,21 @@ OpenResult Container::verifyCrc() const
     }
     const uint32_t storedCrc = readU32LE(footer);
     return (storedCrc == crc) ? OpenResult::Ok : OpenResult::CrcMismatch;
+}
+
+bool Container::declaredCrc32(uint32_t &out) const
+{
+    if (!isOpen()) {
+        return false;
+    }
+    const uint64_t size     = backendSize();
+    const uint32_t crcStart = static_cast<uint32_t>(size - kFooterSize);
+    uint8_t footer[kFooterSize];
+    if (!readAt(crcStart, footer, kFooterSize)) {
+        return false;
+    }
+    out = readU32LE(footer);
+    return true;
 }
 
 TileInfo Container::findTile(uint8_t z, uint32_t x, uint32_t y) const

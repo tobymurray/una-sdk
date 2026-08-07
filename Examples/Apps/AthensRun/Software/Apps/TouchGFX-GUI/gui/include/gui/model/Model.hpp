@@ -19,6 +19,9 @@
 #include <gui/map/TraceBuffer.hpp>
 #include <gui/map/TileCache.hpp>
 #include <SDK/RawTiles/Container.hpp>
+#include "MapPackPaths.hpp"
+#include "MapPackTrustMarker.hpp"
+#include "MapPackVerifyLog.hpp"
 #include "Settings.hpp"
 #include "ActivitySummary.hpp"
 #include "Track.hpp"
@@ -130,9 +133,31 @@ public:
         int64_t                    centerY16 = 0;
         uint8_t                    zoom      = 16;
         bool                       fix       = false;
-        bool                       packTried = false;
+
+        // One-shot: the *structural* open (skipCrcVerify=true) is a pure
+        // function of the on-disk bytes; if it fails structurally (bad
+        // magic, truncated, ...) it will fail exactly the same way on every
+        // future tick, so it is not worth retrying.
+        bool                       containerOpenTried = false;
         SDK::RawTiles::OpenResult  openResult = SDK::RawTiles::OpenResult::FileNotFound;
-        bool packOpen() const { return openResult == SDK::RawTiles::OpenResult::Ok; }
+        const char*                resolvedPath = nullptr; // set on structural Ok
+
+        // Sticky once true. Re-checked (cheap: one marker-file read) on
+        // every ensureMapPack() tick while structurallyOk() && !trusted --
+        // this is what lets "waiting on Service's background CRC pass"
+        // resolve on its own instead of being a permanent dead end.
+        bool                       trusted = false;
+
+        // Sticky once true: the background pass definitively found this
+        // exact pack corrupt (CRC mismatch). Distinct from !trusted so the
+        // GUI can show an actual error instead of "verifying" forever.
+        bool                       corrupt = false;
+
+        bool structurallyOk() const { return openResult == SDK::RawTiles::OpenResult::Ok; }
+        // Renderable == structurally valid AND CRC-trusted (via a cached
+        // marker, or a background pass that already finished before this
+        // boot).
+        bool packOpen() const { return structurallyOk() && trusted; }
     };
     MapState& mapState() { return mMap; }
     AthensRun::TileCache& tileCache();
@@ -172,7 +197,8 @@ private:
 
     void ensureMapPack();
 
-    MapState mMap {};
+    MapState         mMap {};
+    MapPackVerifyLog mMapPackLog;
 
     // Kernel state
     bool    mGpsFix         = false;

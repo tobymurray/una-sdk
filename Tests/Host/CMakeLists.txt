@@ -100,19 +100,35 @@ target_link_libraries(una-sdk-host-tests PRIVATE
 
 # AthensRun is a standalone copy of the Running app (PoC map screen), so its
 # service classes collide with Running's at link time -- second executable,
-# same pattern as the GpsLab branch. Only the app's pure map math is tested
-# here; the vendored rawtiles Container carries its own conformance evidence
-# on the branch it was vendored from.
+# same pattern as the GpsLab branch. Only the app's pure map math was tested
+# here originally; the vendored rawtiles Container carries its own
+# conformance evidence on the branch it was vendored from -- this session's
+# additive, local-only skipCrcVerify/declaredCrc32 surface (see the
+# Background CRC verification design doc) is NOT part of that upstream
+# conformance evidence, so it gets its own narrow test here instead.
 add_executable(una-sdk-athensrun-tests
     apps/AthensRun/MapMath_test.cpp
     apps/AthensRun/TraceBuffer_test.cpp
+    apps/AthensRun/ContainerCrcSkip_test.cpp
+    apps/AthensRun/MapPackCrcVerifier_test.cpp
+    "${UNA_SDK_ROOT}/Examples/Apps/AthensRun/Software/Apps/TouchGFX-GUI/gui/src/rawtiles/Container.cpp"
+    "${UNA_SDK_ROOT}/Examples/Apps/AthensRun/Software/Libs/Sources/MapPackCrcVerifier.cpp"
 )
 
 target_include_directories(una-sdk-athensrun-tests PRIVATE
     "${UNA_SDK_ROOT}/Examples/Apps/AthensRun/Software/Apps/TouchGFX-GUI/gui/include"
+    "${UNA_SDK_ROOT}/Examples/Apps/AthensRun/Software/Libs/Header"
 )
 
+# sdk_host_test_support (InMemoryFileSystem / KernelFixture, from
+# support/KernelTestDoubles.hpp) is newly linked into this target here --
+# previously only una-sdk-host-tests used it. This target's own Service-class
+# collision with Running (see comment above) is between the two apps' own
+# Sources, not with this shared test-support lib, so it should be safe; if a
+# future addition to this target reintroduces a real collision, split this
+# back out into its own executable rather than fighting the shared lib.
 target_link_libraries(una-sdk-athensrun-tests PRIVATE
+    sdk_host_test_support
     GTest::gtest_main
 )
 

@@ -64,6 +64,8 @@ Service::Service(SDK::Kernel &kernel)
         , mActivitySummarySerializer(mKernel, "Activity/summary.json")
         , mActivityWriter(mKernel, "Activity")
         , mTrackMapBuilder{}
+        , mMapPackVerifier(mKernel)
+        , mDebugLog(mKernel)
         , mSensorGpsLocation(SDK::Sensor::Type::GPS_LOCATION, skSamplePeriod, skSampleLatency)
         , mSensorGpsSpeed(SDK::Sensor::Type::GPS_SPEED, skSamplePeriod, skSampleLatency)
         , mSensorGpsDistance(SDK::Sensor::Type::GPS_DISTANCE, skSamplePeriod, skSampleLatency)
@@ -134,9 +136,17 @@ void Service::run()
 
     std::time_t processedUtc = 0;
 
+    // Kick off the background map-pack CRC verification (see design doc:
+    // Background CRC verification for the AthensRun map pack). Idle if no
+    // pack is deployed; goes straight to Verified with no I/O if a cached
+    // marker already matches this exact pack.
+    mMapPackVerifier.start();
+    mLoopLastLoggedMs = mKernel.sys.getTimeMs();
+
     while (true) {
         SDK::MessageBase *msg;
-        if (mKernel.comm.getMessage(msg, 500)) {
+        const bool gotMessage = mKernel.comm.getMessage(msg, 500);
+        if (gotMessage) {
             // Command handling
             switch (msg->getType()) {
 
@@ -219,6 +229,30 @@ void Service::run()
             mKernel.comm.releaseMessage(msg);
         }
 
+        // Bounded, resumable background CRC scan of the map pack -- runs
+        // every loop iteration (not gated on mGuiStarted or the 500 ms idle
+        // branch above; GPS/sensor messages during an active run keep
+        // gotMessage true well inside the 500 ms budget and would otherwise
+        // starve this). No-op once done().
+        mMapPackVerifier.step();
+
+        // Loop-cadence diagnostic: confirms (or disproves) the assumption
+        // above -- that iterations happen often enough during real sensor
+        // traffic for the CRC step to make steady progress. Throttled to
+        // ~once/sec so it doesn't itself become the noise it's meant to
+        // measure.
+        ++mLoopIterCount;
+        {
+            const uint32_t nowMs = mKernel.sys.getTimeMs();
+            if ((nowMs - mLoopLastLoggedMs) >= 1000) {
+                mDebugLog.logf("SVC", "loop: %lu iterations in %lums, last getMessage() %s\n",
+                                static_cast<unsigned long>(mLoopIterCount),
+                                static_cast<unsigned long>(nowMs - mLoopLastLoggedMs),
+                                gotMessage ? "returned a message" : "timed out");
+                mLoopIterCount    = 0;
+                mLoopLastLoggedMs = nowMs;
+            }
+        }
 
         // Periodic process
         if (mGuiStarted) {
