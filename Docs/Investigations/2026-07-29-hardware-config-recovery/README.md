@@ -165,7 +165,12 @@ Note `0x50`/`0x58` appear on every bus and are now suspected to be a marginal-AC
 
 Goal, plan, and guardrails: `BLE-COMPANION-disassembly-prompt.md`. Running findings, full ledger,
 and confidence tags: **`BLE-COMPANION-protocol-spec.md`** (this folder) — do not duplicate that
-detail here; summary only:
+detail here; summary only.
+
+The read path is done. The **write** path (`0x20`/`0x21`/`0x22`, §2.4's remaining open item) is
+not, and three decisions outside this repo are blocked on its throughput:
+`BLE-COMPANION-write-path-prompt.md` scopes that measurement, including the safety rules for
+pointing an undecoded write protocol at a filesystem that stages OTA images.
 
 - **A standalone Linux prototype (§6a of the spec doc) paired with the watch directly — no phone,
   no Una app — and pulled a real `.fit` file, CRC-validated.** This is no longer just a recovered
