@@ -139,6 +139,11 @@ void Sensor::DataQueue::reinit(float period, uint32_t latency)
  * - If it returns false, we skip (listener doesn't need every single sample).
  *
  * This is how per-listener downsampling / decimation is implemented.
+ *
+ * The fraction dropped at a given input rate is coarser than one per period —
+ * see the delivery rule on Sensor::SampleRateAdapter. Note shouldEmit() is
+ * handed the frame timestamp, not a clock read, so a driver that back-dates a
+ * sample is gated on the back-dated instant.
  */
 void Sensor::DataQueue::pushData(const SDK::Sensor::Data& d)
 {
