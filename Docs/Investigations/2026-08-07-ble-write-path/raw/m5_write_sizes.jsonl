@@ -1,0 +1,4 @@
+{"measurement": "M5", "size": 1048576, "path": "/Apps/HelloWorld/ble_bench_m5_1MiB.bin", "write_elapsed_s": 468.7895543980412, "write_bytes_per_sec": 2236.77338832015, "final_offset": 1048576, "write_ok": true, "verify_ok": null}
+{"measurement": "M5", "size": 3145728, "path": "/Apps/HelloWorld/ble_bench_m5_3MiB.bin", "write_elapsed_s": 1410.9822644309606, "write_bytes_per_sec": 2229.4596319881102, "final_offset": 3145728, "write_ok": true, "verify_ok": null}
+{"measurement": "M5", "size": 8388608, "path": "/Apps/HelloWorld/ble_bench_m5_8MiB.bin", "write_elapsed_s": 3770.10705125588, "write_bytes_per_sec": 2225.0317791919533, "final_offset": 8388608, "write_ok": true, "verify_ok": null}
+{"measurement": "M5", "size": 30408704, "path": "/Apps/HelloWorld/ble_bench_m5_29MiB.bin", "write_elapsed_s": 13704.787635394838, "write_bytes_per_sec": 2218.838030110338, "final_offset": 30408704, "write_ok": true, "verify_ok": null}

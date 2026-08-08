@@ -255,19 +255,72 @@ capture of the real Una app pulling the same 177,756-byte file shows the correct
 every single response header, with the transfer progressing normally (128-byte chunks, monotonic
 offset) as far as that capture window extended. There is no known ceiling on FTS file size.
 
-**A secondary, still-unexplained command pair** (`0x30` request / response byte `0x02` or `0x01`)
-was also observed, issued *after* a successful `0x10` read of the same path, and also probed
-against a hypothetical `<name>.json` sidecar for the same activity. This does **not** gate or
-precede the read (order observed: `0x10` read completes fully, *then* `0x30` fires) — likely a
-"check for a companion metadata file" or a post-sync bookkeeping call. Not blocking; flagged as an
-open item, not a re-run of the mis-hypothesized "open" step from an earlier, incomplete capture
-(see git history of this file for that superseded guess).
+**`0x30`/`0x31` — RESOLVED, 2026-08-08: this is DELETE / DELETE_STATUS.** The "still-unexplained
+command pair" noted here (`0x30` request / response byte `0x02` or `0x01`) is exactly Adafruit's
+`DELETE`/`DELETE_STATUS` opcode pair. Confirmed live: `30 00 <path_len:u16LE> <path>` against a
+cleanly-completed file gets back `31 01` (`cmd=0x31 status=0x01 OK`) and the file is actually
+gone from a subsequent listing; the same request against a file with a still-open write session
+gets back `30 02` (the generic 2-byte `[echoed_opcode, error_status]` envelope, `status=0x02
+ERROR`) and the file is *not* deleted. See `../2026-08-07-ble-write-path/README.md` (§M4/§M6)
+for the full write-path measurement pass this was found during.
 
-**Large-file upload** (`0x20`/`0x21`/`0x22` family) was also observed carrying a large binary blob
-*from phone to watch* (Write Commands to path `/GPS_EPO/GPS.DAT`) — almost certainly the EPO/AGPS
-assistance-data push tied to CCS's `epoStatusHandler` (§3). Confirms the same characteristic
-multiplexes several sub-protocols by leading opcode byte. Framing not fully decoded this pass
-(secondary to the read-path goal); revisit if a companion needs to push EPO data too.
+**Large-file upload (`0x20`/`0x21`/`0x22` family) — RESOLVED, 2026-08-08: fully decoded and
+measured.** What this section originally only observed live (a phone→watch `GPS.DAT` push) has
+now been independently reverse-engineered, implemented, and load-tested up to 29 MiB from a
+phone-free Linux client. Full method, raw data, and per-size throughput live in
+`../2026-08-07-ble-write-path/`; this is the summary at the same standard as §2.2's read-path
+writeup above.
+
+Wire framing (byte-exact structural match to Adafruit's real BLE File Transfer Service WRITE
+opcode, same as the read/listdir paths — but with real firmware-specific deviations, marked
+below):
+
+```
+Request  (Write Command) 0x20 start :
+  20 00 <path_len:u16LE> <offset:u32LE> <mtime_ns:u64LE> <total_length:u32LE> <path ASCII>
+
+Response (Notification)  0x21 pacing:
+  21 <status:u8> 00 00 <current_offset:u32LE> <reserved:u64LE> <free_space:u32LE>
+
+Request  (Write Command) 0x22 data  :
+  22 <status:u8> 00 00 <offset:u32LE> <chunk_len:u32LE> <chunk_len bytes of file data>
+```
+
+`status` is Adafruit's taxonomy: `OK=0x01`, `ERROR=0x02`, `ERROR_NO_FILE=0x03`,
+`ERROR_PROTOCOL=0x04` — confirmed live for `0x01` and `0x04`.
+
+**Three real deviations from a naive "it's just Adafruit's WRITE opcode" reading, all
+CONFIRMED against real hardware:**
+
+1. **`free_space` is not an MTU-aware buffer hint.** It just echoes bytes-remaining
+   (`total_length - offset`), even when that number is far larger than one ATT packet can
+   carry. A client must independently cap each `0x22`'s attached payload to
+   `ATT_MTU - 3 (opcode+handle) - 12 (0x22 header)` bytes, or the underlying GATT write itself
+   fails before ever reaching the firmware.
+2. **The 4th field of a `0x22` packet is validated against the attached payload length**, not
+   against the `free_space` value from the previous ack. Echoing a stale/mismatched value gets
+   a 2-byte `[0x22, 0x04 ERROR_PROTOCOL]` rejection.
+3. **`current_offset` in a `0x21` *data* ack always reads back `0`** — it is not a continuation
+   cursor, on the completing chunk or any other. A client must track its own running byte count;
+   trusting this field causes an infinite retry loop (a real bug caught during this
+   investigation, not a hypothetical — see `../2026-08-07-ble-write-path/raw/m4_infinite_loop_bug.txt`).
+   The `0x20` **start** ack behaves differently and *is* meaningful (see resume, below).
+
+**Measured throughput: ~2220-2237 B/s sustained, CONFIRMED flat across four real writes from
+1 MiB to 29 MiB** (round-trip-bound, ~90ms/request ≈ 2x the 45ms connection interval — same
+mechanism as the read path's M2 finding). The 29 MiB write took 3h48m with zero connection
+drops. Full numbers, method, and raw JSONL/transcripts: `../2026-08-07-ble-write-path/README.md`.
+
+**Resume and validation (relevant to any companion or `rawtiles` design decision):** resuming
+an interrupted write works correctly when the client supplies the file's true current size (the
+`0x20` start ack then reports a real, non-zero `current_offset`/`free_space` reflecting what's
+actually on disk). A partial file reads back truncated exactly at the last successfully-written
+offset — not zero-padded to the declared total, not absent. But **the firmware performs no
+offset or ordering validation beyond rejecting a nonzero start offset on a path that doesn't
+exist as a file yet** — once any file exists at a path, a resume or a data chunk at any offset,
+in any order, is accepted and silently zero-fills whatever gap results. There is no
+integrity/ordering guarantee at the firmware level; any companion needing one must build it
+client-side. Full evidence: `../2026-08-07-ble-write-path/raw/m6_failure_modes.txt`.
 
 ### 2.3 Firmware-string corroboration (the static substream, now doubly confirmed by the capture)
 
@@ -277,9 +330,10 @@ behavior exactly:
 | Handler | Evidence (verbatim log strings) | Confirmed by capture |
 |---|---|---|
 | `readHandler` | `File not exist [%s]`, `Reading: %u%% (%u/%u bytes) [%s]` | **Yes** — exactly matches the observed offset/total/chunk streaming in §2.2 |
-| `writeHandler` | `Invalid offset...`, `Writing: %u%% (%u/%u bytes) [%s]` | Consistent with the `0x20/0x21/0x22` upload family observed for `GPS.DAT` |
+| `writeHandler` | `Invalid offset...`, `Writing: %u%% (%u/%u bytes) [%s]` | **Yes** — the `0x20/0x21/0x22` family is now fully decoded and load-tested (§2.2, 2026-08-08 pass); `Invalid offset...` matches the confirmed rejection of a nonzero start offset on a nonexistent file |
 | `listDirHandler` | `Directory not exist [%s]`, `List directory [%s]`, `Cycling detected [%s]` | **Yes** — exactly matches the `0x50/0x51` listing in §2.2 |
-| `deleteHandler` / `moveHandler` / `makeDirHandler` | (see original evidence) | not exercised in this capture; no reason to doubt given the rest lined up |
+| `deleteHandler` | (see original evidence) | **Yes** — `0x30/0x31` confirmed as DELETE/DELETE_STATUS (§2.2, 2026-08-08 pass), used to clean up 22 of 23 test files |
+| `moveHandler` / `makeDirHandler` | (see original evidence) | not exercised; no reason to doubt given the rest lined up |
 | `TerminatePath` | bare string, no context | still unexplained |
 
 Corroborating context: `0:/ble.ota` (a filesystem path string, line 3358) confirms firmware OTA
@@ -298,8 +352,14 @@ images transit onto the device filesystem at a specific path, and CCS's `firmwar
   §1 UUID candidates it actually is.
 - ~~Whether `total_size`'s 16-bit width is a real ceiling on file size~~ — resolved, §1.2/§2.2: the
   fields are genuinely 32-bit, no ceiling.
-- The `0x30` secondary command's exact purpose.
-- The `0x20/0x21/0x22` upload framing (secondary to the read-path goal).
+- ~~The `0x30` secondary command's exact purpose~~ — resolved, §2.2 (2026-08-08): DELETE/DELETE_STATUS.
+- ~~The `0x20/0x21/0x22` upload framing~~ — resolved, §2.2 (2026-08-08): fully decoded and
+  measured up to 29 MiB. Full writeup at `../2026-08-07-ble-write-path/`.
+- **New from the write-path pass:** the read path's `real_chunklen` accounting has a firmware
+  bug — it clamps to `MTU-16` but only ever delivers `MTU-16-3` bytes in one notification with
+  no continuation, so a `chunk_len` request above `MTU-19` silently hangs rather than erroring.
+  See `../2026-08-07-ble-write-path/raw/m2_real_chunklen_clamp.txt`. Worth reporting upstream —
+  fixing it would raise read throughput for every client, not just this investigation's.
 
 ---
 

@@ -1,0 +1,17 @@
+M5 -- 8 MiB and 29 MiB were spot-verified (offsets 0, middle, and last-200-bytes, each a single
+0x10 request) rather than a full byte-exact readback, which would itself have taken as long as
+the write (another ~1h / ~4h) and duplicated what the 1 MiB and 3 MiB full readbacks already
+proved about correctness at this flat rate (raw/m5_verify.jsonl: both "ok": true, byte-exact).
+This tradeoff was made explicitly, not silently -- see the bundle README's M5 section.
+
+$ python3 spot_verify.py <addr> 8388608 8MiB
+offset=0: total_size=8388608 (expected 8388608) payload=200B match=True
+offset=4194304: total_size=8388608 (expected 8388608) payload=200B match=True
+offset=8388408: total_size=8388608 (expected 8388608) payload=200B match=True
+SPOT VERIFY PASSED for /Apps/HelloWorld/ble_bench_m5_8MiB.bin (8388608 bytes)
+
+$ python3 spot_verify.py <addr> 30408704 29MiB
+offset=0: total_size=30408704 (expected 30408704) payload=200B match=True
+offset=15204352: total_size=30408704 (expected 30408704) payload=200B match=True
+offset=30408504: total_size=30408704 (expected 30408704) payload=200B match=True
+SPOT VERIFY PASSED for /Apps/HelloWorld/ble_bench_m5_29MiB.bin (30408704 bytes)

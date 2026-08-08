@@ -1,0 +1,28 @@
+M4 -- a real bug caught during development, kept here because it IS the evidence for the
+"current_offset is not a continuation cursor" finding, not just a mistake to discard.
+
+First multi-chunk write attempt (1000 bytes, write_file() trusting device_offset to pick the
+next send position) hung for 5+ minutes with a progress callback printing this, unbounded:
+
+  progress: 0/1000 (0.472s elapsed)
+  progress: 0/1000 (0.607s elapsed)
+  progress: 0/1000 (0.697s elapsed)
+  ... (800+ more identical lines, one every ~90ms, sent=0 every time) ...
+  progress: 0/1000 (74.093s elapsed)   <- process killed here, would have run forever
+
+Root cause: every 0x21 ack's current_offset field reads back 0, not the true progress. The
+code was resetting its own bytes_sent tracker to that 0 after every chunk, so it kept
+re-sending the same first 205-byte chunk on every ~90ms round trip, forever, never advancing
+and never erroring (status stayed 0x01 OK each time). Fixed by dropping the device_offset
+trust entirely and tracking bytes_sent purely client-side.
+
+After the fix, the same 1000-byte write completed in 5 chunks, byte-exact:
+
+  progress: 205/1000 (0.500s elapsed)
+  progress: 410/1000 (0.589s elapsed)
+  progress: 615/1000 (0.680s elapsed)
+  progress: 820/1000 (0.769s elapsed)
+  progress: 1000/1000 (0.860s elapsed)
+  write_file() returned final_offset=1000 in 0.861s
+  read back 1000 bytes
+  MATCH: byte-exact round trip

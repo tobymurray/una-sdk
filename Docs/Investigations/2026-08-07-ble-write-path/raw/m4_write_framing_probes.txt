@@ -1,0 +1,53 @@
+M4 — decoding the 0x20/0x21/0x22 write framing. All probes below are byte-exact terminal
+output from debug_write_probe.py / debug_write_step.py / smoke_write.py against a real watch.
+
+--- Safe probe #1: bogus offset on a nonexistent path (no data ever sent, zero write risk) ---
+$ python3 debug_write_probe.py <addr> /Apps/HelloWorld/ble_bench_probe.bin 999999
+sending 0x20 start-write: path='/Apps/HelloWorld/ble_bench_probe.bin' offset=999999 total_length=100
+response: 2 bytes: 2004
+  -> cmd=0x20 (echoed request opcode) status=0x04 (ERROR_PROTOCOL, Adafruit taxonomy)
+Matches the same 2-byte [echoed_opcode, error_status] envelope already documented for the read
+path's malformed-request case (spec doc §6a) -- confirms the pattern is protocol-wide, not
+read-path-specific. Also matches writeHandler's own "Invalid offset..." log string: a nonzero
+start offset is rejected outright when the target file does not exist yet.
+
+--- Safe probe #2: legitimate offset=0 start, still no data sent ---
+$ python3 debug_write_probe.py <addr> /Apps/HelloWorld/ble_bench_probe.bin 0
+response: 20 bytes: 210100000000000080b471d68358060064000000
+  -> cmd=0x21 status=0x01(OK) current_offset=0 free_space=100 (== requested total_length)
+Confirms the 20-byte 0x21 WRITE_PACING response shape: struct.unpack("<BBxxIQI", buf) ->
+cmd, status, current_offset, reserved(8-byte, nonzero/unexplained -- possibly a device
+timestamp, not confirmed), free_space.
+
+--- free_space is NOT an MTU-aware buffer hint -- CONFIRMED bug vs. naive Adafruit reading ---
+$ python3 debug_write_probe.py <addr> ble_bench_check1000.bin 0 1000
+response: ... status=0x01 current_offset=0 free_space=1000   (== total_length, not MTU-clamped)
+A first attempt to write 1000 bytes in one 0x22 packet using this free_space value directly
+failed at the D-Bus/BlueZ layer ("WriteValue failed: ['Failed to initiate write']") because the
+resulting ATT packet exceeded MTU. Client must independently clamp each 0x22's payload to
+ATT_MTU - 3 (opcode+handle) - 12 (0x22 header) bytes.
+
+--- The echoed field in 0x22 must be the ACTUAL chunk length sent, not free_space verbatim ---
+First attempt (clamped chunk size but still echoed the stale free_space=1000 in the header):
+  response: 2204   -> cmd=0x22(echoed) status=0x04(ERROR_PROTOCOL) -- rejected
+Fix: declare len(chunk) (the bytes actually attached) in that field instead. After the fix,
+multi-chunk writes succeeded (see raw/m4_multichunk_smoke.txt).
+
+--- current_offset in the 0x21 ack is NOT a continuation cursor -- always reads back 0 ---
+debug_write_step.py, single 0x22 sending the file's full 47-byte content in one chunk:
+  --> 0x22 data (47 bytes payload): 22010000000000002f00000068656c6c6f...
+  <-- response: 210100000000000000b393e08358060000000000
+      cmd=0x21 status=0x01(OK) current_offset=0 free_space=0
+The write actually succeeded (readback matched byte-exact, see raw/m4_multichunk_smoke.txt) --
+current_offset=0 here is not an error signal, and (per the multi-chunk test) it is ALSO 0 on
+every intermediate ack, not just the completing one. An earlier version of write_file() trusted
+this field to pick the next send offset and looped forever (see raw/m4_infinite_loop_bug.txt).
+The client's own running byte count is the only correct position tracker.
+
+--- 0x30/0x31 DELETE, closing the previously-unexplained "0x30 request / response 0x02 or 0x01"
+    open item from the original phone-capture analysis ---
+$ python3 probe_delete.py <addr> /Apps/HelloWorld/ble_bench_smoke2.bin   (cleanly-completed file)
+  response: 31 01   -> cmd=0x31(DELETE_STATUS) status=0x01(OK) -- file confirmed gone via list
+$ python3 probe_delete.py <addr> /Apps/HelloWorld/ble_bench_m6_outoforder.bin  (open write session)
+  response: 30 02   -> cmd=0x30(echoed) status=0x02(ERROR) -- rejected, matches Adafruit's
+                       generic status taxonomy (OK=1/ERROR=2/ERROR_NO_FILE=3/ERROR_PROTOCOL=4)

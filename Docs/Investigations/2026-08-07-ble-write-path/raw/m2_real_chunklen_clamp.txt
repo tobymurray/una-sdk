@@ -1,0 +1,24 @@
+M2 — the actual chunk-length ceiling discovered while sweeping chunk_len (debug_chunk.py, one
+raw 0x10 request each, dumping the response header before deciding whether to trust it).
+
+At MTU=220, the firmware ALWAYS clamps the advertised real_chunklen to MTU-16=204, regardless
+of the requested chunk_len (244, 512, and 4096 all produced the same real_chunklen=204):
+
+  chunk_len=244 -> parsed: offset=0 total=63456 real_chunklen=204 payload_bytes_here=201
+  chunk_len=512 -> parsed: offset=0 total=63456 real_chunklen=204 payload_bytes_here=201
+  chunk_len=4096 -> parsed: offset=0 total=63456 real_chunklen=204 payload_bytes_here=201
+
+But the single notification actually delivered only 201 bytes of payload (MTU-16-3, i.e. it
+forgets to subtract the 3-byte ATT opcode+handle overhead when computing real_chunklen) -- and
+no continuation notification is ever sent to make up the missing 3 bytes; a client that waits
+for one just times out. This is a firmware accounting bug, not a client fragmentation case to
+reassemble across notifications as originally hypothesized.
+
+Boundary, confirmed exactly:
+  chunk_len=201 -> real_chunklen=201, payload_bytes_here=201  (exact match, no shortfall)
+  chunk_len=202 -> real_chunklen=202, payload_bytes_here=201  (1-byte shortfall, would hang)
+  chunk_len=204 -> real_chunklen=204, payload_bytes_here=201  (3-byte shortfall, would hang)
+
+Practical ceiling at MTU=220: 201 bytes is the largest chunk_len that round-trips cleanly in a
+single request. This is where bench_m2.py's working sweep values (128/180/201) came from, and
+why 202/512/4096 are recorded as `"ok": false` in raw/m2_chunk_sweep.jsonl.

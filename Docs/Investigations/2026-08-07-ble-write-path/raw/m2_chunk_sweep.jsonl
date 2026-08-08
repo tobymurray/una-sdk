@@ -1,0 +1,9 @@
+{"measurement": "M2", "chunk_len": 128, "mtu": 220, "ok": true, "bytes": 63456, "elapsed_s": 46.02429525810294, "bytes_per_sec": 1378.7500632902809, "n_requests": 496, "s_per_request": 0.0927909178590785}
+{"measurement": "M2", "chunk_len": 244, "mtu": 220, "ok": false}
+{"measurement": "M2", "chunk_len": 512, "mtu": 220, "ok": false}
+{"measurement": "M2", "chunk_len": 4096, "mtu": 220, "ok": false}
+{"measurement": "M2", "chunk_len": 128, "mtu": 220, "ok": true, "bytes": 63456, "elapsed_s": 45.62086260691285, "bytes_per_sec": 1390.9425726287038, "n_requests": 496, "s_per_request": 0.09197754557845333}
+{"measurement": "M2", "chunk_len": 180, "mtu": 220, "ok": true, "bytes": 63456, "elapsed_s": 32.11736640892923, "bytes_per_sec": 1975.753528233188, "n_requests": 353, "s_per_request": 0.0909840408184964}
+{"measurement": "M2", "chunk_len": 201, "mtu": 220, "ok": true, "bytes": 63456, "elapsed_s": 29.33246343699284, "bytes_per_sec": 2163.3368822330835, "n_requests": 316, "s_per_request": 0.09282425138288873}
+{"measurement": "M2", "chunk_len": 202, "mtu": 220, "ok": false}
+{"measurement": "M2", "chunk_len": 512, "mtu": 220, "ok": false}

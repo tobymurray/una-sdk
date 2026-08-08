@@ -1,0 +1,33 @@
+M3 — negotiated BLE connection interval, captured with `sudo btmon -w /tmp/btmon_conn.log`
+while the assistant (D-Bus, unprivileged) disconnected and reconnected to the watch, then
+read back with `sudo btmon -r /tmp/btmon_conn.log | grep -A15 "LE Enhanced Connection Complete"`.
+
+Adapter-wide policy range beforehand (not the actual negotiated value, just the range BlueZ
+will request for any new connection):
+  $ sudo cat /sys/kernel/debug/bluetooth/hci0/conn_min_interval  -> 24  (24 * 1.25ms = 30ms)
+  $ sudo cat /sys/kernel/debug/bluetooth/hci0/conn_max_interval  -> 40  (40 * 1.25ms = 50ms)
+  $ sudo cat /sys/kernel/debug/bluetooth/hci0/conn_latency       -> 0
+  (per-connection debugfs directory /sys/kernel/debug/bluetooth/hci0/3585/ existed, keyed by
+  connection handle, but was empty on this kernel -- no per-connection interval readout there.)
+
+Actual on-wire event from the live capture:
+
+> HCI Event: LE Meta Event (0x3e) plen 31                  #57 [hci0] 44.590841
+      LE Enhanced Connection Complete (0x0a)
+        Status: Success (0x00)
+        Handle: 3585
+        Role: Central (0x00)
+        Peer address type: Random (0x01)
+        Peer address: 63:F2:6B:4A:44:54 (Resolvable)
+        Connection interval: 45.00 msec (0x0024)
+        Connection latency: 0 (0x0000)
+        Supervision timeout: 420 msec (0x002a)
+        Central clock accuracy: 0x00
+@ MGMT Event: Device Connected (0x000b) plen 16       {0x0001} [hci0] 44.590863
+        LE Address: E8:DF:D5:49:4C:40 (Static)
+        Flags: 0x00000008
+          Connection Locally Initiated
+
+CONFIRMED: connection interval = 45.00ms, latency = 0, supervision timeout = 420ms.
+This is ~2x the connection interval matches M2's observed ~91-93ms per-request round trip
+almost exactly (2 * 45ms = 90ms).
