@@ -293,27 +293,27 @@ size_t InMemoryFileSystem::InMemoryFile::getPosition() const
     return mPos;
 }
 
-InMemoryFileSystem::EmptyDirectory::EmptyDirectory(std::string path)
-    : mPath(std::move(path))
+InMemoryFileSystem::InMemoryDirectory::InMemoryDirectory(InMemoryFileSystem& fs, std::string path)
+    : mFs(fs), mPath(std::move(path))
 {
 }
 
-void InMemoryFileSystem::EmptyDirectory::setPath(const char* path)
+void InMemoryFileSystem::InMemoryDirectory::setPath(const char* path)
 {
     mPath = path != nullptr ? path : "";
 }
 
-const char* InMemoryFileSystem::EmptyDirectory::getPath() const
+const char* InMemoryFileSystem::InMemoryDirectory::getPath() const
 {
     return mPath.c_str();
 }
 
-bool InMemoryFileSystem::EmptyDirectory::exist() const
+bool InMemoryFileSystem::InMemoryDirectory::exist() const
 {
     return true;
 }
 
-bool InMemoryFileSystem::EmptyDirectory::rename(const char* newPath)
+bool InMemoryFileSystem::InMemoryDirectory::rename(const char* newPath)
 {
     if (newPath == nullptr) {
         return false;
@@ -322,35 +322,86 @@ bool InMemoryFileSystem::EmptyDirectory::rename(const char* newPath)
     return true;
 }
 
-bool InMemoryFileSystem::EmptyDirectory::remove()
+bool InMemoryFileSystem::InMemoryDirectory::remove()
 {
     return true;
 }
 
-bool InMemoryFileSystem::EmptyDirectory::create()
+bool InMemoryFileSystem::InMemoryDirectory::create()
 {
     return true;
 }
 
-bool InMemoryFileSystem::EmptyDirectory::open()
+void InMemoryFileSystem::InMemoryDirectory::snapshot()
+{
+    mEntries.clear();
+    mCursor = 0;
+
+    std::string prefix = mPath;
+    if (!prefix.empty() && prefix.back() != '/') {
+        prefix += '/';
+    }
+
+    for (const auto& kv : mFs.files) {
+        const std::string& path = kv.first;
+        if (!kv.second.exists) {
+            continue;
+        }
+        if (prefix.empty()) {
+            // Root-ish: a direct child has no '/' in it at all.
+            if (path.find('/') == std::string::npos) {
+                mEntries.push_back(path);
+            }
+        } else if (path.size() > prefix.size() && path.compare(0, prefix.size(), prefix) == 0) {
+            const std::string rest = path.substr(prefix.size());
+            if (rest.find('/') == std::string::npos) {
+                mEntries.push_back(path);
+            }
+        }
+    }
+}
+
+bool InMemoryFileSystem::InMemoryDirectory::open()
 {
     mOpen = true;
+    snapshot();
     return true;
 }
 
-bool InMemoryFileSystem::EmptyDirectory::isOpen() const
+bool InMemoryFileSystem::InMemoryDirectory::isOpen() const
 {
     return mOpen;
 }
 
-bool InMemoryFileSystem::EmptyDirectory::readNext(SDK::Interface::IFileSystem::ObjectInfo& item, bool reset)
+bool InMemoryFileSystem::InMemoryDirectory::readNext(SDK::Interface::IFileSystem::ObjectInfo& item, bool reset)
 {
-    (void)item;
-    (void)reset;
-    return false;
+    if (!mOpen) {
+        return false;
+    }
+    if (reset) {
+        snapshot();
+        return true; // Rewind only -- item is left unmodified, per the interface doc comment.
+    }
+    if (mCursor >= mEntries.size()) {
+        return false;
+    }
+
+    const std::string& fullPath = mEntries[mCursor++];
+    const size_t slash = fullPath.find_last_of('/');
+    const std::string base = (slash == std::string::npos) ? fullPath : fullPath.substr(slash + 1);
+
+    std::strncpy(item.name, base.c_str(), sizeof(item.name) - 1);
+    item.name[sizeof(item.name) - 1] = '\0';
+    item.isDir    = false; // This fake has no real directory entries, only flat files.
+    item.isHidden = false;
+    item.isSystem = false;
+    auto it = mFs.files.find(fullPath);
+    item.size = (it != mFs.files.end()) ? it->second.content.size() : 0;
+    item.utc  = 0; // Matches InMemoryFileSystem::objectInfo()'s existing convention.
+    return true;
 }
 
-bool InMemoryFileSystem::EmptyDirectory::close()
+bool InMemoryFileSystem::InMemoryDirectory::close()
 {
     mOpen = false;
     return true;
@@ -372,7 +423,7 @@ std::unique_ptr<SDK::Interface::IFile> InMemoryFileSystem::file(const char* path
 
 std::unique_ptr<SDK::Interface::IDirectory> InMemoryFileSystem::dir(const char* path)
 {
-    return std::make_unique<EmptyDirectory>(path != nullptr ? path : "");
+    return std::make_unique<InMemoryDirectory>(*this, path != nullptr ? path : "");
 }
 
 bool InMemoryFileSystem::exist(const char* path) const

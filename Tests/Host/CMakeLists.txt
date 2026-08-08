@@ -110,9 +110,7 @@ add_executable(una-sdk-athensrun-tests
     apps/AthensRun/MapMath_test.cpp
     apps/AthensRun/TraceBuffer_test.cpp
     apps/AthensRun/ContainerCrcSkip_test.cpp
-    apps/AthensRun/MapPackCrcVerifier_test.cpp
     "${UNA_SDK_ROOT}/Examples/Apps/AthensRun/Software/Apps/TouchGFX-GUI/gui/src/rawtiles/Container.cpp"
-    "${UNA_SDK_ROOT}/Examples/Apps/AthensRun/Software/Libs/Sources/MapPackCrcVerifier.cpp"
 )
 
 target_include_directories(una-sdk-athensrun-tests PRIVATE

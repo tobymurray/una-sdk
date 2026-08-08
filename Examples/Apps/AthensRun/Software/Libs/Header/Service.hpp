@@ -21,8 +21,6 @@
 #include "ActivitySummarySerializer.hpp"
 #include "ActivityWriter.hpp"
 #include "Commands.hpp"
-#include "MapPackCrcVerifier.hpp"
-#include "MapPackVerifyLog.hpp"
 #include "WristTiltDetector.hpp"
 
 class Service : public WristTiltDetector::IListener
@@ -69,13 +67,15 @@ private:
     ActivityWriter            mActivityWriter;
     SDK::TrackMapBuilder      mTrackMapBuilder;
 
-    // -- Background map-pack CRC verification (see design doc:
-    // Background CRC verification for the AthensRun map pack) -----------------
-
-    MapPackCrcVerifier mMapPackVerifier;
-    MapPackVerifyLog   mDebugLog; // loop-cadence diagnostics; mMapPackVerifier owns its own instance for its own log lines
-    uint32_t           mLoopIterCount     = 0;
-    uint32_t           mLoopLastLoggedMs  = 0;
+    // Map-pack background CRC verification used to live here (see
+    // Docs/Investigations/2026-08-07-athensrun-map-verification/) -- it's
+    // been retired in favor of a standalone MapManager app
+    // (github.com/tobymurray/watch-apps, feat/mapmanager) that verifies
+    // whatever's in the shared ../SharedData/maps/ directory once, for every
+    // app, instead of each map-consuming app running its own copy of this
+    // pipeline. Model.cpp's structural-open + marker-poll logic is
+    // unaffected -- it only cares about a path constant, not who wrote the
+    // marker (see MapPackPaths.hpp).
 
     // -- Sensors --------------------------------------------------------------
 

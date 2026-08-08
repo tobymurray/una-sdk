@@ -547,10 +547,10 @@ void Model::ensureMapPack()
     }
 
     // Phase 2 (every tick while structurally OK and not yet resolved):
-    // cheap trust check against Service's background MapPackCrcVerifier
-    // marker -- never re-runs the expensive CRC scan itself. Stops ticking
-    // the instant trusted or corrupt is decided, so this doesn't run
-    // forever once resolved.
+    // cheap trust check against the shared MapManager app's background
+    // verifier marker (see MapPackPaths.hpp) -- never runs the expensive CRC
+    // scan itself. Stops ticking the instant trusted or corrupt is decided,
+    // so this doesn't run forever once resolved.
     if (mMap.structurallyOk() && !mMap.trusted && !mMap.corrupt) {
         uint32_t declaredCrc = 0;
         if (mMap.container.declaredCrc32(declaredCrc)) {

@@ -93,10 +93,17 @@ public:
         size_t mPos = 0;
     };
 
-    class EmptyDirectory : public SDK::Interface::IDirectory {
+    /// Enumerates the flat `files` map as if it were a real hierarchy: an
+    /// entry is "in" a directory when its path starts with `<dir>/` and has
+    /// no further `/` after that prefix (a direct child, not a nested
+    /// subdirectory's file). readNext() is a cursor over a snapshot taken at
+    /// open() (and re-taken on an explicit reset=true) -- matching real
+    /// filesystem enumeration, where entries added mid-scan aren't expected
+    /// to retroactively appear.
+    class InMemoryDirectory : public SDK::Interface::IDirectory {
     public:
-        explicit EmptyDirectory(std::string path);
-        ~EmptyDirectory() override = default;
+        InMemoryDirectory(InMemoryFileSystem& fs, std::string path);
+        ~InMemoryDirectory() override = default;
 
         void setPath(const char* path) override;
         const char* getPath() const override;
@@ -111,8 +118,13 @@ public:
         bool close() override;
 
     private:
-        std::string mPath;
-        bool mOpen = false;
+        InMemoryFileSystem&      mFs;
+        std::string              mPath;
+        bool                     mOpen = false;
+        std::vector<std::string> mEntries; // full paths, snapshotted at open()/reset
+        size_t                   mCursor = 0;
+
+        void snapshot();
     };
 
     bool mkdir(const char* path) override;

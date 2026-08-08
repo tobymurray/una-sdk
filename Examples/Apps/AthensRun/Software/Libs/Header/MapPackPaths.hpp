@@ -3,14 +3,20 @@
 
 namespace AthensRun {
 
-/// Sandbox-relative candidate paths for the live map pack, tried in this
-/// order by both Model::ensureMapPack() (GUI) and MapPackCrcVerifier
-/// (Service). Single source of truth: if these two ever disagreed, the
-/// trust marker would never match and the map would show "verifying" for
-/// the entire life of the app for no discoverable reason.
+/// Sandbox-relative candidate paths for the live map pack, checked by
+/// Model::ensureMapPack() (GUI). Points at the shared MapManager app's
+/// directory (../SharedData/maps/) rather than a private copy under this
+/// app's own folder: MapManager (github.com/tobymurray/watch-apps,
+/// feat/mapmanager) owns fetching/verifying packs there in the background
+/// from boot, and any app -- not just this one -- reads from the same
+/// already-verified location instead of running its own copy of this
+/// verification pipeline. AthensRun's own MapPackCrcVerifier has been
+/// retired accordingly (see Service.hpp/.cpp) -- Model.cpp's structural-open
+/// + marker-poll logic needed no change at all to make this switch, since it
+/// was already written against a path constant, not an assumption about who
+/// writes the marker.
 inline constexpr const char* kMapPackCandidatePaths[] = {
-    "maps/athens.rawtiles",
-    "athens.rawtiles",
+    "../SharedData/maps/athens.rawtiles",
 };
 
 /// Suffix appended to whichever candidate resolved, to name the trust
