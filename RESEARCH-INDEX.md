@@ -29,6 +29,7 @@ independent firmware and a phone-free companion.
 | `REPRODUCTION-GUIDE.md` | A self-contained walkthrough of the *technique* — every command and source edit needed to reproduce the hardware-config read from scratch. Narrative counterpart to the ledger. |
 | `BLE-COMPANION-protocol-spec.md` | Running output of the BLE/GATT recovery: the File Transfer Service protocol as recovered from a first-party HCI capture plus flash strings. |
 | `prototype/una_ble_client.py` | **Working, validated code.** A phone-free Linux BlueZ client that lists directories and pulls `.fit` activity files off the watch with matching CRC-16. Proof the protocol spec above is correct. |
+| `prototype/una_hr_probe.py` | **Working, validated code.** Black-box probe for CCS's two daily-health commands (`0x10` aggregate, `0x14` hourly per-minute HR matrix), including deliberately impossible requests to characterise error behaviour. Recovered the full `0x14` wire format from a real watch; see the spec's §3.1. |
 | `prototype/README.md` | Setup and usage for that prototype. |
 | `BLE-COMPANION-disassembly-prompt.md` | Self-contained handoff prompt: recover the GATT profile to build a Gadgetbridge plugin / standalone companion. |
 | `SEAM-HUNT-disassembly-prompt.md` | Self-contained handoff prompt: find injectable seams in the closed vendor kernel for incremental per-peripheral Rust replacement. |

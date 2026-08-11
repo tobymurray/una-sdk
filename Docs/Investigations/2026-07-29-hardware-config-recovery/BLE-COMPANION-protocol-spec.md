@@ -262,6 +262,74 @@ Handler names under `BLE.SRV.CustomCommand`:
 No auth/gating strings were found near any of these (see §4) — the `resetHandler`'s "allowed" token
 is the only hint of any conditional logic in this group, and its meaning is unconfirmed.
 
+### 3.1 CCS transport and the two daily-health commands — CONFIRMED by live probing
+
+**Both daily-health commands are now fully recovered and validated against a real watch**
+(UNA Watch 403795, firmware 1.3.0 / hardware 3.1), by writing requests directly over BlueZ and
+recording the replies — no phone and no vendor app involved. Probe script:
+`prototype/una_hr_probe.py`. Twenty requests, all answered. Every command below is a read;
+nothing is written to the watch.
+
+CCS UUIDs, confirmed live at these paths (`service0029/char002a` in the probed session):
+
+| Role | UUID |
+|---|---|
+| Service | `554e4100-a2cf-4df8-0000-7e1e48595106` |
+| Command characteristic (both commands ride this) | `554e4100-a2cf-4df8-0001-7e1e48595106` |
+| Event characteristic (watch→phone; not yet exercised) | `554e4100-a2cf-4df8-0002-7e1e48595106` |
+
+Requests are ATT Write Commands; replies are notifications on the same characteristic,
+multiplexed by an echoed leading opcode byte exactly as FTS does. Observed **notify MTU 220**
+and **~90 ms per round trip** (89–180 ms, the outlier being the first).
+
+**`0x10` — daily aggregate** (`dailyHealthHandler`):
+
+```
+Request  (6 bytes):  10 00 <year:u16LE> <month:u8> <day:u8>
+Response (22 bytes): 10 01 <steps:u32LE> <floors:u32LE> <activeMinutes:u32LE>
+                           <restingHR:u32LE> <averageHR:u32LE>
+```
+Observed: `1000ea07080b` → `1001fe02000002000000000000004100000048000000`
+= 2026-08-11, steps 766, floors 2, active 0 min, RHR 65, AHR 72. Note `activeMinutes` is
+frequently **0** even on a day with a full heart-rate record, so it is not a reliable figure.
+
+**`0x14` — hourly HR matrix** (`dailyHealthHrHandler`) — the per-minute counterpart:
+
+```
+Request  (7 bytes):  14 00 <year:u16LE> <month:u8> <day:u8> <hour:u8>
+Response (62 bytes): 14 01 <60 x u8>     one bpm per minute-of-hour, 0 = no reading
+```
+Observed: `1400ea07080b09` → `14013e3e3c3c3c6c3f...` = 2026-08-11 09:00, 60/60 minutes measured,
+range 57–111 bpm. Month is 1-based; all fields are **local wall-clock**.
+
+**The single most important behavioural finding: the watch always replies, always with status
+`0x01`.** A non-OK status was never observed for any input:
+
+| Probe | Result |
+|---|---|
+| Hour with data | `14 01` + real values |
+| Hour not worn | `14 01` + **60 zero bytes** |
+| Date two days in the **future** | `14 01` + 60 zero bytes |
+| `hour=25`, out of range | `14 01` + 60 zero bytes |
+
+So "no data" and "invalid request" are indistinguishable, the firmware does no input validation,
+and **nothing ever goes silent** — a client walking many hours does not strictly need a
+per-request timeout (the vendor app uses a 5 s one regardless). The real "no data" signal is an
+all-zero payload, so a client must filter zeros rather than read a status code.
+
+Two further practical notes for anyone consuming this:
+
+- **Zeros occur sporadically mid-hour**, not just as a trailing gap — 11:00 had minute 5 zero
+  between two good readings. Drop them per minute.
+- **Values frequently repeat in adjacent pairs** (`105 105 105 105 105 113 113 71 71 71`),
+  suggesting the underlying sample interval is coarser than a minute and the watch expands it.
+  Sixty entries is the resolution exposed, not sixty independent measurements.
+
+**Retention is at least 3 days**, well beyond the 12 hours a companion might assume: `-1d`
+returned 59/60 real readings and `-3d` returned 60/60 — though that `-3d` hour was a *flat
+constant 63 bpm for all 60 minutes*, which looks more like a stored default or decayed record
+than a real measurement. Treat old hours with more suspicion than recent ones.
+
 ---
 
 ## 4. Authentication / pairing model — the pivotal question (still open, but a real lead)
@@ -421,13 +489,31 @@ pairing directly confirmed `adaf0002-4669-6c65-5472-616e73666572` (part of the `
 the FTS characteristic, at declaration handle `0x0026` / value handle `0x0027` — matching the
 original phone capture's `0x0027` exactly.
 
+**CCS daily-health commands: done.** Both `0x10` and `0x14` are fully recovered and validated
+against a real watch by direct probing — request framing, response layout, error behaviour and
+retention (§3.1). `prototype/una_hr_probe.py` is the working proof. This closes the "worth
+keeping in mind as an alternate/simpler sync channel" note left open in §3: it is not merely an
+alternate channel, it is the *only* source of a per-minute heart rate timeline, since the `.fit`
+files carry discrete workouts rather than all-day monitoring.
+
 Remaining work, roughly in priority order:
-1. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing (both secondary to
+1. **CANS (notifications).** The largest remaining gap for any companion, and the one thing that
+   makes a watch a watch. Service `554e4100-28e7-4811-0000-141f8b92ee40`, characteristics
+   `-0001-` and `-0002-`. The watch is the GATT server, so it is a plain characteristic write —
+   far cheaper than the AMS/ANCS path, which would need the companion to *run* a GATT server.
+   Expect a fragmentation/reassembly layer (multi-KB buffers and a worker thread in the
+   constructor; strings `parseBuffer`, `BLE.ParserCANS`, `androidFetchAttr`, `notifHandler`).
+2. The CCS **event characteristic** `-0002-`, still completely unexercised. `sendEventActivityEnded`
+   and `sendEventFindPhoneAlert` (§3) should surface here — the first would let the watch trigger
+   a sync instead of the companion polling.
+3. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing (both secondary to
    the core read-path goal, which is solved).
-2. Test whether a longer/larger real activity recording still transfers cleanly, given the
+4. Test whether a longer/larger real activity recording still transfers cleanly, given the
    `uint16` `total_size` field observed (§2.2's flagged ceiling).
-3. Understand why the phone capture appeared to need only one `0x10` request per file while the
+5. Understand why the phone capture appeared to need only one `0x10` request per file while the
    standalone prototype needed one per chunk (§6a) — a real discrepancy, not yet explained.
+6. Explain the flat-constant-63-bpm hour seen 3 days back (§3.1) — real resting record, or a
+   stored default the firmware emits for decayed history?
 
 **The read path is fully proven, not just specified.** §6a's standalone prototype pairs with the
 watch with no phone involved, lists directories, and pulls a real `.fit` file that passes CRC
