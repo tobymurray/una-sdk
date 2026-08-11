@@ -11,10 +11,10 @@ Three things it is trying to settle:
   1. What the activity archive layout actually is, so a companion can enumerate history instead
      of relying on `/Apps/latest_activity.txt` (which only lists what the firmware considers
      pending, leaving everything older invisible).
-  2. What the unexplained bytes 16..27 of a 0x51 directory entry are. The spec has them down as
+  2. What the unexplained bytes 16..27 of a 0x51 directory entry are. The spec had them down as
      "mtime and/or reserved, not confirmed which". This correlates them against a file's real
      size, which is known independently from the 0x11 read header -- if a field matches, that
-     settles it.
+     settles it. (Answer: mtime in microseconds, then size as a uint32.)
   3. What `adaf0001` holds. It is the one FTS characteristic marked [read] that nothing has ever
      touched.
 
@@ -182,8 +182,7 @@ async def read_size(stream, bus, char_path, path, timeout=6.0):
     """One minimal 0x10 chunk, purely to learn total_size from the 0x11 header."""
     stream.drain()
     payload = (bytes([CMD_READ, 0]) + struct.pack("<H", len(path))
-               + struct.pack("<H", 0) + b"\x00\x00"
-               + struct.pack("<H", 16) + b"\x00\x00" + path.encode("ascii"))
+               + struct.pack("<I", 0) + struct.pack("<I", 16) + path.encode("ascii"))
     await write_command(bus, char_path, payload)
     try:
         b = await stream.get(timeout)
@@ -191,7 +190,7 @@ async def read_size(stream, bus, char_path, path, timeout=6.0):
         return None, None
     if len(b) < READ_CHUNK_HEADER or b[0] != RESP_READ_CHUNK:
         return None, b
-    offset, total, chunklen = struct.unpack("<HHH", b[4:6] + b[8:10] + b[12:14])
+    offset, total, chunklen = struct.unpack("<III", b[4:16])
     return total, b
 
 

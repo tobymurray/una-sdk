@@ -261,10 +261,14 @@ but empirically exact across two independent 14–16-chunk transfers):
 
 ```
 Request  (Write Command):
-  10 00 <path_len:u16LE> 00 00 00 00 <requested_chunk_len:u16LE> 00 00 <path ASCII, no NUL>
+  10 00 <path_len:u16LE> <offset:u32LE> <requested_chunk_len:u32LE> <path ASCII, no NUL>
 
 Response (Notification, repeated until offset+chunklen == total, no per-chunk ack needed):
-  11 01 00 00 <offset:u16LE> 00 00 <total_size:u16LE> 00 00 <chunklen:u16LE> 00 00 <chunklen bytes of file data>
+  11 01 00 00 <offset:u32LE> <total_size:u32LE> <chunklen:u32LE> <chunklen bytes of file data>
+
+  (An earlier revision recorded these as uint16 fields each followed by 2 reserved bytes. That
+   was wrong -- see the resolved note below. Every file observed at the time was under 64 KiB,
+   so the high halves were always zero and both readings fit the data.)
 ```
 Confirmed concretely: request chunk length was `128` in every observed transfer; the server
 honored it exactly (every chunk except the final remainder was 128 bytes); **the client issues
@@ -273,25 +277,42 @@ no per-chunk request/ack round-trip, which is good news for a companion implemen
 control puzzle — read notifications until the byte count matches `total_size`, exactly as the
 firmware's `Reading: %u%% (%u/%u bytes)` log string in §2.3 already implied).
 
-**⚠ The uint16 ceiling is REAL, and it truncates silently — CONFIRMED.** `total_size` is carried
-as a `uint16` in the `0x11` header, and a file larger than 65535 bytes reports
-**`size mod 65536`** rather than erroring or using a wider field. Measured directly:
+**✅ There is no size ceiling. The header fields are plain `uint32`, and the earlier
+"`uint16` + 2 reserved bytes" reading was simply wrong — RESOLVED, and this supersedes an
+earlier revision of this document that recorded a truncating 64 KiB limit.**
 
-| File | True size (from the `0x51` directory entry) | `total_size` in the `0x11` header |
-|---|---|---|
-| `/Apps/Running/Running_1.3.0.uapp` | **519652** | **60900** |
+The mistake was inherited from the original phone-capture transcription and repeated by both
+prototypes: every observed file was under 64 KiB, so the high half of each field was always zero
+and the layout looked like `u16` values separated by padding. Reading a 519652-byte file settles
+it. Raw header, requested offset 0:
 
-`519652 mod 65536 = 60900` — exact. This is the single most dangerous thing in the FTS read
-path: a client that reads until `offset + chunklen == total_size`, exactly as §2.2 and the
-prototype both do, will **silently produce a truncated file with no error of any kind** for
-anything over 64 KiB. A long ride or run whose `.fit` exceeds that will be quietly corrupted.
+```
+11 01 0000 00000000 e4ed0700 40000000
+             ^offset  ^total   ^chunklen      all uint32 little-endian
+```
 
-**The fix is available and cheap:** the `0x51` directory entry carries the true size as a full
-`uint32` (see §2.2.1). So a client should take the size from the *listing*, not from the read
-header, and treat a mismatch between them as "this file is over the ceiling". Whether the
-remaining bytes can be fetched at all by continuing to request offsets past the truncated
-`total_size` is **not yet tested** — that is the obvious next experiment, and until it is done,
-files over 64 KiB should be treated as unreadable rather than partially read.
+`0x0007ede4` = **519652**, matching the `0x51` directory entry exactly, with no wrapping. The
+corrected framing is:
+
+```
+Request  (Write Command):
+  10 00 <path_len:u16LE> <offset:u32LE> <requested_chunk_len:u32LE> <path ASCII, no NUL>
+
+Response (Notification):
+  11 01 0000 <offset:u32LE> <total_size:u32LE> <chunklen:u32LE> <chunklen bytes of file data>
+```
+
+Offsets beyond 65535 are addressable and work — verified by requesting 65536, 131072 and 519552
+against that file, each echoing the requested offset back and returning the correct 64-byte
+payload. So **large files are fully readable**, and activity backfill is not blocked by any size
+limit.
+
+The `0x51` directory entry's `uint32` size (§2.2.1) agrees with the read header rather than
+correcting it, and remains useful for knowing a file's size before starting to read it.
+
+Both `prototype/una_ble_client.py` and `prototype/una_fts_walk.py` have been corrected to build
+and parse these fields as `uint32`. Gadgetbridge's `UnaFtsProtocol` already did, so it was never
+affected.
 
 **A secondary, still-unexplained command pair** (`0x30` request / response byte `0x02` or `0x01`)
 was also observed, issued *after* a successful `0x10` read of the same path, and also probed
@@ -654,11 +675,10 @@ Remaining work, roughly in priority order:
 2. The CCS **event characteristic** `-0002-`, still completely unexercised. `sendEventActivityEnded`
    and `sendEventFindPhoneAlert` (§3) should surface here — the first would let the watch trigger
    a sync instead of the companion polling.
-3. **Can a file over 64 KiB be read at all?** §2.2's ceiling is now confirmed to truncate
-   silently (`519652` reported as `60900`). Untested: whether continuing to request offsets past
-   the wrapped `total_size` keeps returning data, which would make large files recoverable, or
-   whether the read genuinely cannot address beyond 64 KiB. **This blocks any reliable activity
-   backfill**, since a long ride's `.fit` will exceed it.
+3. ~~Can a file over 64 KiB be read at all?~~ **DONE — yes.** The ceiling never existed; the
+   header fields are `uint32` and offsets past 65535 work (§2.2). Nothing blocks activity
+   backfill on size grounds. Worth doing once for real: pull a complete >64 KiB `.fit` end to end
+   and CRC-check it, the same way §2.1 validated the two small ones.
 4. Read a `/DailyHealth/<YYYYMM>/dh_<YYYYMMDD>.json` (§2.2.2) and diff it against the same day's
    `0x10` response. The on-disk record may carry more than the CCS aggregate and is not bound by
    CCS retention — potentially a much better history source than either.
