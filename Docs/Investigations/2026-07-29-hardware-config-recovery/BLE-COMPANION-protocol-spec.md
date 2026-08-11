@@ -364,11 +364,53 @@ Two corrections to earlier notes:
   sidecar genuinely exists on disk, so `0x30` is very likely a "does this companion metadata file
   exist" check. Still not proof of what `0x30` *does*, and it remains unsafe to fire blind.
 
-**`/DailyHealth/<YYYYMM>/dh_<YYYYMMDD>.json` is a notable find in its own right**: a per-day
-health record sitting on the filesystem, readable over FTS, entirely independent of the CCS
-`0x10`/`0x14` commands. It may well hold more than the CCS aggregate does, and it is not bounded
-by CCS's retention. Reading one and diffing it against the same day's `0x10` response is an
-obvious next experiment and has not been done.
+#### 2.2.3 `/DailyHealth/` — a full day of per-minute HR in a single file read
+
+This turned out to be the most useful thing in the tree, and it **supersedes the CCS commands as
+the best way to get health history**.
+
+Reading `/DailyHealth/202608/dh_20260810.json` (3470 bytes) gives:
+
+```json
+{
+  "dailySteps": 1666,
+  "dailyFloorsUp": 0,
+  "dailyFloorsDown": 0,
+  "dailyActivityMinutes": 0,
+  "restingHeartRate": 67,
+  "averageHeartRate": 77,
+  "hrPerMinute": [ ...exactly 1440 integers... ]
+}
+```
+
+**`hrPerMinute` is the whole day, one entry per minute, midnight to midnight**, with `0` meaning
+no reading exactly as in the CCS `0x14` payload.
+
+**Cross-validated against CCS, exactly.** `hrPerMinute[720:780]` — the 12:00 hour — is
+element-for-element identical to the `0x14` response for `2026-08-10 12:00`, including the
+isolated zero at minute 2 and the 108/107 spikes. Two entirely independent transports agreeing
+byte for byte confirms both decodings, and shows `0x14` is simply serving 60-element slices of
+this same on-disk array.
+
+Why this is the better source:
+
+| | CCS `0x14` | `dh_<date>.json` over FTS |
+|---|---|---|
+| Data per exchange | 60 minutes | **1440 minutes + the day's aggregate** |
+| History available | ≥3 days (unverified beyond) | **14 days present on disk** (2026-07-28 … 08-10) |
+| Floors | single combined figure | **split into `dailyFloorsUp` / `dailyFloorsDown`** |
+| Cost for one full day | 24 round trips, ~2.2 s | one ~3.5 KB read, ~2.5 s |
+
+The day currently in progress is not yet in a dated file — it lives in `/DailyHealth/dh.tmp`,
+which is presumably renamed into `<YYYYMM>/dh_<YYYYMMDD>.json` when the day closes. A companion
+wanting today's partial data should read `dh.tmp` (or fall back to CCS, which does serve the
+current day).
+
+`/DailyHealth/200001/dh_20000101.json` also exists — a year-2000 directory, almost certainly
+data recorded before the clock was ever set.
+
+Per this investigation's guardrails, no retrieved health file is committed here; the structure
+above is transcribed, the contents are the device owner's own data.
 
 ### 2.3 Firmware-string corroboration (the static substream, now doubly confirmed by the capture)
 
@@ -679,9 +721,10 @@ Remaining work, roughly in priority order:
    header fields are `uint32` and offsets past 65535 work (§2.2). Nothing blocks activity
    backfill on size grounds. Worth doing once for real: pull a complete >64 KiB `.fit` end to end
    and CRC-check it, the same way §2.1 validated the two small ones.
-4. Read a `/DailyHealth/<YYYYMM>/dh_<YYYYMMDD>.json` (§2.2.2) and diff it against the same day's
-   `0x10` response. The on-disk record may carry more than the CCS aggregate and is not bound by
-   CCS retention — potentially a much better history source than either.
+4. ~~Read a `dh_<date>.json` and diff it against `0x10`.~~ **DONE — see §2.2.3.** It carries a
+   full 1440-entry per-minute HR array plus the daily aggregate, matches CCS `0x14` exactly, and
+   14 days are on disk. Follow-up worth doing: confirm `/DailyHealth/dh.tmp` really is the
+   in-progress day and is renamed on rollover.
 5. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing. `0x30` is now
    known to be probed against a `.json` sidecar that really exists (§2.2.2), so the "does
    companion metadata exist" reading is more likely — but still unproven and unsafe to fire blind.
