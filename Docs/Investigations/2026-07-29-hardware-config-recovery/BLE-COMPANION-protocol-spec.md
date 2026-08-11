@@ -121,7 +121,57 @@ This step-wise refinement (wrong → partially right → precisely characterized
 discipline the source plan asks for: each guess was checked against an independent source rather
 than assumed.
 
-**Working hypothesis for the FTS transport (LIKELY, unconfirmed):** FTS appears to be built from
+### 1.2 The live GATT table — REFUTES the NUS hypothesis below
+
+A full enumeration of the connected watch's GATT table on firmware 1.3.0
+(`prototype/una_gatt_dump.py`, which reads BlueZ's resolved cache and puts nothing on the air)
+returns **8 services and 19 characteristics**, and **there is no Nordic UART Service on the
+device**. No `6e400001`, no RX, no TX.
+
+That kills the working hypothesis stated immediately below: FTS does not ride an NUS-compatible
+byte pipe, because no such pipe is exposed. The NUS constructor really is in the firmware image
+(§1.1's `FUN_08093a80` is not in doubt) but it is evidently not registered on this build. The
+`0xFEBB`/`adaf0002` characteristic carries the whole protocol on its own, exactly as the working
+prototype has been doing all along.
+
+AMS and ANCS are likewise absent, which is expected and not a contradiction: the watch is the
+*client* for those, consuming them from an iOS phone, so they would never appear in its own
+GATT server.
+
+The complete table, with the property flags — the flags are the valuable part, since they settle
+which direction each vendor channel runs:
+
+| Service | Characteristic | Flags |
+|---|---|---|
+| GAP `1800` | `2a00` name, `2a01` appearance, `2a04` PPCP, `2aa6` central addr resolution | read (+write on the first two) |
+| GATT `1801` | `2a05` service changed | indicate |
+| DIS `180a` | `2a29` manufacturer, `2a24` model, `2a25` serial, `2a26` firmware, `2a27` hardware | read |
+| CTS `1805` | `2a2b` current time | read, write, notify |
+| CTS `1805` | `2a0f` local time info | read, write |
+| BAS `180f` | `2a19` battery level | read, notify |
+| FTS `febb` | `adaf0001` | **read** |
+| FTS `febb` | `adaf0002` | write-without-response, notify |
+| CCS `554e4100-a2cf-…-0000` | `…-0001` command | write-without-response, notify |
+| CCS `554e4100-a2cf-…-0000` | `…-0002` event | **notify only** |
+| CANS `554e4100-28e7-…-0000` | `…-0001` | **write-without-response only** |
+| CANS `554e4100-28e7-…-0000` | `…-0002` | write-without-response, notify |
+
+Three things fall straight out of the flags:
+
+- **CANS `-0001-` is write-only.** Pushing a notification to the watch is fire-and-forget; there
+  is no reply on that characteristic. Anything ANCS-like where the watch asks the phone for more
+  detail (`androidFetchAttr`) must therefore come back on `-0002-`, which is the only CANS
+  channel that notifies.
+- **CCS `-0002-` is notify-only**, confirming it is purely the watch→phone event push channel —
+  where `sendEventActivityEnded` and `sendEventFindPhoneAlert` (§3) should surface. Still
+  unexercised.
+- **`adaf0001` is readable**, and reading it returns 4 bytes: `04 00 00 00`, i.e. `uint32` = 4.
+  Almost certainly an FTS protocol version. Adafruit's own File Transfer Service defines exactly
+  such a version characteristic, so this is the one place the ADAF resemblance goes beyond the
+  UUID. Nothing observed depends on it, but a companion could use it to detect a protocol change.
+
+**Working hypothesis for the FTS transport (REFUTED — see §1.2 above; retained for the record):**
+FTS appears to be built from
 *two* GATT building blocks together: a small `ADAF`-styled pair (service+1 characteristic, or
 2 characteristics of one service — ambiguous from strings alone) for something version/identity
 adjacent, **plus** a literal clone of Nordic's 3-UUID NUS pattern (service + RX write + TX notify)
@@ -169,7 +219,38 @@ Response (Notification, one per entry, streamed):
 Observed live listing `/Apps/` → 19 entries (`Alarm`, `Cycling`, `GlanceActivity`, ... `Workout`),
 each with a monotonically increasing `index` and a constant `total_count=19` — lets a client know
 when the listing is complete without a separate "end" marker (a final all-zero record was also
-observed, possibly an explicit terminator — worth confirming, not load-bearing).
+observed, possibly an explicit terminator — worth confirming, not load-bearing). A later walk of
+the same directory on firmware 1.3.0 returned 24 entries; the count simply tracks what is
+installed.
+
+#### 2.2.1 The trailing 12 bytes of a `0x51` entry — SOLVED
+
+The bytes previously recorded as "`mtime:u64LE?`" and reserved are now identified, by walking the
+real filesystem and correlating each entry against sizes obtained independently from `0x11` read
+headers (`prototype/una_fts_walk.py`):
+
+```
+51 <flags:u8> <name_len:u16LE> <index:u32LE> <total_count:u32LE> <attr:u32LE>
+   <mtime:u64LE, MICROSECONDS since the Unix epoch> <size:u32LE> <name ASCII>
+```
+
+- **bytes 16..23 — `mtime`, microseconds since the Unix epoch.** Always second-granularity in
+  practice (the low 6 digits are zero). `dh_20260728.json` → `1785326400000000` µs →
+  2026-07-29 12:00:00 UTC, i.e. the day after the data it covers, consistent with a file
+  finalised once the day closed.
+- **bytes 24..27 — `size`, `uint32` little-endian.** Correlated exactly against `0x11`
+  `total_size` for every file under 64 KiB, and is the *true* size for files above it (see the
+  ceiling warning above). Directories always report `0`.
+
+`attr` bit 0 set = directory, clear = file, as previously documented.
+
+**Gotcha, learned the hard way:** a `0x51` entry carries no request identifier, so the *only*
+thing binding a response to its request is that the previous exchange finished first. A walker
+that keeps waiting after the firmware's `50 03` error reply will have the next listing swallow
+the stragglers, producing a tree that looks entirely plausible but attributes files to the wrong
+directories — the first run of the walk showed `/Apps/GlanceActivity/` containing
+`Cycling_1.3.0.uapp`, shifted by one directory the whole way down. Stop the exchange dead on any
+non-`0x51` reply, and let the link go quiet before the next request.
 
 **Whole-file read — the mechanism that pulled the `.fit` files** (`0x10` request / `0x11` streamed
 response), 12-byte request header + path, 16-byte response header + chunk, fields confirmed by
@@ -192,11 +273,25 @@ no per-chunk request/ack round-trip, which is good news for a companion implemen
 control puzzle — read notifications until the byte count matches `total_size`, exactly as the
 firmware's `Reading: %u%% (%u/%u bytes)` log string in §2.3 already implied).
 
-**⚠ Practical ceiling worth flagging:** `total_size` is carried as a `uint16` (max 65535 bytes) in
-every field observed. Both captured files were well under this. Whether larger recordings (long
-rides/runs, which could plausibly exceed 64KB of FIT records) use a wider field, a different
-opcode, or genuinely cannot exceed 65535 bytes this way is **unconfirmed** — worth testing with a
-longer real activity before assuming this scales.
+**⚠ The uint16 ceiling is REAL, and it truncates silently — CONFIRMED.** `total_size` is carried
+as a `uint16` in the `0x11` header, and a file larger than 65535 bytes reports
+**`size mod 65536`** rather than erroring or using a wider field. Measured directly:
+
+| File | True size (from the `0x51` directory entry) | `total_size` in the `0x11` header |
+|---|---|---|
+| `/Apps/Running/Running_1.3.0.uapp` | **519652** | **60900** |
+
+`519652 mod 65536 = 60900` — exact. This is the single most dangerous thing in the FTS read
+path: a client that reads until `offset + chunklen == total_size`, exactly as §2.2 and the
+prototype both do, will **silently produce a truncated file with no error of any kind** for
+anything over 64 KiB. A long ride or run whose `.fit` exceeds that will be quietly corrupted.
+
+**The fix is available and cheap:** the `0x51` directory entry carries the true size as a full
+`uint32` (see §2.2.1). So a client should take the size from the *listing*, not from the read
+header, and treat a mismatch between them as "this file is over the ceiling". Whether the
+remaining bytes can be fetched at all by continuing to request offsets past the truncated
+`total_size` is **not yet tested** — that is the obvious next experiment, and until it is done,
+files over 64 KiB should be treated as unreadable rather than partially read.
 
 **A secondary, still-unexplained command pair** (`0x30` request / response byte `0x02` or `0x01`)
 was also observed, issued *after* a successful `0x10` read of the same path, and also probed
@@ -211,6 +306,48 @@ open item, not a re-run of the mis-hypothesized "open" step from an earlier, inc
 assistance-data push tied to CCS's `epoStatusHandler` (§3). Confirms the same characteristic
 multiplexes several sub-protocols by leading opcode byte. Framing not fully decoded this pass
 (secondary to the read-path goal); revisit if a companion needs to push EPO data too.
+
+### 2.2.2 The on-watch filesystem layout — walked, firmware 1.3.0
+
+A read-only recursive walk (`prototype/una_fts_walk.py`) gives the real tree. This matters
+because a companion relying on `/Apps/latest_activity.txt` sees only what the firmware considers
+*pending* — a freshly-paired phone finds a user's entire history invisible.
+
+```
+/
+├── settings.json, settings.json.bak            (+ local_settings.json, accessories.json, .bak)
+├── DailyHealth/
+│   └── <YYYYMM>/dh_<YYYYMMDD>.json             one JSON per day
+├── Apps/
+│   ├── app_list.json, app_sorting.json, latest_activity.txt, QZSS.DAT
+│   └── <AppName>/
+│       ├── <AppName>_<version>.uapp            the app binary
+│       └── Activity/
+│           ├── summary.json
+│           └── <YYYYMM>/
+│               ├── activity_<YYYYMMDD>T<HHMMSS>.fit
+│               └── activity_<YYYYMMDD>T<HHMMSS>.json   sidecar
+├── GPS_EPO/     GPS.DAT, GLO.DAT, GAL.DAT, BD.DAT      (the EPO/AGPS push target)
+├── Crash/       Activity/, Debug/Debug/dump_<serial>_<n>_<ts>_<fw>.bin
+├── Update/
+├── .Trash-1000/
+└── _disabled_apps_backup/
+```
+
+Two corrections to earlier notes:
+
+- The archive directory is **`Activity/`**, not `ActivityArchive/` as the prototype's usage
+  example says (that example predates this walk and should be read as illustrative).
+- **The `.json` sidecar beside each `.fit` is real.** §2.2 recorded the mysterious `0x30` command
+  being probed against a hypothetical `<name>.json` sidecar and flagged it as unexplained; the
+  sidecar genuinely exists on disk, so `0x30` is very likely a "does this companion metadata file
+  exist" check. Still not proof of what `0x30` *does*, and it remains unsafe to fire blind.
+
+**`/DailyHealth/<YYYYMM>/dh_<YYYYMMDD>.json` is a notable find in its own right**: a per-day
+health record sitting on the filesystem, readable over FTS, entirely independent of the CCS
+`0x10`/`0x14` commands. It may well hold more than the CCS aggregate does, and it is not bounded
+by CCS's retention. Reading one and diffing it against the same day's `0x10` response is an
+obvious next experiment and has not been done.
 
 ### 2.3 Firmware-string corroboration (the static substream, now doubly confirmed by the capture)
 
@@ -312,10 +449,21 @@ range 57–111 bpm. Month is 1-based; all fields are **local wall-clock**.
 | Date two days in the **future** | `14 01` + 60 zero bytes |
 | `hour=25`, out of range | `14 01` + 60 zero bytes |
 
-So "no data" and "invalid request" are indistinguishable, the firmware does no input validation,
-and **nothing ever goes silent** — a client walking many hours does not strictly need a
-per-request timeout (the vendor app uses a 5 s one regardless). The real "no data" signal is an
-all-zero payload, so a client must filter zeros rather than read a status code.
+**`0x10` behaves identically** — the same edge cases were run against it separately rather than
+assumed to carry over, since a client walking days has the same stall exposure as one walking
+hours:
+
+| Probe | Result |
+|---|---|
+| 60 days back | `10 01` + all-zero payload |
+| A year back | `10 01` + all-zero payload |
+| Two days in the future | `10 01` + all-zero payload |
+| `month=13, day=32` | `10 01` + all-zero payload |
+
+So "no data" and "invalid request" are indistinguishable, the firmware does no input validation
+on *either* command, and **nothing ever goes silent** — a client walking many hours or days does
+not strictly need a per-request timeout (the vendor app uses a 5 s one regardless). The real "no
+data" signal is an all-zero payload, so a client must filter zeros rather than read a status code.
 
 Two further practical notes for anyone consuming this:
 
@@ -506,13 +654,20 @@ Remaining work, roughly in priority order:
 2. The CCS **event characteristic** `-0002-`, still completely unexercised. `sendEventActivityEnded`
    and `sendEventFindPhoneAlert` (§3) should surface here — the first would let the watch trigger
    a sync instead of the companion polling.
-3. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing (both secondary to
-   the core read-path goal, which is solved).
-4. Test whether a longer/larger real activity recording still transfers cleanly, given the
-   `uint16` `total_size` field observed (§2.2's flagged ceiling).
-5. Understand why the phone capture appeared to need only one `0x10` request per file while the
+3. **Can a file over 64 KiB be read at all?** §2.2's ceiling is now confirmed to truncate
+   silently (`519652` reported as `60900`). Untested: whether continuing to request offsets past
+   the wrapped `total_size` keeps returning data, which would make large files recoverable, or
+   whether the read genuinely cannot address beyond 64 KiB. **This blocks any reliable activity
+   backfill**, since a long ride's `.fit` will exceed it.
+4. Read a `/DailyHealth/<YYYYMM>/dh_<YYYYMMDD>.json` (§2.2.2) and diff it against the same day's
+   `0x10` response. The on-disk record may carry more than the CCS aggregate and is not bound by
+   CCS retention — potentially a much better history source than either.
+5. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing. `0x30` is now
+   known to be probed against a `.json` sidecar that really exists (§2.2.2), so the "does
+   companion metadata exist" reading is more likely — but still unproven and unsafe to fire blind.
+6. Understand why the phone capture appeared to need only one `0x10` request per file while the
    standalone prototype needed one per chunk (§6a) — a real discrepancy, not yet explained.
-6. Explain the flat-constant-63-bpm hour seen 3 days back (§3.1) — real resting record, or a
+7. Explain the flat-constant-63-bpm hour seen 3 days back (§3.1) — real resting record, or a
    stored default the firmware emits for decayed history?
 
 **The read path is fully proven, not just specified.** §6a's standalone prototype pairs with the

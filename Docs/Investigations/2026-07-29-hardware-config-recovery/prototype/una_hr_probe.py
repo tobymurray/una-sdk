@@ -316,6 +316,27 @@ async def main():
                     build_hourly_hr(t.year, t.month, t.day, t.hour),
                     CMD_HOURLY_HR, args.timeout))
 
+        # 0x10 gets the same edge-case treatment as 0x14. A client that walks several days of
+        # aggregates has exactly the same stall exposure as one walking hours, so "does an
+        # unavailable day answer at all" has to be settled for both commands, not assumed to
+        # carry over from one to the other.
+        print("\n=== 0x10 daily health: edge cases ===")
+        for delta, why in ((-60, "60 days back"), (-365, "a year back")):
+            t = now + datetime.timedelta(days=delta)
+            results.append(await probe(
+                stream, bus, char_path, f"daily health {t:%Y-%m-%d} ({why})",
+                build_daily_health(t.year, t.month, t.day),
+                CMD_DAILY_HEALTH, args.timeout))
+        future = now + datetime.timedelta(days=2)
+        results.append(await probe(
+            stream, bus, char_path, f"daily health {future:%Y-%m-%d} (future)",
+            build_daily_health(future.year, future.month, future.day),
+            CMD_DAILY_HEALTH, args.timeout))
+        results.append(await probe(
+            stream, bus, char_path, "daily health month=13 day=32 (out of range)",
+            build_daily_health(now.year, 13, 32),
+            CMD_DAILY_HEALTH, args.timeout))
+
         # Deliberately impossible requests: the cleanest way to see the error-status shape
         # without depending on what the watch happens to have retained.
         print("\n=== 0x14 deliberately invalid (error-status shape) ===")
@@ -345,9 +366,11 @@ async def main():
         print(f"  ** {silent} request(s) got no reply at all. A Gadgetbridge sync that walks")
         print("     hours therefore NEEDS a per-request timeout, or it will stall. **")
     else:
-        print("  Every request was answered, including the invalid ones -- an unavailable hour")
-        print("  reports an error status rather than going silent, so skipping on non-OK status")
-        print("  is sufficient and a watchdog is defence-in-depth rather than required.")
+        print("  Every request was answered, including the invalid ones. The watch does not")
+        print("  report unavailable data with an error status at all -- it returns status 0x01")
+        print("  with an all-zero payload, for both 0x10 and 0x14, and does no input validation.")
+        print("  So: read 'no data' off the PAYLOAD, not the status byte; and since nothing ever")
+        print("  goes silent, a per-request timeout is defence-in-depth rather than required.")
 
 
 if __name__ == "__main__":

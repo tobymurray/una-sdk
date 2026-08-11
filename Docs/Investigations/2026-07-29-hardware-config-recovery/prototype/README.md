@@ -1,6 +1,12 @@
 # Standalone phone-free prototypes
 
-Two scripts, both validated end-to-end against a real watch with no phone involved.
+Four scripts, all validated end-to-end against a real watch with no phone involved. Every one of
+them is **read-only**: none sends the FTS write/delete/move/mkdir opcodes, the unexplained `0x30`,
+or any CCS opcode other than the two daily-health reads.
+
+Run `una_gatt_dump.py` first in any session — it costs nothing, puts no traffic on the air, and
+the characteristic property flags tell you which direction every channel runs before you send
+anything.
 
 `una_ble_client.py` is a client for the **File Transfer Service**: lists directories and pulls
 `.fit` activity files with correct FIT headers and matching CRC-16 checksums. Full protocol
@@ -45,9 +51,17 @@ python3 una_ble_client.py <device-address> read /Apps/GpsLab/ActivityArchive/202
 
 python3 -u una_hr_probe.py <device-address>
 python3 -u una_hr_probe.py <device-address> --hours 18 --retention-days 3
+
+python3 una_gatt_dump.py <device-address>
+python3 -u una_fts_walk.py <device-address> --root /Apps/ --depth 2
 ```
 
-Use `python3 -u` for the probe: it prints progress as it goes, and buffering hides that.
+Use `python3 -u` for anything long-running: it prints progress as it goes, and buffering hides
+that — a run that looks hung is often just buffered.
+
+`una_gatt_dump.py` dumps every service, characteristic and property flag from BlueZ's resolved
+cache. `una_fts_walk.py` walks the filesystem read-only and runs two experiments: correlating a
+directory entry's trailing bytes against real file sizes, and reading `adaf0001`.
 
 ## Known caveats
 
