@@ -59,9 +59,11 @@ the consequence of that one sentence.
 | `slippypack` | the pack writer (Rust CLI + core, PWA later) | `~/git/slippypack` |
 | `rawtiles` | the byte format spec + conformance corpus | clone as needed |
 
-GitHub copies of `slippypack` and `rawtiles` may be push-mirrors of a Gitea at `nas:3000`
-which is not always reachable. **Before force-updating any branch on those two, confirm
-which side is authoritative** — and never force-push blind on any shared branch; other
+**The Gitea at `nas:3000` is authoritative; the GitHub copies of `slippypack` and `rawtiles`
+are downstream mirrors of it.** Verified reachable 2026-08-12. Push to the Gitea and confirm
+with `git ls-remote` afterwards — a branch pushed only to GitHub can be removed by a sync
+from the authoritative side, and **that has already happened once**: see
+`Docs/External/rawtiles/README.md`. Never force-push blind on a shared branch either; other
 sessions push to these.
 
 ---
@@ -83,9 +85,11 @@ On `slippypack`, branch **`map-delivery-workflow`** (head `b8d5464`, unmerged):
   not depend on it surviving.
 - `PLAN.md` — phasing. Parts of it predate the audit; see `A1` and `C1`.
 
-On `una-sdk` (repo root, untracked): `RAWTILES_SPEC_ADEQUACY.md` — the v0.6 grading,
-needs matrix, must-fix items M1–M8, and E1's identity defect, which card `B1` exists to
-avoid repeating.
+On `una-sdk` (repo root): `RAWTILES_SPEC_ADEQUACY.md` — the v0.6 grading, needs matrix,
+must-fix items M1–M8, E1's identity defect, and § 11's change list. **Read
+`Docs/External/rawtiles/README.md` alongside it:** the branch that implemented that change
+list no longer exists on any remote, so § 11 is a set of instructions again rather than a
+description of something landed. Card `B0` exists because of this.
 
 ---
 
@@ -142,17 +146,35 @@ Logged spin-off **S1**.
 
 ### Group B — Identity, before any renderer exists (blocks Group C)
 
-**B1 — Put the renderer in the canonical descriptor.** `PackDescriptor` already carries
+**B0 — Redo the spec 0.7 adequacy fixes.** Both remotes hold rawtiles at **v0.6**. The branch
+that implemented `M1`–`M8`, the extension registry, the widened corpus and the first canonical
+RLE encoder is gone — not on GitHub, not on the Gitea, not on this machine. Full account and
+probable cause in `Docs/External/rawtiles/README.md`.
+
+The recipe survives intact: `RAWTILES_SPEC_ADEQUACY.md` § 11 is a change list written as
+instructions, and the v0.6 corpus survives in this repo on
+`origin/tmp/rawtiles-container-pr-description` (`d2f26542`, under `Tests/Host/rawtiles/corpus/`),
+so a rebuild starts from a working base rather than from nothing. The expensive part to
+recreate is the RLE encoder, whose value came from being cross-validated against an independent
+decoder and from the bug that cross-validation found — so rebuild it the same way, not from
+memory of the result.
+→ `rawtiles`, `spec-0.7-adequacy-fixes` (again). **Push to the Gitea and verify with
+`ls-remote`.** Done when the corpus is green, the reference reader implements the new rules, and
+the branch is confirmed present on the authoritative remote. **Medium-large, and it blocks
+`B1`.**
+
+**B1 — Put the renderer in the canonical descriptor.** *Depends on `B0`.* `PackDescriptor` already carries
 `quantiser_version` and `style_hash`, and `Source::Style` hashes the style JSON — but
 **nothing captures the renderer**: MapLibre Native's version, and the glyphs and sprites a
 style references *by URL* rather than by content. Bump the renderer or repoint a font
 stack and you get **the same `pack_uuid` over different bytes** — exactly the `E1` defect
 that Appendix A's `M1` fix just closed for compression, re-entering through the renderer
-door.
+door. And `M1` is itself unlanded again, so that hole is currently open on both sides.
 
 The timing argument is the whole point of this card: descriptor keys are **additive today
 and UUID-invalidating once rendered packs exist.** Land it before, or in the same pass as,
-any renderer.
+any renderer — and fold it into `B0`'s pass if that work is being redone anyway, since both
+edit Appendix A.
 → `rawtiles` (Appendix A + a conformance rule) then `slippypack` (`identity.rs`), stacked.
 Done when: same style, different renderer version ⇒ different `pack_uuid`, with a test
 that fails if the field is dropped; A.5's worked example recomputed; corpus refreshed.
@@ -342,8 +364,10 @@ constrains UI design well beyond maps.
 **A1 + A2 together.** They are hours, they stop the tool recommending a prohibited source,
 and every other card's documentation quotes them.
 
-**Then `B1`**, because it is the only card whose cost grows with delay: additive now,
-invalidating every issued `pack_uuid` later.
+**Then `B0` + `B1` as one pass**, because they edit the same appendix and because `B1` is the
+card whose cost grows with delay: additive now, invalidating every issued `pack_uuid` later.
+`B0` also has a second clock on it — the analysis that specifies it is a year of context away
+from being hard to act on, and it has already been lost once.
 
 **Then `E3`**, because a validated end-to-end run will reorder Group D more reliably than
 this prompt's guesses about which friction matters.
@@ -363,7 +387,8 @@ Verified; do not re-derive, and do not trust older documents that contradict the
 | "Apps read absolute volume paths like `N:/maps/…`" | No absolute volume path resolves from an app. Sandbox-relative only |
 | "256 KB of app RAM" | A stale diagram label. Real: 500 K service / 600 K GUI, and the PoC app fits exactly **one** 256 px tile slot over Running's GUI statics |
 | "The pack can use RLE" | The vendored reader fails closed on RLE until its decoder lands, so build `--compression none` for now. This is a capacity feature, not a latency one — a 64 KiB tile read measured 7–9 ms on hardware |
-| "`pack_uuid` identifies the bytes" | Only after `M1`. The original defect — same UUID, 6.9× different bytes — is the precedent card `B1` exists to avoid repeating |
+| "`pack_uuid` identifies the bytes" | **It does not.** `M1` fixed this on a branch that no longer exists, so both remotes still hold the defect: same UUID over 6.9× different bytes. Anything written after 2026-08-06 claiming otherwise describes lost work — see `B0` |
+| "The rawtiles spec is at 0.7" | Both remotes are at **v0.6** (`38d4d26`). Treat every 0.7 claim as a specification of intended work, not of shipped work |
 
 ---
 
