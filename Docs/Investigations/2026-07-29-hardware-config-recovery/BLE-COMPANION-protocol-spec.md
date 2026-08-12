@@ -343,6 +343,13 @@ negotiated MTU of 220 — cutting a 3998-byte file from 32 round trips to 20. Th
 connection rather than hardcoding, and negotiate a larger MTU during setup: on the 23-byte
 default that formula yields 4 bytes per chunk.
 
+**`mtu - 19` is a hard limit, not a margin.** Above it the firmware clamps its reply using
+`MTU - 16` without subtracting ATT's 3 bytes, so the response header advertises more data than the
+notification actually carries and no continuation follows — a client that trusts the header waits
+forever. Measured at MTU 220: 201 is correct, 202 is one byte short, 204+ is three short. Reported
+as https://github.com/UNAWatch/una-sdk/issues/272. The published spec states the correct ceiling
+(`≤ 201` at MTU 220), so the firmware does not match its own documentation here.
+
 Confirmed concretely: the server honors the requested length exactly (every chunk but the final
 remainder is full-length); **the client issues
 exactly one request per file and the server streams the entire file back unprompted** — there is
@@ -485,9 +492,18 @@ That last point is the one that matters for a companion: **a no-reading zero fro
 current hour is not necessarily final.** Re-reading a day from its file once the day has closed
 is not redundant, it corrects the live view.
 
-**`dh.tmp` is NOT the JSON for the day in progress.** It is a fixed-size 1464-byte *binary*
-record — the same 1464 bytes on two different days at two different times of day, only its mtime
-changing. Its header is the same date encoding the CCS commands use:
+**`dh.tmp` is the daily-health *recovery* file — RESOLVED.** It is not the in-progress day's JSON,
+and it is not a general scratch buffer. The firmware string table names it directly under
+`DH.Storage`: `Failed to open recovery file for write`, `Recovery file size mismatch: have %u,
+expect %u`, `Recovery file CRC mismatch`, alongside `saveCurrent` / `loadCurrent`. A fixed-size,
+CRC-checked binary snapshot for crash recovery is exactly consistent with what was measured — the
+same 1464 bytes on two different days at two different times, with only the mtime changing.
+
+This closes the question of whether a companion could read it to get the current day: it should
+not try. The dated JSON is not written until the day closes, and the recovery file is an internal
+durability mechanism, not an export. **The current day is only available via CCS.**
+
+Its header is nonetheless the same date encoding the CCS commands use:
 
 ```
 ea 07 08 0c  00 00 00 00  38 00 00 00  00 00 00 00  00 00 61 61 60 5f 5f 5f ...
@@ -496,10 +512,9 @@ ea 07 08 0c  00 00 00 00  38 00 00 00  00 00 00 00  00 00 61 61 60 5f 5f 5f ...
 ```
 
 The tail is mostly `0x5f` (543 bytes) and `0x00` (909 bytes), and 1464 - 20 is about 1440, so it
-looks like a per-minute array using `0x5f` where the JSON uses `0`, and `0x00` for minutes not
-yet reached. Not decoded further, because the practical conclusion is already clear: **the
-current day is only available as JSON via CCS.** A companion wanting today's data should use the
-`0x10`/`0x14` commands rather than decode a second undocumented format to save a few requests.
+looks like a per-minute array using `0x5f` where the JSON uses `0`, and `0x00` for minutes not yet
+reached. Not decoded further, and now deliberately so: it is a recovery artifact whose layout is
+free to change, so a companion depending on it would be building on internal state.
 
 `/DailyHealth/200001/dh_20000101.json` also exists — a year-2000 directory, almost certainly
 data recorded before the clock was ever set.
@@ -636,6 +651,35 @@ returned 59/60 real readings and `-3d` returned 60/60 — though that `-3d` hour
 constant 63 bpm for all 60 minutes*. That flat hour is not a curiosity; it is the artifact
 described in §3.2, and it turned out to be the single most consequential finding for anyone
 consuming this data.
+
+### 3.1a There is no intraday step data, anywhere — CONFIRMED
+
+A companion can show a correct daily step total but **cannot** show steps accumulating through the
+day, and this is a property of the firmware rather than of the export.
+
+The record writer's key set is visible in the firmware string table, in order, immediately around
+`writeRecordJson`:
+
+```
+dailySteps  dailyFloorsUp  dailyFloorsDown  dailyActivityMinutes
+restingHeartRate  averageHeartRate  hrPerMinute
+```
+
+`hrPerMinute` is the **only** per-minute series, and `getStoredHrSeries` is the only stored-series
+accessor in the image. There is no `stepsPerMinute`, `stepsPerHour` or any `stepsPer*` string
+anywhere; steps appear only as `dailySteps`, `Daily step counter` and `Sensor.StepCntDaily`. The
+CCS handler inventory (§3) matches: `dailyHealthHandler` and `dailyHealthHrHandler`, with no steps
+equivalent.
+
+The SDK agrees from the other side. `IStepCounter` and `subscribeStep` are **live** APIs for a
+running watch app, and the `stepsPerBin` / `kBinValidMinSteps` constants nearby are cadence bins
+for stride-length calibration, not time buckets. An app can sample steps continuously, but nothing
+persists that where a companion could read it.
+
+**Consequence for a consumer:** a cumulative step chart built from this data will be a step
+function — the day's whole total lands on whatever single timestamp the aggregate is stored at.
+That is the honest rendering. The only intraday step data on the device lives inside recorded
+workout `.fit` files.
 
 ### 3.2 The watch reports a fabricated heart rate while off-wrist — CONFIRMED
 
@@ -884,6 +928,11 @@ pairing directly confirmed `adaf0002-4669-6c65-5472-616e73666572` (part of the `
 the FTS characteristic, at declaration handle `0x0026` / value handle `0x0027` — matching the
 original phone capture's `0x0027` exactly.
 
+**Per-minute data: heart rate only.** `hrPerMinute` is the sole per-minute series the firmware
+stores or exposes (§3.1a). Steps, floors and active minutes exist only as daily totals, so a
+companion can report an accurate daily step count but not its progression through the day. This is
+confirmed from the firmware's own record-writer key set, not inferred from the export.
+
 **CCS daily-health commands: done.** Both `0x10` and `0x14` are fully recovered and validated
 against a real watch by direct probing — request framing, response layout, error behaviour and
 retention (§3.1). `prototype/una_hr_probe.py` is the working proof. This closes the "worth
@@ -922,8 +971,15 @@ Remaining work, roughly in priority order:
 7a. **Report the two spec discrepancies (§0.3):** `modificationTime` decoding as microseconds
    where the published spec says nanoseconds, and Nordic UART being documented but absent from
    this firmware's GATT table.
-7b. **Follow up on issue #282:** whether the `0x5f` fill in `dh.tmp` becomes `0` once that day
-   closes, and quantify the fluctuating FIT case against `hrPerMinute` over the same minutes.
+7b. **Follow up on issue #282:** quantify the fluctuating FIT case against `hrPerMinute` over the
+   same minutes, which would settle whether the off-wrist artifact is one issue seen through two
+   paths or two. The other half of that follow-up — what `dh.tmp` is — is answered: it is the
+   daily-health recovery file (§2.2.3), so the `0x5f` fill is internal state and not an encoding a
+   companion should reason about.
+7c. **Report the read-chunk clamp as a spec conformance gap.** Already filed as issue #272; worth
+   noting there that the published FTS document states the correct `≤ 201` ceiling at MTU 220, so
+   this is the firmware disagreeing with UNA's own specification rather than an undocumented
+   limit.
 8. Decode `/DailyHealth/dh.tmp`'s binary layout (§2.2.3), if the current day is ever wanted
    without CCS. Header is `<year:u16LE> <month:u8> <day:u8>`; the rest looks like a 1440-byte
    per-minute array with `0x5f` for no-reading and `0x00` for not-yet-reached. Unverified.
