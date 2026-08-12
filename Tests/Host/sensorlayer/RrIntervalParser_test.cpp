@@ -54,12 +54,11 @@ struct Beat {
     RrInterval parser() { return RrInterval(SDK::Sensor::DataView(*d.data(), fields)); }
 };
 
+using Us = RrInterval::Microseconds;
+
 uint64_t msToUs(float ms) { return static_cast<uint64_t>(ms * 1000.f); }
 
-// Whether checkContinuity() can be called with a stamp of type T at all. A
-// deleted overload is chosen by overload resolution and then makes the call
-// ill-formed, which in this immediate context is a substitution failure rather
-// than a hard error — so this detects the deletion instead of failing to compile.
+// Whether checkContinuity() can be called with a stamp of type T at all.
 template <typename T, typename = void>
 struct AcceptsStamp : std::false_type {};
 
@@ -68,13 +67,23 @@ struct AcceptsStamp<T, std::void_t<decltype(std::declval<const RrInterval&>()
                                                     .checkContinuity(std::declval<T>()))>>
     : std::true_type {};
 
+// The same, WRITTEN IN BRACES. A braced-init-list is a non-deduced context, so it
+// is invisible to a probe on a prvalue and has to be asked separately.
+template <typename T, typename = void>
+struct AcceptsBracedStamp : std::false_type {};
+
+template <typename T>
+struct AcceptsBracedStamp<T, std::void_t<decltype(std::declval<const RrInterval&>()
+                                                          .checkContinuity({std::declval<T>()}))>>
+    : std::true_type {};
+
 // Whether a BUDGET of type B is accepted alongside a valid stamp.
 template <typename B, typename = void>
 struct AcceptsBudget : std::false_type {};
 
 template <typename B>
 struct AcceptsBudget<B, std::void_t<decltype(std::declval<const RrInterval&>()
-                                                     .checkContinuity(uint64_t(1),
+                                                     .checkContinuity(RrInterval::Microseconds(1),
                                                                       std::declval<B>()))>>
     : std::true_type {};
 
@@ -85,6 +94,16 @@ template <typename T>
 struct AcceptsStampAndBudget<T, std::void_t<decltype(std::declval<const RrInterval&>()
                                                              .checkContinuity(std::declval<T>(),
                                                                               1.f))>>
+    : std::true_type {};
+
+// Whether checkContinuity can be NAMED as a member pointer of the given type. A
+// pointer-to-member names an overload directly, so no deduction happens and no
+// deleted overload is consulted; the parameter type is the only thing in its way.
+template <typename P, typename = void>
+struct AddressableAs : std::false_type {};
+
+template <typename P>
+struct AddressableAs<P, std::void_t<decltype(P(&RrInterval::checkContinuity))>>
     : std::true_type {};
 
 enum UnscopedStamp : unsigned { kSessionStartMs = 5000 };
@@ -198,7 +217,7 @@ TEST(RrIntervalParser, MicrosecondTailSurvivesOnAValidFrame)
     RrInterval p(SDK::Sensor::DataView(*m.data(), 1));
 
     EXPECT_EQ(p.getTimestamp(), 1000u);
-    EXPECT_EQ(p.getTimestampUs(), 1000469ull);
+    EXPECT_EQ(p.getTimestampUs().us, 1000469ull);
 }
 
 TEST(RrIntervalParser, ZeroMetadataReadsAsNotReported)
@@ -357,7 +376,7 @@ TEST(RrIntervalParser, UnusableRrValuesMakeTheFrameInvalid)
         // handing back a confident EXTERNAL would invite a consumer to trust the
         // rest of the frame.
         EXPECT_EQ(p.getTimestamp(), 0u);
-        EXPECT_EQ(p.getTimestampUs(), 0u);
+        EXPECT_EQ(p.getTimestampUs().us, 0u);
         EXPECT_EQ(src(p.getSource()), src(RrInterval::Source::UNKNOWN));
         EXPECT_FALSE(p.hasDiscontinuity());
         EXPECT_FALSE(p.isArtifactSuspect());
@@ -484,7 +503,7 @@ TEST(RrIntervalContinuity, ThereIsExactlyOneBudgetAndNoFrameChangesIt)
             EXPECT_FLOAT_EQ(b.parser().continuityToleranceMs(),
                             RrInterval::kDefaultContinuityToleranceMs)
                     << "flags=" << flags << " stride=" << stride;
-            EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+            EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                       cont(RrInterval::Continuity::CONTIGUOUS))
                     << "flags=" << flags << " stride=" << stride;
         }
@@ -495,7 +514,7 @@ TEST(RrIntervalContinuity, ThereIsExactlyOneBudgetAndNoFrameChangesIt)
     // two-argument overload even though this class does not.
     Beat stamped(rr, thisUs, RrInterval::Flag::DETECTOR_STAMPED);
     EXPECT_TRUE(stamped.parser().isDetectorStamped());
-    EXPECT_EQ(cont(stamped.parser().checkContinuity(prevUs, 20.f)),
+    EXPECT_EQ(cont(stamped.parser().checkContinuity(Us{prevUs}, 20.f)),
               cont(RrInterval::Continuity::GAP));
 }
 
@@ -513,16 +532,16 @@ TEST(RrIntervalContinuity, TheStampBoundIsLooseAndTheMicrosecondFieldIsARemainde
 
     RrInterval p(SDK::Sensor::DataView(*m.data(), 1));
 
-    EXPECT_EQ(p.getTimestampUs(), RrInterval::kMaxTimestampUs);
+    EXPECT_EQ(p.getTimestampUs().us, RrInterval::kMaxTimestampUs);
     // And such a stamp is accepted as a previous instant rather than rejected as
     // impossible: a bound narrower than the accessor's range would read this as
     // "not from this API".
-    EXPECT_LE(p.getTimestampUs(), RrInterval::kMaxTimestampUs);
+    EXPECT_LE(p.getTimestampUs().us, RrInterval::kMaxTimestampUs);
 
     Beat b(800.f, 5000000ull, 0u);
-    EXPECT_EQ(cont(b.parser().checkContinuity(RrInterval::kMaxTimestampUs)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{RrInterval::kMaxTimestampUs})),
               cont(RrInterval::Continuity::REORDERED));
-    EXPECT_EQ(cont(b.parser().checkContinuity(RrInterval::kMaxTimestampUs + 1ull)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{RrInterval::kMaxTimestampUs + 1ull})),
               cont(RrInterval::Continuity::UNUSABLE));
 
     // The remainder is a PRECONDITION of the comparison, not a convention a writer
@@ -553,7 +572,7 @@ TEST(RrIntervalContinuity, TheStampBoundIsLooseAndTheMicrosecondFieldIsARemainde
         edge->mTimeStampUs                = 999u;
         edge->mValue[RrInterval::RR_MS].f = 800.f;
         RrInterval e(SDK::Sensor::DataView(*edge.data(), 1));
-        EXPECT_NE(cont(e.checkContinuity(5000999ull)),
+        EXPECT_NE(cont(e.checkContinuity(Us{5000999ull})),
                   cont(RrInterval::Continuity::UNUSABLE)) << "999 us is a remainder";
 
         // And past where a 32-bit ms * 1000 product would wrap: the guard's
@@ -564,7 +583,7 @@ TEST(RrIntervalContinuity, TheStampBoundIsLooseAndTheMicrosecondFieldIsARemainde
         high->mTimeStampUs                = 500u;
         high->mValue[RrInterval::RR_MS].f = 800.f;
         RrInterval h(SDK::Sensor::DataView(*high.data(), 1));
-        EXPECT_NE(cont(h.checkContinuity(4294967700ull)),
+        EXPECT_NE(cont(h.checkContinuity(Us{4294967700ull})),
                   cont(RrInterval::Continuity::UNUSABLE))
                 << "a conforming frame past the 32-bit product's wrap";
 
@@ -573,7 +592,7 @@ TEST(RrIntervalContinuity, TheStampBoundIsLooseAndTheMicrosecondFieldIsARemainde
         over->mTimeStampUs                = 1000u; // one microsecond past a remainder
         over->mValue[RrInterval::RR_MS].f = 800.f;
         RrInterval o(SDK::Sensor::DataView(*over.data(), 1));
-        EXPECT_EQ(cont(o.checkContinuity(5001000ull)),
+        EXPECT_EQ(cont(o.checkContinuity(Us{5001000ull})),
                   cont(RrInterval::Continuity::UNUSABLE)) << "1000 us is not";
     }
 }
@@ -644,7 +663,7 @@ TEST(RrIntervalContinuity, EqualityIsUnusableWhichIsWhyThereIsABudgetAtAll)
     // ...and the check reads it as contiguous regardless.
     const uint64_t prevUs = 10000000ull;
     Beat b(rr, prevUs + rrUs, 0u);
-    EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
               cont(RrInterval::Continuity::CONTIGUOUS));
 }
 
@@ -662,10 +681,10 @@ TEST(RrIntervalContinuity, JitterReadsContiguousAndALostBeatReadsAsAGap)
     const uint64_t jitterUs = msToUs(RrInterval::kDefaultContinuityToleranceMs - 1.f);
     {
         Beat late(rr, prevUs + rrUs + jitterUs, 0u);
-        EXPECT_EQ(cont(late.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(late.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::CONTIGUOUS));
         Beat early(rr, prevUs + rrUs - jitterUs, 0u);
-        EXPECT_EQ(cont(early.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(early.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::CONTIGUOUS));
     }
 
@@ -673,7 +692,7 @@ TEST(RrIntervalContinuity, JitterReadsContiguousAndALostBeatReadsAsAGap)
     // the loss of -- not a beat of the stream above, which is slower.
     {
         Beat lost(rr, prevUs + rrUs + msToUs(RrInterval::kShortestLostBeatMs), 0u);
-        EXPECT_EQ(cont(lost.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(lost.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::GAP));
     }
 }
@@ -694,18 +713,18 @@ TEST(RrIntervalContinuity, TheBudgetIsInclusiveAtBothEdges)
 
     {
         Beat at(rr, prevUs + rrUs + tolUs, 0u);
-        EXPECT_EQ(cont(at.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(at.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::CONTIGUOUS)) << "late by exactly the budget";
         Beat past(rr, prevUs + rrUs + tolUs + 1ull, 0u);
-        EXPECT_EQ(cont(past.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(past.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::GAP)) << "one microsecond past it";
     }
     {
         Beat at(rr, prevUs + rrUs - tolUs, 0u);
-        EXPECT_EQ(cont(at.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(at.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::CONTIGUOUS)) << "early by exactly the budget";
         Beat past(rr, prevUs + rrUs - tolUs - 1ull, 0u);
-        EXPECT_EQ(cont(past.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(past.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::REORDERED)) << "one microsecond past it";
     }
 }
@@ -737,7 +756,7 @@ TEST(RrIntervalContinuity, AChainReadsContiguousWithinAndAcrossANotification)
     uint64_t prevUs = stamps[0] - msToUs(rr[0]); // the beat before this burst
     for (int i = 0; i < 4; ++i) {
         Beat b(rr[i], stamps[i], 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::CONTIGUOUS))
                 << "within-notification pair " << i;
         prevUs = stamps[i];
@@ -750,7 +769,7 @@ TEST(RrIntervalContinuity, AChainReadsContiguousWithinAndAcrossANotification)
         const float    nextRr = 801.f;
         const uint64_t skew   = msToUs(RrInterval::kDefaultContinuityToleranceMs - 1.f);
         Beat           b(nextRr, prevUs + msToUs(nextRr) + skew, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::CONTIGUOUS));
     }
 }
@@ -768,7 +787,7 @@ TEST(RrIntervalContinuity, SeveralLostBeatsStillReadAsOneGap)
         const uint64_t thisUs = prevUs + msToUs(rr) +
                 static_cast<uint64_t>(lost) * msToUs(rr);
         Beat b(rr, thisUs, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::GAP))
                 << lost << " beats lost";
     }
@@ -791,7 +810,7 @@ TEST(RrIntervalContinuity, ALostBeatIsCaughtAtThePolicyRateAndHiddenAboveTheBudg
         const float    rr   = 60000.f / bpm;
         const uint64_t rrUs = static_cast<uint64_t>(rr * 1000.f);
         Beat b(rr, prevUs + rrUs + rrUs, 0u);
-        return cont(b.parser().checkContinuity(prevUs));
+        return cont(b.parser().checkContinuity(Us{prevUs}));
     };
 
     // The undertaking itself, at the rate that names it.
@@ -827,7 +846,7 @@ TEST(RrIntervalContinuity, TheMillisecondFieldWrapReadsAsOneReordering)
 
     {
         Beat b(rr, afterUs, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::REORDERED));
     }
 
@@ -836,7 +855,7 @@ TEST(RrIntervalContinuity, TheMillisecondFieldWrapReadsAsOneReordering)
     {
         const uint64_t nextUs = afterUs + msToUs(rr);
         Beat           b(rr, nextUs, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(afterUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{afterUs})),
                   cont(RrInterval::Continuity::CONTIGUOUS));
     }
 }
@@ -852,7 +871,7 @@ TEST(RrIntervalContinuity, TheFirstFrameOfAStreamAndOfAReconnect)
     // a consumer has before it has seen one. Nothing can be said, so UNUSABLE.
     {
         Beat b(rr, 40000000ull, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(0ull)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{0ull})),
                   cont(RrInterval::Continuity::UNUSABLE));
     }
 
@@ -867,11 +886,11 @@ TEST(RrIntervalContinuity, TheFirstFrameOfAStreamAndOfAReconnect)
     // that one does cost a consumer a window it should have thrown away.
     {
         Beat b(rr, 40000000ull, RrInterval::Flag::DISCONTINUITY);
-        EXPECT_EQ(cont(b.parser().checkContinuity(0ull)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{0ull})),
                   cont(RrInterval::Continuity::GAP));
         // ...and an unstamped frame declaring one is still a declared gap.
         Beat unstamped(rr, 0ull, RrInterval::Flag::DISCONTINUITY);
-        EXPECT_EQ(cont(unstamped.parser().checkContinuity(40000000ull)),
+        EXPECT_EQ(cont(unstamped.parser().checkContinuity(Us{40000000ull})),
                   cont(RrInterval::Continuity::GAP));
     }
 
@@ -883,7 +902,7 @@ TEST(RrIntervalContinuity, TheFirstFrameOfAStreamAndOfAReconnect)
     {
         const uint64_t prevUs = 40000000ull;
         Beat           b(rr, prevUs + msToUs(rr), RrInterval::Flag::DISCONTINUITY);
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::GAP));
     }
 }
@@ -900,8 +919,8 @@ TEST(RrIntervalContinuity, AnUnstampedFrameIsUnusableRatherThanContiguous)
 
     Beat b(rr, 0ull, 0u);
     EXPECT_TRUE(b.parser().isDataValid()); // the interval itself is fine
-    EXPECT_EQ(b.parser().getTimestampUs(), 0ull);
-    EXPECT_EQ(cont(b.parser().checkContinuity(msToUs(rr))),
+    EXPECT_EQ(b.parser().getTimestampUs().us, 0ull);
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{msToUs(rr)})),
               cont(RrInterval::Continuity::UNUSABLE));
 
     // The rule's own path: the surviving frames are stamped normally and the
@@ -910,10 +929,10 @@ TEST(RrIntervalContinuity, AnUnstampedFrameIsUnusableRatherThanContiguous)
     {
         const uint64_t firstUs = msToUs(rr);
         Beat           first(rr, firstUs, RrInterval::Flag::DISCONTINUITY);
-        EXPECT_EQ(cont(first.parser().checkContinuity(msToUs(400.f))),
+        EXPECT_EQ(cont(first.parser().checkContinuity(Us{msToUs(400.f)})),
                   cont(RrInterval::Continuity::GAP));
         Beat second(rr, firstUs + msToUs(rr), 0u);
-        EXPECT_EQ(cont(second.parser().checkContinuity(firstUs)),
+        EXPECT_EQ(cont(second.parser().checkContinuity(Us{firstUs})),
                   cont(RrInterval::Continuity::CONTIGUOUS));
     }
 }
@@ -936,22 +955,22 @@ TEST(RrIntervalContinuity, TheAdvanceRuleAConsumerHasToFollow)
     Beat malformed(std::numeric_limits<float>::quiet_NaN(), b3, 0u);
     Beat next(rr, b4, 0u);
 
-    ASSERT_EQ(cont(good.parser().checkContinuity(b1)),
+    ASSERT_EQ(cont(good.parser().checkContinuity(Us{b1})),
               cont(RrInterval::Continuity::CONTIGUOUS));
-    ASSERT_EQ(cont(malformed.parser().checkContinuity(b2)),
+    ASSERT_EQ(cont(malformed.parser().checkContinuity(Us{b2})),
               cont(RrInterval::Continuity::UNUSABLE));
 
     // Following the rule: the last frame whose isDataValid() held was `good`, at
     // b2. The pair therefore spans two beats and IS a gap — one interval went
     // unreported, and the window it falls in has a hole in it.
-    EXPECT_EQ(cont(next.parser().checkContinuity(b2)),
+    EXPECT_EQ(cont(next.parser().checkContinuity(Us{b2})),
               cont(RrInterval::Continuity::GAP));
 
     // Breaking it the first way — advancing across the invalid frame — carries its
     // zero stamp forward, and the gap becomes UNUSABLE: the one verdict the header
     // defines as needing no window discarded. This is the expensive direction,
     // because a window with a lost beat in it survives into an HRV figure.
-    EXPECT_EQ(malformed.parser().getTimestampUs(), 0ull);
+    EXPECT_EQ(malformed.parser().getTimestampUs().us, 0ull);
     EXPECT_EQ(cont(next.parser().checkContinuity(malformed.parser().getTimestampUs())),
               cont(RrInterval::Continuity::UNUSABLE));
 
@@ -964,13 +983,13 @@ TEST(RrIntervalContinuity, TheAdvanceRuleAConsumerHasToFollow)
         const uint64_t pre   = 0xFFFFFFFFull * 1000ull + 600ull;
         const uint64_t after = 400ull * 1000ull; // wrapped: 400 ms past zero
         Beat wrapped(rr, after, 0u);
-        ASSERT_EQ(cont(wrapped.parser().checkContinuity(pre)),
+        ASSERT_EQ(cont(wrapped.parser().checkContinuity(Us{pre})),
                   cont(RrInterval::Continuity::REORDERED));
 
         Beat following(rr, after + msToUs(rr), 0u);
-        EXPECT_EQ(cont(following.parser().checkContinuity(after)),
+        EXPECT_EQ(cont(following.parser().checkContinuity(Us{after})),
                   cont(RrInterval::Continuity::CONTIGUOUS)) << "advanced per the rule";
-        EXPECT_EQ(cont(following.parser().checkContinuity(pre)),
+        EXPECT_EQ(cont(following.parser().checkContinuity(Us{pre})),
                   cont(RrInterval::Continuity::REORDERED)) << "held at the pre-wrap stamp";
     }
 }
@@ -1002,83 +1021,78 @@ TEST(RrIntervalContinuity, TheBudgetDoesNotKeyOnSource)
             EXPECT_FLOAT_EQ(b.parser().continuityToleranceMs(),
                             RrInterval::kDefaultContinuityToleranceMs)
                     << "source=" << src(s) << " flags=" << flags;
-            EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+            EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                       cont(RrInterval::Continuity::CONTIGUOUS))
                     << "source=" << src(s) << " flags=" << flags;
         }
     }
 }
 
-TEST(RrIntervalContinuity, ANarrowerStampIsDeletedRatherThanWidened)
+TEST(RrIntervalContinuity, OnlyAMicrosecondInstantIsAStamp)
 {
     // The unit confusion this class is otherwise wide open to. getTimestamp() and
-    // getTimestampUs() sit next to each other, differ by a factor of 1000, and
-    // both convert to uint64_t without complaint — so the wrong one yields a
-    // confident GAP on a contiguous pair, silently, in the one operation the
-    // contract tells consumers not to write themselves. A millisecond stamp is
-    // indistinguishable at runtime from a microsecond stamp of a session 1000x
-    // younger.
-    static_assert(AcceptsStamp<uint64_t>::value,
-                  "a microsecond stamp is what this takes");
+    // getTimestampUs() sit next to each other and differ by a factor of 1000, so the
+    // wrong one yields a confident GAP on a contiguous pair, silently, in the one
+    // operation the contract tells consumers not to write themselves. A millisecond
+    // stamp is indistinguishable at runtime from a microsecond stamp of a session
+    // 1000x younger.
+    //
+    // A deleted overload set refused this one TYPE at a time, and a caller could
+    // reach the parameter without naming any of them. The cases below are properties
+    // of the parameter's type instead, so they hold for spellings nobody anticipated.
+    static_assert(AcceptsStamp<RrInterval::Microseconds>::value,
+                  "an instant is what this takes");
+    static_assert(AcceptsStampAndBudget<RrInterval::Microseconds>::value,
+                  "and the two-argument overload takes the same one");
+
+    // A raw count is not an instant, at any width, signedness or spelling.
+    static_assert(!AcceptsStamp<uint64_t>::value,
+                  "a bare microsecond count carries no unit and is not a stamp");
     static_assert(!AcceptsStamp<uint32_t>::value,
                   "getTimestamp() is milliseconds and must not compile here");
-    static_assert(AcceptsStampAndBudget<uint64_t>::value,
-                  "the two-argument overload takes the same stamp");
-    static_assert(!AcceptsStampAndBudget<uint32_t>::value,
-                  "and refuses the same wrong one");
-
-    // A stamp is an integer instant. A float one is refused for the same reason and
-    // by the same route -- nothing distinguishes float ms from float us at runtime --
-    // and on the two-argument form a float first argument is the arguments
-    // transposed.
-    static_assert(!AcceptsStamp<float>::value,
-                  "a float stamp is not a microsecond instant");
-    static_assert(!AcceptsStamp<double>::value,
-                  "a double stamp is not a microsecond instant");
-    static_assert(!AcceptsStampAndBudget<float>::value,
-                  "and a float first argument is the two arguments swapped");
-    static_assert(!AcceptsStampAndBudget<double>::value,
-                  "and a float first argument is the two arguments swapped");
-    // The other categories that converted silently before the whitelist.
-    static_assert(!AcceptsStamp<UnscopedStamp>::value,
-                  "an enumerator is a compile-time constant, not an instant");
-    static_assert(!AcceptsStamp<int64_t>::value,
-                  "a signed millisecond count is not a stamp either");
-    static_assert(!AcceptsStamp<long long>::value,
-                  "nor a signed one that happens to be wide enough");
-    static_assert(!AcceptsStampAndBudget<UnscopedStamp>::value, "same on both overloads");
-    static_assert(!AcceptsStampAndBudget<int64_t>::value, "same on both overloads");
-    // A user-defined conversion reaches prevUs as silently as a built-in one.
+    static_assert(!AcceptsStamp<float>::value,  "nor a float one");
+    static_assert(!AcceptsStamp<double>::value, "nor a double one");
+    static_assert(!AcceptsStamp<int64_t>::value, "nor a signed count");
+    static_assert(!AcceptsStamp<UnscopedStamp>::value, "nor an enumerator");
     static_assert(!AcceptsStamp<ConvertsToStamp>::value,
-                  "a class with operator uint64_t() is not a stamp either");
-    static_assert(!AcceptsStampAndBudget<ConvertsToStamp>::value, "same on both overloads");
+                  "nor a class with operator uint64_t()");
+    static_assert(!AcceptsStampAndBudget<uint32_t>::value, "same on both overloads");
+    static_assert(!AcceptsStampAndBudget<uint64_t>::value, "same on both overloads");
 
-    // The transposition refused from the budget's side -- NOT every spelling of it:
-    // the predicates are duals, so a type refused as a stamp is accepted as a budget
-    // and the transposition survives there. See the overload's note. Pinned with the
-    // legal budget spellings, since the argument for closing the closable part is
-    // that it costs none of them.
+    // BRACES. A braced-init-list is a non-deduced context, so it took every deleted
+    // overload out of the candidate set at once and landed on whatever non-template
+    // remained. Copy-list-initialization cannot select an explicit constructor, so it
+    // reaches nothing now.
+    static_assert(!AcceptsBracedStamp<uint32_t>::value, "a braced millisecond stamp");
+    static_assert(!AcceptsBracedStamp<uint64_t>::value, "a braced raw count");
+    static_assert(!AcceptsBracedStamp<ConvertsToStamp>::value, "a braced conversion");
+    static_assert(AcceptsBracedStamp<RrInterval::Microseconds>::value,
+                  "an instant in braces is still an instant");
+
+    // A POINTER-TO-MEMBER names an overload directly, so it was invisible to every
+    // predicate the old set could express. The signature it needed no longer exists.
+    static_assert(!AddressableAs<RrInterval::Continuity (RrInterval::*)(uint64_t) const>::value,
+                  "there is no raw-count overload left to name");
+    static_assert(AddressableAs<RrInterval::Continuity (RrInterval::*)(RrInterval::Microseconds) const>::value,
+                  "and the instant one is nameable, so the line above means something");
+
+    // The transposition from the budget's side, which the instant does not reach.
     static_assert(!AcceptsBudget<uint64_t>::value,
-                  "an unsigned 64-bit budget is the transposition");
-    // Spelled as the width the predicate keys on, so it holds on a 32-bit target too
-    // (!AcceptsBudget<size_t> would not: size_t is four bytes there).
-    static_assert(!AcceptsBudget<unsigned long long>::value,
-                  "however it is spelled -- and this is the spelling that pins the "
-                  "width form rather than is_same<B, uint64_t>");
+                  "an unsigned 64-bit budget is a stamp in the budget's place");
+    static_assert(!AcceptsBudget<unsigned long long>::value, "however it is spelled");
     static_assert(AcceptsBudget<float>::value,   "a budget is float milliseconds");
     static_assert(AcceptsBudget<double>::value,  "and a double literal still converts");
-    static_assert(AcceptsBudget<int>::value,     "and an int literal: checkContinuity(x, 270)");
+    static_assert(AcceptsBudget<int>::value,     "and an int literal");
     static_assert(AcceptsBudget<unsigned>::value, "and 270u");
-    static_assert(AcceptsBudget<long>::value,    "and a signed long, which cannot be a stamp");
+    static_assert(AcceptsBudget<long>::value,    "and a signed long");
 
-    // The verdict the deleted overload would have returned, had it existed: the
-    // pair below is contiguous, and a millisecond stamp reads it as a gap.
+    // The verdict a millisecond stamp would have returned, had one been spellable.
     const float    rr     = 800.f;
     const uint64_t prevUs = 5000000ull;
     Beat           b(rr, prevUs + 800000ull, 0u);
-    EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
               cont(RrInterval::Continuity::CONTIGUOUS));
-    EXPECT_EQ(cont(b.parser().checkContinuity(static_cast<uint64_t>(prevUs / 1000ull))),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs / 1000ull})),
               cont(RrInterval::Continuity::GAP));
 }
 
@@ -1100,7 +1114,7 @@ TEST(RrIntervalContinuity, TheSubtractionAConsumerWouldWriteGetsReorderingWrong)
     EXPECT_GT(naiveDeltaMs, 1e12f); // ~1.8e16 ms, where the truth is -400 ms
 
     Beat b(rr, thisUs, 0u);
-    EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
               cont(RrInterval::Continuity::REORDERED));
 }
 
@@ -1117,7 +1131,7 @@ TEST(RrIntervalContinuity, AReorderedPairReadsReorderedNotAGiantGap)
     // Well past the budget backwards.
     {
         Beat b(rr, thisUs, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(thisUs + 400000ull)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{thisUs + 400000ull})),
                   cont(RrInterval::Continuity::REORDERED));
     }
 
@@ -1127,7 +1141,7 @@ TEST(RrIntervalContinuity, AReorderedPairReadsReorderedNotAGiantGap)
         Beat b(rr, thisUs, 0u);
         const uint64_t prevUs = thisUs + 800000ull +
                 msToUs(RrInterval::kDefaultContinuityToleranceMs + 1.f);
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::REORDERED));
     }
 }
@@ -1142,7 +1156,7 @@ TEST(RrIntervalContinuity, ADeclaredDiscontinuityOutranksTheStamps)
     const uint64_t prevUs = 5000000ull;
 
     Beat b(rr, prevUs + 800000ull, RrInterval::Flag::DISCONTINUITY);
-    EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
               cont(RrInterval::Continuity::GAP));
     // Still distinguishable from a detected gap.
     EXPECT_TRUE(b.parser().hasDiscontinuity());
@@ -1160,7 +1174,7 @@ TEST(RrIntervalContinuity, UnusableRatherThanAFalseVerdict)
     {
         Beat b(0.f, thisUs, 0u);
         EXPECT_FALSE(b.parser().isDataValid());
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::UNUSABLE));
     }
 
@@ -1169,12 +1183,12 @@ TEST(RrIntervalContinuity, UnusableRatherThanAFalseVerdict)
     // to stamp. Neither end is an instant to measure from.
     {
         Beat b(rr, 0ull, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::UNUSABLE));
     }
     {
         Beat b(rr, thisUs, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(0ull)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{0ull})),
                   cont(RrInterval::Continuity::UNUSABLE));
     }
 
@@ -1184,7 +1198,7 @@ TEST(RrIntervalContinuity, UnusableRatherThanAFalseVerdict)
     // the signed conversion out of range.
     {
         Beat b(rr, thisUs, 0u);
-        EXPECT_EQ(cont(b.parser().checkContinuity(RrInterval::kMaxTimestampUs + 1ull)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{RrInterval::kMaxTimestampUs + 1ull})),
                   cont(RrInterval::Continuity::UNUSABLE));
     }
 
@@ -1203,9 +1217,9 @@ TEST(RrIntervalContinuity, UnusableRatherThanAFalseVerdict)
                               std::numeric_limits<float>::infinity(),
                               -1.f };
         for (float t : bad) {
-            EXPECT_EQ(cont(b.parser().checkContinuity(prevUs, t)),
+            EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs}, t)),
                       cont(RrInterval::Continuity::UNUSABLE)) << t;
-            EXPECT_EQ(cont(declared.parser().checkContinuity(prevUs, t)),
+            EXPECT_EQ(cont(declared.parser().checkContinuity(Us{prevUs}, t)),
                       cont(RrInterval::Continuity::GAP)) << t;
         }
     }
@@ -1236,7 +1250,7 @@ TEST(RrIntervalContinuity, AnIntervalTooLargeToCompareIsUnusableNotUndefined)
         Beat b(v, 40000000ull, 0u);
         EXPECT_TRUE(b.parser().isDataValid()) << v;      // a valid frame...
         EXPECT_FLOAT_EQ(b.parser().getRrMs(), v);        // ...reported as given...
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::UNUSABLE)) << v;
     }
 
@@ -1244,7 +1258,7 @@ TEST(RrIntervalContinuity, AnIntervalTooLargeToCompareIsUnusableNotUndefined)
     // still gets a real verdict, so the guard cuts where it says it does.
     {
         Beat b(std::nextafter(RrInterval::kMaxComparableRrMs, 0.f), 40000000ull, 0u);
-        EXPECT_NE(cont(b.parser().checkContinuity(prevUs)),
+        EXPECT_NE(cont(b.parser().checkContinuity(Us{prevUs})),
                   cont(RrInterval::Continuity::UNUSABLE));
     }
 }
@@ -1263,19 +1277,19 @@ TEST(RrIntervalContinuity, ACallerCanSupplyItsOwnBudget)
     Beat b(rr, thisUs, 0u);
 
     // The default budget absorbs 100 ms...
-    EXPECT_EQ(cont(b.parser().checkContinuity(prevUs)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs})),
               cont(RrInterval::Continuity::CONTIGUOUS));
     // ...a consumer on a link it knows to be tighter than that does not have to.
-    EXPECT_EQ(cont(b.parser().checkContinuity(prevUs, 50.f)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs}, 50.f)),
               cont(RrInterval::Continuity::GAP));
     // A zero budget is legal and means "exact or nothing" — both halves, since a
     // boundary that excluded its own edge would make "exact" unreachable and turn
     // a zero budget into "always GAP".
-    EXPECT_EQ(cont(b.parser().checkContinuity(prevUs, 0.f)),
+    EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs}, 0.f)),
               cont(RrInterval::Continuity::GAP));
     {
         Beat exact(rr, prevUs + 800000ull, 0u);
-        EXPECT_EQ(cont(exact.parser().checkContinuity(prevUs, 0.f)),
+        EXPECT_EQ(cont(exact.parser().checkContinuity(Us{prevUs}, 0.f)),
                   cont(RrInterval::Continuity::CONTIGUOUS));
     }
     // ...and "exact" means exact in MICROSECONDS. The 800 ms above cannot show that:
@@ -1287,10 +1301,10 @@ TEST(RrIntervalContinuity, ACallerCanSupplyItsOwnBudget)
         ASSERT_NE(tickRrUs, static_cast<uint64_t>(tickRr) * 1000ull)
                 << "the fixture must be fractional in milliseconds or it pins nothing";
         Beat exactUs(tickRr, prevUs + tickRrUs, 0u);
-        EXPECT_EQ(cont(exactUs.parser().checkContinuity(prevUs, 0.f)),
+        EXPECT_EQ(cont(exactUs.parser().checkContinuity(Us{prevUs}, 0.f)),
                   cont(RrInterval::Continuity::CONTIGUOUS));
         Beat exactMsOnly(tickRr, prevUs + static_cast<uint64_t>(tickRr) * 1000ull, 0u);
-        EXPECT_EQ(cont(exactMsOnly.parser().checkContinuity(prevUs, 0.f)),
+        EXPECT_EQ(cont(exactMsOnly.parser().checkContinuity(Us{prevUs}, 0.f)),
                   cont(RrInterval::Continuity::REORDERED))
                 << "a whole-millisecond interval is not this interval";
     }
@@ -1300,13 +1314,12 @@ TEST(RrIntervalContinuity, ACallerCanSupplyItsOwnBudget)
     // finite, non-negative and pass every other test a budget faces.
     for (float t : { 1e10f, 1e30f, std::numeric_limits<float>::max(),
                      RrInterval::kMaxComparableRrMs }) {
-        EXPECT_EQ(cont(b.parser().checkContinuity(prevUs, t)),
+        EXPECT_EQ(cont(b.parser().checkContinuity(Us{prevUs}, t)),
                   cont(RrInterval::Continuity::UNUSABLE)) << t;
     }
     // And the bound cuts where it says: the largest budget still comparable gets a
     // real verdict rather than falling into the same refusal.
-    EXPECT_NE(cont(b.parser().checkContinuity(
-                      prevUs, std::nextafter(RrInterval::kMaxComparableRrMs, 0.f))),
+    EXPECT_NE(cont(b.parser().checkContinuity(Us{prevUs}, std::nextafter(RrInterval::kMaxComparableRrMs, 0.f))),
               cont(RrInterval::Continuity::UNUSABLE));
 }
 

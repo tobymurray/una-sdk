@@ -151,6 +151,21 @@ namespace SDK
             };
 
             /**
+             * @brief A microsecond instant, as getTimestampUs() reports one.
+             * @note  A type rather than a uint64_t because the unit is the mistake
+             *        this contract exists to stop: getTimestamp() is milliseconds,
+             *        sits beside getTimestampUs(), and differs by a factor of 1000,
+             *        so the wrong one reads a confident GAP on a contiguous pair
+             *        and a millisecond stamp is indistinguishable at runtime from a
+             *        microsecond stamp of a session 1000x younger. Constructing one
+             *        is explicit, so a consumer that means it still can.
+             */
+            struct Microseconds {
+                uint64_t us;
+                explicit constexpr Microseconds(uint64_t value) : us(value) {}
+            };
+
+            /**
              * @brief Result of checkContinuity().
              * @note  Frozen values; a consumer may log or persist them.
              * @note  Four outcomes rather than a bool because they want different
@@ -366,69 +381,23 @@ namespace SDK
              *        hasDiscontinuity() still distinguishes a declared gap from a
              *        detected one.
              */
-            Continuity checkContinuity(uint64_t prevUs) const
+            Continuity checkContinuity(Microseconds prevUs) const
             {
                 return checkContinuity(prevUs, continuityToleranceMs());
             }
 
             /**
-             * @name A narrower stamp is refused rather than widened
-             * @brief getTimestamp() and getTimestampUs() sit next to each other,
-             *        differ by a factor of 1000, and both reach uint64_t without a
-             *        diagnostic — so passing the millisecond one returns a
-             *        confident GAP on a contiguous pair, in the single operation
-             *        this contract exists to stop consumers writing themselves. A
-             *        millisecond stamp is indistinguishable at runtime from a
-             *        microsecond stamp of a session 1000x younger.
-             *
-             *        Deleted on WIDTH rather than on uint32_t: a stamp is always
-             *        uint64_t here, and matching that one type would leave
-             *        checkContinuity(0ull) ambiguous wherever uint64_t is not
-             *        unsigned long long. The predicate is a whitelist — an unsigned
-             *        integral at least as wide as uint64_t — because a blacklist
-             *        admits the next category by omission. No type predicate reaches
-             *        the unit mistake itself: checkContinuity(5000ull) still reads a
-             *        confident GAP. Cost: the stamp needs an unsigned 64-bit spelling,
-             *        so the zero a consumer starts from is checkContinuity(0ull), and
-             *        a µs count from <chrono> needs one cast.
-             * @{
-             */
-            template <typename T, typename = typename std::enable_if<
-                                          !(std::is_integral<T>::value &&
-                                            !std::is_signed<T>::value &&
-                                            (sizeof(T) >= sizeof(uint64_t)))>::type>
-            Continuity checkContinuity(T prevNotMicroseconds) const = delete;
-
-            template <typename T, typename = typename std::enable_if<
-                                          !(std::is_integral<T>::value &&
-                                            !std::is_signed<T>::value &&
-                                            (sizeof(T) >= sizeof(uint64_t)))>::type>
-            Continuity checkContinuity(T prevNotMicroseconds, float toleranceMs) const = delete;
-
-            /**
              * @brief The transposition, refused from the budget's side.
-             * @note  A budget is float milliseconds. checkContinuity(budgetMs, prevUs)
-             *        otherwise puts the stamp in the budget and the budget in the
-             *        stamp.
-             *
-             *        PARTIAL, and the limit bounds what any overload set can do here:
-             *        the two predicates are duals, so a type refused as a STAMP is
-             *        accepted as a BUDGET and the transposition survives there — an
-             *        int64_t or <chrono> stamp, a double, a conversion operator, an
-             *        enum. A budget in the wrong UNIT is unreachable by any signature.
-             *        Closing the class wants a tagged budget type, which changes every
-             *        call site.
-             *
-             *        Cost: a budget spelled as an unsigned 64-bit type no longer
-             *        compiles. (x, 270), (x, 270.0f), (x, 270u) and (x, someSignedLong)
-             *        are unaffected.
+             * @note  A budget is float milliseconds. An unsigned 64-bit one is a
+             *        stamp in the budget's place; the instant's own type refuses the
+             *        other direction. A budget in the wrong UNIT is unreachable by
+             *        any signature.
              */
             template <typename B, typename = typename std::enable_if<
                                           std::is_integral<B>::value &&
                                           !std::is_signed<B>::value &&
                                           (sizeof(B) >= sizeof(uint64_t))>::type>
-            Continuity checkContinuity(uint64_t prevUs, B budgetNotAStamp) const = delete;
-            /** @} */
+            Continuity checkContinuity(Microseconds prevUs, B budgetNotAStamp) const = delete;
 
             /**
              * @brief As above, against a caller-supplied budget.
@@ -444,7 +413,7 @@ namespace SDK
              *        unsigned stamps directly makes a reordered pair wrap to an
              *        enormous forward gap.
              */
-            Continuity checkContinuity(uint64_t prevUs, float toleranceMs) const
+            Continuity checkContinuity(Microseconds prevUs, float toleranceMs) const
             {
                 if (!isDataValid()) {
                     return Continuity::UNUSABLE;
@@ -455,7 +424,7 @@ namespace SDK
                     return Continuity::GAP;
                 }
 
-                const uint64_t thisUs = getTimestampUs();
+                const uint64_t thisUs = getTimestampUs().us;
                 // The microsecond field is a remainder, not a counter (see
                 // TIMESTAMP); as a counter, no comparison it enters means anything.
                 if ((thisUs - (static_cast<uint64_t>(getTimestamp()) * 1000ull)) >= 1000ull) {
@@ -464,7 +433,7 @@ namespace SDK
                 // Zero is "no stamp" throughout this class. Values above
                 // kMaxTimestampUs did not come from getTimestampUs(), and admitting
                 // them would put the signed conversion below out of range.
-                if ((thisUs == 0ull) || (prevUs == 0ull) || (prevUs > kMaxTimestampUs)) {
+                if ((thisUs == 0ull) || (prevUs.us == 0ull) || (prevUs.us > kMaxTimestampUs)) {
                     return Continuity::UNUSABLE;
                 }
 
@@ -481,9 +450,9 @@ namespace SDK
                     return Continuity::UNUSABLE;
                 }
 
-                const int64_t deltaUs = (thisUs >= prevUs)
-                        ? static_cast<int64_t>(thisUs - prevUs)
-                        : -static_cast<int64_t>(prevUs - thisUs);
+                const int64_t deltaUs = (thisUs >= prevUs.us)
+                        ? static_cast<int64_t>(thisUs - prevUs.us)
+                        : -static_cast<int64_t>(prevUs.us - thisUs);
                 const int64_t rrUs  = static_cast<int64_t>(rrMs * 1000.0f);
                 const int64_t tolUs = static_cast<int64_t>(toleranceMs * 1000.0f);
                 const int64_t errUs = deltaUs - rrUs;
@@ -502,9 +471,9 @@ namespace SDK
                 return isDataValid() ? mData.getTimestamp() : 0;
             }
 
-            uint64_t getTimestampUs() const
+            Microseconds getTimestampUs() const
             {
-                return isDataValid() ? mData.getTimestampUs() : 0;
+                return Microseconds(isDataValid() ? mData.getTimestampUs() : 0);
             }
 
             /**
