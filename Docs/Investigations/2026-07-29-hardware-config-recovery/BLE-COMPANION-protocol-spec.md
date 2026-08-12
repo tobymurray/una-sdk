@@ -27,6 +27,71 @@ lead) or UNVERIFIED.
 
 ---
 
+## 0. UNA has since published an official BLE specification — read that first
+
+On 2026-08-08 UNA published `Docs/BLE-File-Transfer-Service.md` and
+`Docs/BLE-Services-Overview.md` on `main`, described as "first public documentation of the watch's
+BLE interface, for companion-app and third-party integrators". **Those documents are now the
+authority for everything they cover, and this investigation is reduced to a corroborating record
+plus the parts they do not cover.**
+
+What they cover: FTS (the full command set and wire layouts), DIS, CTS, Battery, and Nordic UART.
+
+What they do **not** cover, and which therefore remains only documented here: the **CCS** custom
+command service (`554E4100-A2CF-4DF8-…`, including the `0x10` daily-health and `0x14` hourly-HR
+commands, §3/§3.1), the **CANS** notification service (`554E4100-28E7-4811-…`), and the on-watch
+`/DailyHealth/` and activity-archive **file layout** (§2.2.2, §2.2.3).
+
+### 0.1 Where the published spec confirms this investigation
+
+Independently derived here, and matching the official document exactly:
+
+| Finding | Where derived | Official |
+|---|---|---|
+| `READ`/`READ_DATA` fields are `uint32`, not `uint16`+padding | §2.2 | confirmed — `chunkOffset`, `totalLength`, `chunkLength` all `uint32` |
+| No 64 KiB size ceiling | §2.2 | confirmed by the field widths |
+| `0x51` trailing bytes are a timestamp then a `uint32` size | §2.2.1 | confirmed — `modificationTime` at 16, `fileSize` at 24 |
+| `flags` bit 0 = directory | §2.2.1 | confirmed |
+| Chunk size is bounded by `MTU − 3 − 16` | §2.2 | confirmed — the spec states `≤ 201` at MTU 220 |
+| Bonded, encrypted link is the whole gate | §4 | confirmed |
+
+### 0.2 Where it corrects or extends this investigation
+
+- **`0x30` is `DELETE`.** This document long carried it as "a secondary, still-unexplained command"
+  and speculated it was a metadata-existence check. It is a delete, with `0x31` as its status
+  reply. **The instinct never to fire it speculatively was right**; doing so would have destroyed
+  data on the watch.
+- **The classic read flow uses `READ_PACING` (`0x12`)**, not a repeated `0x10`. Send `READ` once,
+  then `0x12` carrying the next offset for each subsequent chunk. Repeating `0x10` with the full
+  path works — everything here was collected that way — but `0x12` is the documented flow and
+  avoids re-sending the path on every chunk. This also finally explains the §6 open item about
+  "one request per file" versus "one per chunk": the second request is a *different opcode*.
+- **Status codes are enumerated**: `0x01` OK, `0x02` ERROR, `0x03` ERROR_NO_FILE, `0x04`
+  ERROR_PROTOCOL, `0x05` ERROR_READ_ONLY. The `50 03` and `10 03` replies seen throughout are
+  ERROR_NO_FILE, exactly as guessed.
+- **The `adaf0001` Version characteristic has meaning**: `4` = classic protocol only, `≥ 5` = UNA's
+  fast-transfer extensions. The `04 00 00 00` read here (§1.2) therefore says this watch, on
+  firmware 1.3.0, is **classic-only** — the windowed reads/writes, `DIGEST` and resume described
+  in the official document are not available on it.
+- **Further commands exist** that were never exercised here: `MKDIR 0x40`, `MOVE 0x60`, and the
+  version-5 extension `DIGEST 0x70`.
+
+### 0.3 Two discrepancies between the published spec and this device
+
+Both observed on firmware 1.3.0, both worth reporting upstream:
+
+1. **`modificationTime` appears to be microseconds, not nanoseconds.** The spec states "ns since
+   epoch". Every entry read here decodes sensibly as microseconds and absurdly as nanoseconds —
+   `dh_20260728.json` carries `1785326400000000`, which is 2026-07-29 12:00:00 UTC as µs and 1970
+   as ns. Consistent across every file and directory observed.
+2. **Nordic UART is documented but absent.** `BLE-Services-Overview.md` lists NUS as a service the
+   watch exposes, and describes its two data characteristics as swapped relative to Nordic's usual
+   convention. A full GATT enumeration on this watch (§1.2) returns 8 services with no
+   `6E400001-…` anywhere. See §1.2 — this also independently killed a standing hypothesis here
+   that FTS rode an NUS byte pipe.
+
+---
+
 ## 1. GATT table — services and UUIDs recovered so far
 
 All 18 UUID-shaped strings in `flash_strings.txt` were extracted with one pass
@@ -496,7 +561,7 @@ is the only hint of any conditional logic in this group, and its meaning is unco
 
 **Both daily-health commands are now fully recovered and validated against a real watch**
 (UNA Watch 403795, firmware 1.3.0 / hardware 3.1), by writing requests directly over BlueZ and
-recording the replies — no phone and no vendor app involved. Probe script:
+recording the replies — no phone involved. Probe script:
 `prototype/una_hr_probe.py`. Twenty requests, all answered. Every command below is a read;
 nothing is written to the watch.
 
@@ -555,7 +620,7 @@ hours:
 
 So "no data" and "invalid request" are indistinguishable, the firmware does no input validation
 on *either* command, and **nothing ever goes silent** — a client walking many hours or days does
-not strictly need a per-request timeout (the vendor app uses a 5 s one regardless). The real "no
+not strictly need a per-request timeout, though one is cheap insurance. The real "no
 data" signal is an all-zero payload, so a client must filter zeros rather than read a status code.
 
 Two further practical notes for anyone consuming this:
@@ -568,8 +633,80 @@ Two further practical notes for anyone consuming this:
 
 **Retention is at least 3 days**, well beyond the 12 hours a companion might assume: `-1d`
 returned 59/60 real readings and `-3d` returned 60/60 — though that `-3d` hour was a *flat
-constant 63 bpm for all 60 minutes*, which looks more like a stored default or decayed record
-than a real measurement. Treat old hours with more suspicion than recent ones.
+constant 63 bpm for all 60 minutes*. That flat hour is not a curiosity; it is the artifact
+described in §3.2, and it turned out to be the single most consequential finding for anyone
+consuming this data.
+
+### 3.2 The watch reports a fabricated heart rate while off-wrist — CONFIRMED
+
+**This is the one thing to know before using per-minute HR from this device for anything.**
+
+While the watch is off the wrist it does not report no-data. It keeps emitting a plausible-looking
+heart rate, held at one identical integer, for as long as **eleven hours**. Across 14 consecutive
+days from one watch, runs of ≥45 minutes accounted for **2628 of 6700 populated minutes (39%)**.
+
+| Run value | Length (min) | Starts | Reading before | Reading after |
+|---|---|---|---|---|
+| 78 | 458 | 2026-07-30 01:07 | 73 | 74 |
+| 82 | 321 | 2026-08-01 15:35 | 102 | 76 |
+| 91 | 64 | 2026-08-02 13:14 | 92 | 110 |
+| 61 | 54 | 2026-08-02 23:06 | 62 | 0 |
+| 78 | 265 | 2026-08-05 17:29 | 80 | 143 |
+| 110 | 59 | 2026-08-06 21:45 | 117 | 103 |
+| 67 | 185 | 2026-08-07 16:30 | 68 | 77 |
+| 63 | 679 | 2026-08-08 10:40 | 65 | 0 |
+| 95 | 543 | 2026-08-12 00:03 | 96 | 56 |
+
+**It cannot be recognised by value.** The held value differs every occurrence, and in 6 of the 9
+runs sits within 2 bpm *below* the last real reading (`92→91`, `62→61`, `68→67`, `65→63`,
+`96→95`, `80→78`) — settle slightly, then freeze. A fixed sentinel would be trivial to filter;
+this is not one. In particular the `0x5f`/95 seen in `dh.tmp` (§2.2.3) is **coincidence**: that
+day's last real reading happened to be 96.
+
+**The same physical condition is encoded two different ways.** On days the watch was not worn at
+all (2026-08-03, 2026-08-09), `hrPerMinute` is all zeros for the full 1440 minutes, and `0` also
+appears for isolated minutes mid-hour during ordinary wear. But when the watch comes *off* partway
+through a day, that same off-wrist state produces a plausible heart rate instead.
+
+**It is not a BLE or daily-health artifact.** A FIT activity file recorded off-wrist — written by
+the watch to its own flash, no BLE involved — also contains heart rate that cannot be real, though
+it *fluctuates* rather than holding constant. Whatever produces this sits below every reporting
+path, so no companion can fix it; the transports are faithfully passing on what they are given.
+
+That difference (constant in `hrPerMinute`, fluctuating in FIT) is unexplained. It may be one
+issue seen through two paths, two related issues with a common root, or two unrelated ones.
+
+**Reported upstream:** https://github.com/UNAWatch/una-sdk/issues/282.
+
+#### What a consumer can actually do
+
+Only duration separates artifact from measurement, and even that is imperfect. An earlier attempt
+here used a 45-minute threshold, on the reasoning that 40–50 selected exactly the nine runs above
+and the longest apparently legitimate run was 39 minutes — an apparently clean gap.
+
+**That gap was an accident of the sample.** A surviving 26-minute run at a constant 187 bpm was
+confirmed by the device's owner as not a real reading. The artifact reaches well down into the
+range where ordinary runs live, and no secondary signal reliably separates them.
+
+| threshold | minutes dropped of 6700 | runs at least this long |
+|---|---|---|
+| 5 min | 3295 (49%) | 100 |
+| 8 min | 2903 (43%) | 28 |
+| 10 min | 2844 (42%) | 21 |
+| 30 min | 2697 (40%) | 11 |
+| 40–50 min | 2628 (39%) | 9 |
+
+Runs of 1–5 minutes are ordinary — the watch's output already repeats in adjacent pairs, so its
+effective resolution is ~2 minutes and a 5-minute run is only two or three independent samples
+(the same sample held 890 runs of length two). Below about 8 minutes the cost climbs steeply for
+no gain against the artifact.
+
+Whatever threshold is chosen, choose it on the **cost of being wrong**, not on a boundary in the
+data: keeping a fabricated value is worse than dropping a real one, because a gap is visibly
+missing data whereas a stuck value is silently false and drags the daily minimum, maximum and
+average with it. A consumer applying an 8-minute rule to this sample keeps 3866 of 6700 minutes,
+leaves no run longer than 7 minutes, and retains the genuine 186 bpm peak immediately preceding
+the fabricated 187 stretch.
 
 ---
 
@@ -671,6 +808,23 @@ standard specs closely enough to be practically actionable for a companion regar
 
 ---
 
+## 5a. Verified through an independent Android client
+
+Everything above was additionally exercised end-to-end from an Android phone (Pixel 9a, Android
+17) rather than only from Linux/BlueZ, which is worth recording because two things could only be
+confirmed against a real mobile stack:
+
+- **MTU.** Requesting 247 during connection setup, Android granted **220** — the same value BlueZ
+  negotiated. With the `MTU − 3 − 16` rule that yields 201, and 200-byte chunks were used
+  throughout with no truncation. On the 23-byte default the same formula gives 4 bytes per chunk,
+  so requesting an MTU is not optional for usable throughput.
+- **Sustained transfer.** A first sync pulling 4 activity files plus 14 daily health records took
+  about 5 minutes; a second sync with those days already cached took **6 seconds**, confirming the
+  per-day records are stable once written and safe to cache by date.
+
+Per-day HR counts from that client also match the `hrPerMinute` arrays exactly once the §3.2
+artifact is excluded, which is a third independent corroboration of §2.2.3.
+
 ## 6a. Standalone prototype — built and validated against the real watch, phone-free
 
 A Linux desktop prototype (Python + BlueZ D-Bus: `bleak` for discovery/pairing groundwork, raw
@@ -755,13 +909,21 @@ Remaining work, roughly in priority order:
    full 1440-entry per-minute HR array plus the daily aggregate, matches CCS `0x14` exactly, and
    14 days are on disk. Rollover is now confirmed too, and `dh.tmp` turned out to be a binary
    record rather than the in-progress JSON (§2.2.3).
-5. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing. `0x30` is now
-   known to be probed against a `.json` sidecar that really exists (§2.2.2), so the "does
-   companion metadata exist" reading is more likely — but still unproven and unsafe to fire blind.
-6. Understand why the phone capture appeared to need only one `0x10` request per file while the
-   standalone prototype needed one per chunk (§6a) — a real discrepancy, not yet explained.
-7. Explain the flat-constant-63-bpm hour seen 3 days back (§3.1) — real resting record, or a
-   stored default the firmware emits for decayed history?
+5. ~~Decode the `0x30` secondary command~~ **DONE — it is `DELETE` (§0.2).** The `0x20/0x21/0x22`
+   upload framing is likewise now published as `WRITE`/`WRITE_PACING`/`WRITE_DATA`. Neither needs
+   further reverse engineering; both are destructive and should be exercised deliberately or not
+   at all.
+6. ~~Why did the phone capture appear to need one `0x10` per file where the prototype needed one
+   per chunk?~~ **DONE (§0.2).** The subsequent requests are a different opcode, `READ_PACING`
+   `0x12`. Worth adopting: it avoids re-sending the path on every chunk.
+7. ~~Explain the flat-constant-63-bpm hour.~~ **DONE — see §3.2.** It is neither a real reading
+   nor a stored default: the watch reports a fabricated held heart rate whenever it is off-wrist.
+   Reported upstream as issue #282.
+7a. **Report the two spec discrepancies (§0.3):** `modificationTime` decoding as microseconds
+   where the published spec says nanoseconds, and Nordic UART being documented but absent from
+   this firmware's GATT table.
+7b. **Follow up on issue #282:** whether the `0x5f` fill in `dh.tmp` becomes `0` once that day
+   closes, and quantify the fluctuating FIT case against `hrPerMinute` over the same minutes.
 8. Decode `/DailyHealth/dh.tmp`'s binary layout (§2.2.3), if the current day is ever wanted
    without CCS. Header is `<year:u16LE> <month:u8> <day:u8>`; the rest looks like a 1440-byte
    per-minute array with `0x5f` for no-reading and `0x00` for not-yet-reached. Unverified.

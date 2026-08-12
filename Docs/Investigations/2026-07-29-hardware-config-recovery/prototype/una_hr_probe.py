@@ -258,12 +258,13 @@ async def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("address", help="watch BD address, e.g. E8:DF:D5:49:4C:40")
     parser.add_argument("--hours", type=int, default=14,
-                        help="how many recent hours to sweep (default 14 -- deliberately past "
-                             "the vendor app's 12, to see whether the 13th differs)")
+                        help="how many recent hours to sweep (default 14, comfortably more than "
+                             "a day's worth of recent hours a companion would want)")
     parser.add_argument("--retention-days", type=int, default=3,
                         help="also probe this many days back, to test retention (default 3)")
     parser.add_argument("--timeout", type=float, default=5.0,
-                        help="per-request timeout in seconds (default 5.0, matching the vendor app)")
+                        help="per-request timeout in seconds (default 5.0; observed replies "
+                             "arrive in ~90 ms, so this is generous)")
     parser.add_argument("--connect-retries", type=int, default=6)
     args = parser.parse_args()
 
