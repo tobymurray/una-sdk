@@ -1,6 +1,6 @@
 # Standalone phone-free prototypes
 
-Four scripts, all validated end-to-end against a real watch with no phone involved. Every one of
+Five scripts, all validated end-to-end against a real watch with no phone involved. Every one of
 them is **read-only**: none sends the FTS write/delete/move/mkdir opcodes, the unexplained `0x30`,
 or any CCS opcode other than the two daily-health reads.
 
@@ -54,6 +54,7 @@ python3 -u una_hr_probe.py <device-address> --hours 18 --retention-days 3
 
 python3 una_gatt_dump.py <device-address>
 python3 -u una_fts_walk.py <device-address> --root /Apps/ --depth 2
+python3 -u una_read_probe.py <device-address> /DailyHealth/dh.tmp 200 dh_tmp.bin
 ```
 
 Use `python3 -u` for anything long-running: it prints progress as it goes, and buffering hides
@@ -62,6 +63,8 @@ that — a run that looks hung is often just buffered.
 `una_gatt_dump.py` dumps every service, characteristic and property flag from BlueZ's resolved
 cache. `una_fts_walk.py` walks the filesystem read-only and runs two experiments: correlating a
 directory entry's trailing bytes against real file sizes, and reading `adaf0001`.
+`una_read_probe.py` reads a single file at a chosen chunk size and dumps the raw `0x11` header --
+use it to check throughput or to re-derive the header layout.
 
 ## Known caveats
 

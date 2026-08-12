@@ -270,8 +270,16 @@ Response (Notification, repeated until offset+chunklen == total, no per-chunk ac
    was wrong -- see the resolved note below. Every file observed at the time was under 64 KiB,
    so the high halves were always zero and both readings fit the data.)
 ```
-Confirmed concretely: request chunk length was `128` in every observed transfer; the server
-honored it exactly (every chunk except the final remainder was 128 bytes); **the client issues
+**`128` is not a protocol limit; the MTU is what actually bounds it.** The original capture
+requested `128` every time and the server honored it exactly, which made 128 look definitive. A
+later session requested `200` and got exactly 200-byte chunks in 216-byte notifications against a
+negotiated MTU of 220 — cutting a 3998-byte file from 32 round trips to 20. The frame is
+`16 + chunk` with ATT's 3 bytes on top, so the largest safe request is `mtu - 19`. Derive it per
+connection rather than hardcoding, and negotiate a larger MTU during setup: on the 23-byte
+default that formula yields 4 bytes per chunk.
+
+Confirmed concretely: the server honors the requested length exactly (every chunk but the final
+remainder is full-length); **the client issues
 exactly one request per file and the server streams the entire file back unprompted** — there is
 no per-chunk request/ack round-trip, which is good news for a companion implementation (no flow
 control puzzle — read notifications until the byte count matches `total_size`, exactly as the
@@ -401,10 +409,32 @@ Why this is the better source:
 | Floors | single combined figure | **split into `dailyFloorsUp` / `dailyFloorsDown`** |
 | Cost for one full day | 24 round trips, ~2.2 s | one ~3.5 KB read, ~2.5 s |
 
-The day currently in progress is not yet in a dated file — it lives in `/DailyHealth/dh.tmp`,
-which is presumably renamed into `<YYYYMM>/dh_<YYYYMMDD>.json` when the day closes. A companion
-wanting today's partial data should read `dh.tmp` (or fall back to CCS, which does serve the
-current day).
+**Rollover confirmed, and the file is authoritative.** Watched across a date change: on
+2026-08-11 the newest dated file was `dh_20260810.json`; the next morning `dh_20260811.json`
+existed (3998 bytes). Hours 09, 10 and 11 of 2026-08-11, captured live over CCS *while that day
+was still running*, are element-for-element identical to the same hours of the file written once
+it closed. Hour 12, captured mid-hour, matches for its first 38 minutes, and the file has since
+filled in the 22 that read as zero at the time.
+
+That last point is the one that matters for a companion: **a no-reading zero from CCS for the
+current hour is not necessarily final.** Re-reading a day from its file once the day has closed
+is not redundant, it corrects the live view.
+
+**`dh.tmp` is NOT the JSON for the day in progress.** It is a fixed-size 1464-byte *binary*
+record — the same 1464 bytes on two different days at two different times of day, only its mtime
+changing. Its header is the same date encoding the CCS commands use:
+
+```
+ea 07 08 0c  00 00 00 00  38 00 00 00  00 00 00 00  00 00 61 61 60 5f 5f 5f ...
+^^^^^ year   ^^ month ^^ day                                    ^^^^^^^^ per-minute data?
+2026         08       12   (the day it was read)
+```
+
+The tail is mostly `0x5f` (543 bytes) and `0x00` (909 bytes), and 1464 - 20 is about 1440, so it
+looks like a per-minute array using `0x5f` where the JSON uses `0`, and `0x00` for minutes not
+yet reached. Not decoded further, because the practical conclusion is already clear: **the
+current day is only available as JSON via CCS.** A companion wanting today's data should use the
+`0x10`/`0x14` commands rather than decode a second undocumented format to save a few requests.
 
 `/DailyHealth/200001/dh_20000101.json` also exists — a year-2000 directory, almost certainly
 data recorded before the clock was ever set.
@@ -723,8 +753,8 @@ Remaining work, roughly in priority order:
    and CRC-check it, the same way §2.1 validated the two small ones.
 4. ~~Read a `dh_<date>.json` and diff it against `0x10`.~~ **DONE — see §2.2.3.** It carries a
    full 1440-entry per-minute HR array plus the daily aggregate, matches CCS `0x14` exactly, and
-   14 days are on disk. Follow-up worth doing: confirm `/DailyHealth/dh.tmp` really is the
-   in-progress day and is renamed on rollover.
+   14 days are on disk. Rollover is now confirmed too, and `dh.tmp` turned out to be a binary
+   record rather than the in-progress JSON (§2.2.3).
 5. Decode the `0x30` secondary command and the `0x20/0x21/0x22` upload framing. `0x30` is now
    known to be probed against a `.json` sidecar that really exists (§2.2.2), so the "does
    companion metadata exist" reading is more likely — but still unproven and unsafe to fire blind.
@@ -732,6 +762,9 @@ Remaining work, roughly in priority order:
    standalone prototype needed one per chunk (§6a) — a real discrepancy, not yet explained.
 7. Explain the flat-constant-63-bpm hour seen 3 days back (§3.1) — real resting record, or a
    stored default the firmware emits for decayed history?
+8. Decode `/DailyHealth/dh.tmp`'s binary layout (§2.2.3), if the current day is ever wanted
+   without CCS. Header is `<year:u16LE> <month:u8> <day:u8>`; the rest looks like a 1440-byte
+   per-minute array with `0x5f` for no-reading and `0x00` for not-yet-reached. Unverified.
 
 **The read path is fully proven, not just specified.** §6a's standalone prototype pairs with the
 watch with no phone involved, lists directories, and pulls a real `.fit` file that passes CRC
