@@ -577,6 +577,74 @@ over-read.
     plainly in the runbook, because a green validator on a 45 MB pack invites exactly the wrong
     inference after a style change.
 
+## Panel preview (card `E1`, minimal) — run out of order, because L5 needs hardware
+
+L5 needs the watch mounted and it is not connected, so this was done instead. It turns out to be
+the most informative thing in the whole run.
+
+`scripts/panel_preview.py` decodes tiles **back out of the pack** — layout re-derived from the
+spec tables, calling no slippypack code — composes a 240 × 240 viewport centred on Athens at each
+zoom, and writes it at 1× and 3×. Two jobs in one: the verification L4 structurally cannot do, and
+the cartography preview card `E1` asks for.
+
+**As verification: the pack is right.** Tiles decode, every payload is exactly 65,536 B =
+`tile_dim_px²` (so this pack's `tile_dim` is honest, even though finding 12 says nothing checks
+it), the 3 × 3 neighbourhood is complete at z13–z16, and the image is recognisably Athens with
+its street grid, buildings and park in the right places. **This is the first evidence that the
+bytes are the bytes we meant** — L4 could only say they were well-formed.
+
+**As cartography: the map is unusable, and not for the reason expected.**
+
+`images/panel_before_after_z16.png` is the same viewport rendered (left) and quantised (right).
+On the left, a legible street map: grey-beige ground, white roads, grey buildings, green park. On
+the right, the road network **has vanished entirely**, buildings are **yellow**, and the park is
+**neutral grey**.
+
+Where the colours went, measured on one z16 tile — 719 distinct source colours collapse to seven:
+
+| source | share | lands on |
+|---|---:|---|
+| `(226,223,218)` ground | 66.2 % | `(255,255,255)` — pure white |
+| `(215,213,211)` buildings | 8.2 % | `(255,255,170)` — **yellow** |
+| `(156,211,180)` park | 1.7 % | `(170,170,170)` — **neutral grey** |
+| `(247,247,247)` roads | 1.2 % | `(255,255,255)` — pure white |
+
+**Roads are invisible because road-white and ground both land on `0xff`.** The figure/ground
+distinction is destroyed by rounding, not by a colour choice.
+
+**And the false hue is the real discovery.** ABGR2222 gives two bits per channel — levels
+{0, 85, 170, 255} — and each channel rounds independently of the others. A *neutral* grey at
+(215, 213, 211) has channels that straddle the 212.5 boundary in different directions, so it
+emerges saturated yellow. Nearest-in-3D picks the same slot, so this is not a quantiser bug to
+fix: **there is no neutral light grey between 170 and 255 to land on.** That is the light-end twin
+of the known dark-end gap (no neutral between L* 23.7 and L* 66.5), and it is why the viewport
+also contains pink and magenta pixels — `0xeb`, `0xfb`, `0xe6`, **none of which the style
+declares.**
+
+Lightness distribution in the z16 viewport, which is the number to remember: **about 94 % of
+pixels sit above L\* 93**, the only sub-L\* 40 code in use is `0xd5` at 0.1 % of pixels, and the
+roads-that-should-be-there would have been the 6.1 % of mid-grey at L\* 69.6 against white. On a
+transflective panel in daylight that is a white screen with faint marks.
+
+### Findings
+
+15. **A light-background cartography is not achievable on this panel by any quantisation
+    strategy.** Snapping to declared slots (`C3`) does not rescue it either — the nearest declared
+    slot to the building grey is white, so buildings would *vanish* instead of turning yellow.
+    Different failure, same verdict. The style must be **designed against the palette**, which is
+    what palette-first means and why `MAP_CARTOGRAPHY_SPEC.md` exists. The stock Protomaps light
+    theme is not a starting point to adjust; it is the wrong end of the space.
+16. **`E1` earns the board's description of it — "highest-value new surface for cartography" — and
+    it is cheaper than the card assumes.** The card debates whether it should be a
+    `slippypack preview` subcommand or a separate tool, worrying about pulling in the renderer
+    dependency. It needs no renderer at all: reading tiles out of a finished pack is enough, and
+    it is a short script. Card `E1` should be re-scoped from "decide the seam" to "productionise
+    the thing that already exists here".
+17. **The pipeline working and the product working are very different claims.** L1–L4 all passed;
+    the artifact validates; and the map is unusable. Nothing upstream of a rendered preview would
+    have told anyone that, which is the strongest argument on this board for building `E1` before
+    more of Group C or D.
+
 ## L5 — Get it onto the watch
 
 **Hypothesis.** USB mass storage delivery works today, at an app-sandbox-relative path.
