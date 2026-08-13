@@ -1142,6 +1142,44 @@ paper with green blocks and one large place name.
     `symbol-placement: line` with upright text, or accepting the ambiguity, or a renderer that can
     do it.
 
+### v4 on the panel — the U-shape fix holds, and the display is not square
+
+Second trial, same night, v4 live as `athens.rawtiles` with v3 kept alongside for comparison.
+Photographs in `images/panel_v4_z1*_reflective.jpg`.
+
+**The core hypothesis is `CONFIRMED`.** z13 and z14 — uniform texture under v3 — now read as a black
+arterial grid on pale ground with green blocks and one large place name. The default running zoom is
+usable. Withholding minors, paths and buildings below z15 was the right intervention, and it changed
+almost nothing at z12, where the two versions look near-identical because minors were already a
+small contribution at 27 m/px. That is why the widest shot looked unchanged.
+
+**Label sizing is `CONFIRMED` too, which settles the open half of finding 28.** "Little Tokyo" and
+"Toronto" are readable on the panel at glance distance — the first time any name has been in this
+investigation. 22–26 px works where § 4's 11–12 px did not, as the arcminute arithmetic predicted
+and against § 4's own 1:1-render evidence.
+
+35. **The visible display is a circle, not the 240 × 240 square everything assumes.** The panel is
+    square and the watch's aperture is round, so the corners sit behind the bezel: **about 21 % of
+    the rendered area is never seen**, since only π/4 of a square is inscribed. MapLibre places and
+    collision-tests against the square, so it will put a label in a corner quite happily — on the
+    panel both "Little Tokyo" and "Bay" are cut off by the round edge. This also means
+    **`panel_preview.py` and every preview image here overstate what is visible**, which is the same
+    class of error as finding 29's 2× magnification. A preview should mask to the inscribed circle,
+    and label padding should respect that circle rather than the square.
+36. **The app's overlay collides with map labels, because nothing arbitrates between them.** At z16
+    the road label "Bay" lands under `Acquiring GPS …` and both become unreadable. The renderer's
+    collision logic governs map labels only; the app draws status text over the finished blit
+    knowing nothing of what is beneath. Either the overlay needs an exclusion zone the style keeps
+    clear, or it should not sit over the map — finding 32 arriving from the other direction.
+37. **Point placement's association problem is real on the panel, not just in preview.** Labels read
+    as floating near roads rather than naming them, per finding 34. v4 traded rasterisation quality
+    for association and the trade is visible; the next attempt should try along-line placement with
+    upright text, which keeps association without arbitrary rotation.
+
+---
+
+## Exit criteria
+
 The card's bar is: **someone else can follow this without improvising.** Concretely, this
 investigation is done when
 
