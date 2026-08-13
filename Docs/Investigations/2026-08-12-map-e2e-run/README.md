@@ -704,6 +704,69 @@ hardcoded to 256 and there is no flag. Judging 4 px strokes at 256 px and shippi
 would invalidate every judgement in § 4 — which § 4 itself already flags as the part most likely
 to change after a hardware legibility trial. Neither `E1` nor `C3` mentions needing `D2`.
 
+### The palette-locked style — written 2026-08-12, at `tile_dim` 256
+
+`scripts/gen-watch-style.js` emits a MapLibre style for the Protomaps schema using **only** § 3's
+slots. Built at 256 px, where § 7's published ladder and its m/px column agree, so § 4's weights
+are meaningful as written; finding 18 is untouched by this and still needs settling before 128 px.
+
+**The palette lock is mechanical, not aspirational.** Every colour is derived from its ABGR2222
+byte rather than typed, and the script asserts that no colour literal outside the declared slots
+survives into the output — it throws otherwise. `layers=16 colours used=10 all legal slots=yes`.
+
+Schema targets came from the data rather than from guesswork: `scripts/mvt_kinds.py` is a
+dependency-free MVT reader that enumerates what the extract actually contains. For Athens the
+roads layer holds only `major_road:secondary`, `minor_road:residential` and
+`minor_road:service` — no highways, no paths — so `path` `0xD0` is unexercised here and the
+warm/cool ink split of R1 cannot be judged on this area. Worth knowing before anyone concludes
+R1 works. (The same probe confirms L1's overzoom from the other side: a z16 *vector* tile 404s
+while a z16 *raster* tile renders.)
+
+Structural choices worth stating, since § 4 leaves them implicit:
+
+- **All road casings are a separate pass beneath all road fills.** Per-road casing-then-fill
+  would let one road's `paper` halo overdraw the adjacent road it exists to separate.
+- **Weights are fixed, not zoom-interpolated.** § 4 gives single px values with no ramp, so that
+  is the faithful reading — but it means a 4 px major road at z12 is the same stroke as at z16,
+  and that is very likely wrong. Flagged rather than invented.
+- **The spec wants bold label text and the renderer has only `Noto Sans Regular`** (finding 7).
+  Recorded as a gap instead of silently substituting Regular and calling § 4 satisfied.
+
+**Result, measured.** Roads are visible for the first time: `road_major` `0xC0` at 1.3 % of pixels
+and `road_minor` `0xC1` at 1.5 % at z16, against 0 % before — previously both collapsed into
+`paper`. Off-palette pixels fall to **2.1 % at z16 and 3.3 % at z14**, and every one of them is an
+antialiasing blend *between two legal slots* — the dominant one is mid-grey `(85,85,85)`, which is
+black road blended with white halo. That is precisely what `C3` snaps away, and it is a much
+better-posed problem than the stock theme's, where whole features landed on wrong slots.
+
+`images/watch_z16_aseen.png`, `images/watch_z14_aseen.png`.
+
+### Finding 19 — a device-RGB preview oversaturates, and every image before this one did
+
+§ 3 is explicit that the `preview` sRGB column is "the sRGB rendering of what the eye sees on the
+panel once adapted", **not** a colour to paste into a style. The corollary is the one I missed:
+it is also what a *preview* must display. `panel_preview.py` and the earlier before/after images
+show device RGB — the ×85 channel expansion — so `wood_lt` `0xDD` appears as vivid `#55FF55`
+when the panel renders it as pale `#D0EDCD`.
+
+`images/watch_device_vs_seen.png` is the same viewport both ways. The left is what the bytes are;
+the right is what the wearer sees, and it is a restrained, legible map rather than the garish one
+the left implies. **Anyone judging cartography from a device-RGB preview will "fix" saturation
+that does not exist.** `E1` should apply the § 3 mapping by default and offer raw device RGB only
+as a debugging view.
+
+This does not change finding 15: that was about *lightness* collapse — roads and ground landing on
+the same slot, ~94 % of the viewport above L\* 93 — which is unaffected by how saturation is
+displayed.
+
+### One design question this raises for the spec
+
+At z16 over a village, the built-up wash `landuse` `0xEE` covers **72.5 %** of the viewport and
+`paper` covers **9.2 %**. § 3 casts `paper` as "ground" and `landuse` as a wash "one step off
+paper", but in a settlement where nearly every polygon is residential the wash *is* the ground and
+paper becomes the exception. Not wrong, but likely not intended, and it is a one-line change to
+test the inverse (paper as built-up, tint reserved for denser urban fabric).
+
 ### The implementation order this implies
 
 1. **Settle the ladder in m/px** — the table above is the proposed restatement. Until it is

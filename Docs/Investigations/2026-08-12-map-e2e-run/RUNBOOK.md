@@ -250,8 +250,19 @@ print(int((lon+180)/360*n), int((1-math.log(math.tan(lr)+1/math.cos(lr))/math.pi
 ```
 
 Note the map you get is the stock Protomaps *light* theme: pale, thin, and designed for a phone
-screen. It is deliberately not the watch cartography — that is a separate piece of work
-(`MAP_CARTOGRAPHY_SPEC.md`). It is good enough to prove the pipeline.
+screen. It proves the pipeline, and **it produces an unusable pack** — quantised to the panel's
+64 colours its roads vanish into the background entirely. See the investigation README.
+
+**If you want a pack worth looking at, use the watch style instead:**
+
+```sh
+node gen-watch-style.js ~/maps/styles/watch/style.json   # scripts/, beside this runbook
+# expect: layers=16 colours used=10 all legal slots=yes
+docker restart tsgl && sleep 15
+```
+
+That emits only the 14 palette slots from `MAP_CARTOGRAPHY_SPEC.md` § 3, so quantisation is
+close to a no-op and roads survive. It needs no `npm install` — no theme package involved.
 
 ---
 
