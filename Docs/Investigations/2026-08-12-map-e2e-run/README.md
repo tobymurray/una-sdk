@@ -389,11 +389,9 @@ second question by destroying the ability to answer the first.
    compare it **before** transferring tens of MB rather than buried in the footer. This is
    `G7`'s neighbourhood — the verifiable prefix wants per-region integrity for the same reason —
    and the two should be designed together.
-2. **The determinism may come free from `C3`.** The unstable pixels are antialiasing coverage
-   ties. The cartography spec already wants palette-first, effectively aliased output, and `E5`
-   found that snapping to declared palette slots recovers that from an ordinary AA renderer.
-   Snapping lands both sides of a tie on the same slot. `PLAUSIBLE`; settled by rerunning L3's
-   five builds with snap enabled.
+2. ~~**The determinism may come free from `C3`.**~~ **Tested — it does not.** See
+   "The snap experiment" below: snapping reduces exposure roughly four-fold but does not reach
+   zero, so it is mitigation, not a fix. `CONFIRMED` negative.
 3. **Weaken § A.4 to what is true.** Even with 1 and 2 done, the honest statement is that the
    UUID identifies the recipe and the digest identifies the bytes. Free during v0.x, expensive
    after.
@@ -410,6 +408,53 @@ Two pixels in a map is visually nothing. The harm is operational, and concentrat
 So the urgency tracks the transfer work, not the map's appearance. While delivery is a
 whole-file USB-MSC copy, this can wait. The moment BLE transfer of a large pack becomes real,
 it cannot.
+
+### The snap experiment
+
+Run after the notes above were written, and it answers the open question with a **no**.
+Scripts: `scripts/probe_render.py`, `scripts/snap_test.py`, `scripts/exposure.py`.
+
+**First, the isolation L3 skipped.** L3 inferred that the renderer was nondeterministic from
+pack bytes; it never checked the renderer directly. Fetching all 480 z16 tiles three times over:
+**one tile, `16/18941/23671`, returned more than one distinct PNG.** Fetching that tile 40 times
+returned **three distinct PNGs**. So the nondeterminism is upstream of slippypack entirely —
+`CONFIRMED`, not inferred.
+
+**What the difference actually is.** Between two variants: **one pixel**, at (63, 142), RGB
+`(244,244,243)` versus `(244,243,242)`. A ±1 jitter in a channel — sub-perceptual, and today's
+quantiser maps both to the same slot.
+
+**So the quantiser is an amplifier, and that is the real mechanism.** The renderer errs by
+about 1/255. The pack errs by a whole ABGR2222 level — 85/255 — because the ABGR2222 levels are
+{0, 85, 170, 255} and a ±1 jitter flips the result *only* when the pre-quantisation value sits
+next to a decision boundary. That is exactly what L3's two pack pixels were: values parked at
+~212.5, flipping a channel between level 2 and level 3.
+
+Confirmation from the slot codes: L3 saw `0xFF`↔`0xEB`, and `0xEB` is **not among the nine
+slots this style declares** (`0xd5 0xd8 0xe5 0xe9 0xea 0xee 0xef 0xfe 0xff`). It is a quantised
+antialiasing blend — a colour the style never asked for. Which is precisely the palette-first
+problem, showing up as an identity problem.
+
+**Exposure, measured exactly** — perturb each pixel by ±1 per channel and count how many change
+slot, over five tiles spanning z12–z16:
+
+| quantiser | pixels exposed | rate |
+|---|---:|---:|
+| nearest of all 64 slots (today) | 13,623 / 327,680 | **4.16 %** |
+| nearest of the 9 declared slots (`C3` snap) | 3,241 / 327,680 | **0.99 %** |
+
+**Verdict. Snapping cuts exposure about four-fold and does not eliminate it.** It moves the
+decision boundaries further apart, so fewer pixels sit beside one — but a pixel landing near a
+boundary between two *declared* colours still flips, and when it does the flip is larger,
+because declared slots are further apart than adjacent ABGR2222 levels.
+
+So `E5`'s finding needs a precision, not a correction: snapping recovers the palette-first
+**appearance** at negligible byte cost. It does not recover palette-first **determinism**. Those
+were being treated as the same property and they are not. Only a render that never produces
+intermediate values — genuinely aliased output, or a renderer emitting palette indices directly —
+removes the boundary, because then there is nothing to round.
+
+`C3` remains worth doing on its own merits. It is just not the answer to this.
 
 ### On writing our own deterministic renderer
 
@@ -443,15 +488,29 @@ What it actually costs, and the reason not to start now:
   real, and the appendix's verdict on raw OSM ("maximum control, maximum work") applies to
   rendering too.
 
-**Recommendation, in order:**
+**Recommendation, revised after the snap experiment.** The measurement removed the cheap escape:
+snapping does not deliver determinism, so "keep MapLibre and quantise the problem away" is off
+the table. What is left, in order:
 
-1. Run `C3`'s snap-to-slots experiment first. It is planned work, it takes minutes to evaluate
-   against L3's five-build harness, and it removes DIY's strongest argument if it succeeds.
-2. If snapping does not fix determinism, price a **swap to a deterministic CPU rasteriser**
-   before pricing a rewrite.
-3. Consider DIY only if palette-first native output is wanted for its own sake *and* someone is
-   willing to own label placement. If it happens, scope it to fills and lines with a prebaked
-   glyph atlas — not a general-purpose renderer.
+1. **Decide whether byte-reproducibility is required at all**, because that is now a product
+   decision rather than a bug to fix. While delivery is a whole-file USB copy, one pixel in a
+   45 MB pack costs nothing, and parts 1 and 3 above (a published content digest, and § A.4
+   saying what is true) make living with it safe and honest. That is the cheap path and it is
+   defensible.
+2. **If reproducibility is required, aliased rendering is the requirement** — not snapping. Price
+   a deterministic CPU rasteriser first (mapnik/AGG, or a `tiny-skia`-class Rust stack,
+   single-threaded, antialiasing off). Maintained, and it removes the boundary problem at the
+   source rather than downstream of it.
+3. **DIY only if palette-first native output is wanted for its own sake** *and* someone will own
+   label placement. The determinism argument alone does not justify it, because option 2 buys
+   determinism without the text bill. If it happens anyway, scope it to fills and lines with a
+   prebaked glyph atlas — not a general-purpose renderer.
+
+Note what the exposure number implies for option 2's payoff: at 4.16 % of pixels exposed and
+roughly one jittering pixel observed per few hundred rendered tiles, this is a rare event with a
+visible-but-trivial effect. It is worth engineering away only where *byte* equality is load
+bearing — resumable transfer, dedup, a reproducible-build gate — which is the same conclusion the
+"how much this matters" section reaches from the other direction.
 
 ## L4 — Validate independently
 
