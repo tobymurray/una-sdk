@@ -10,3 +10,21 @@ build-host/
 # the variant packer leaves bytecode next to the scripts.
 __pycache__/
 *.pyc
+
+# Build and deploy outputs. Every rule here is anchored with a leading slash on
+# purpose: Docs/Output/ and Docs/Tutorials/*/Output/ are tracked — the tutorials
+# keep their config JSON there behind their own nested .gitignore — so a bare
+# `Output/` would claim to ignore directories the repo actually carries.
+/Output/
+/Examples/Output/
+/Examples/Apps/*/Output/
+/Tests/Host/build/
+
+# Vector basemap extracts, pulled to render tiles locally. A regional PMTiles
+# file runs to hundreds of MB and belongs outside the worktree entirely; this
+# rule is a backstop, not a storage plan.
+#
+# Deliberately no blanket *.rawtiles: built packs are large and live under the
+# ignored Output/ paths above, while the small spec-conformance fixtures under
+# Docs/Investigations/ are tracked on purpose.
+*.pmtiles
