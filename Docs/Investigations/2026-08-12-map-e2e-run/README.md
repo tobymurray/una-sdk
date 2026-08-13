@@ -1028,9 +1028,72 @@ source tree is largely untracked and
 in the index. Resolve that before trusting a build. Photograph the panel; a screenshot of the
 simulator is not evidence about the real display.
 
-**Log.**
+**Log.** Run 2026-08-12 night, indoors, well-lit room. Toronto pack (style v3) as the live
+`athens.rawtiles`, started with no GPS fix so the view stayed on the pack's bbox centre. Zoom
+cycled z12→z16 with R2 and photographed at each step, twice over: once **backlight on** and once
+**backlight off**. The hand-written trust marker was accepted — tiles drew, no error and no
+"validating" state — so L5's marker layout is `CONFIRMED` end to end.
 
-**Verdict.**
+**Read the backlight-off set for anything about colour.** With the backlight on the whole panel
+reads strongly **cyan-blue**: `paper` `0xFF` looks like a light blue rather than white, and every
+fill shifts with it. Reflectively — the panel's normal mode, and the mode § 3's adaptation model
+describes — `paper` reads as a light warm grey, water is a clear distinct blue, and the greens are
+visible as separate tones. Same bytes, different apparent palette.
+
+Legibility by zoom, reflective, judged on the panel rather than from the photographs:
+
+| zoom | m/px | verdict on the panel |
+|---:|---:|---|
+| z12 | 27.0 | **good** — grid, lake edge and the parkway curve all read |
+| z13 | 13.5 | **worst of the five** — uniform texture, no skeleton |
+| z14 | 6.76 | **bad** — texture; minor roads dominate the majors |
+| z15 | 3.38 | **acceptable** — structure readable |
+| z16 | 1.69 | **good** — sparse and clean |
+
+**Verdict. The pack renders on the watch and the delivery path is settled, so `E3`'s six links are
+complete. The cartography is not.** `CONFIRMED`: legibility is **U-shaped in zoom** — the two
+extremes work and the middle fails — and § 7's designated **default running zoom, z14, is on the
+wrong side of the crossover**, which sits between z14 and z15. A runner's default view is the one
+that does not work.
+
+### Findings from the hardware trial
+
+27. **Any colour judgement must be made with the backlight off.** Backlit, the panel reads
+    markedly blue and `paper` looks light blue rather than white. Recorded because it will
+    otherwise bias a palette decision later: a photograph taken with the backlight on says
+    nothing reliable about § 3's slots, and the reflective appearance is both the normal mode and
+    the one the spec models. Not yet checked in daylight — this was night, indoors.
+28. **Street names are unreadable on the panel, and photographs say otherwise.** The names are
+    legible in every close-up photograph and illegible on the watch at glance distance. The
+    arithmetic agrees with the eye, not the camera: at 126 µm pitch, § 4's specified 11–12 px text
+    has an x-height subtending about **8 arcminutes** at 30 cm, which is detection rather than
+    reading; comfortable reading needs roughly **28 px**, about 2.3× the spec, and only eight such
+    lines fit across the panel.
+29. **§ 4's own evidence for text size is invalid, and so were this investigation's previews.**
+    § 4 argues "aliased text at 11 px is blocky but readable at 1:1" and cites a 1:1 render. A
+    desktop monitor's pixel pitch is roughly 0.25 mm against this panel's 0.126 mm, so **a "1:1"
+    render is physically about twice the size it will be on the watch.** Every legibility judgement
+    made that way — including finding 24's conclusion that labels survive, drawn from photographs
+    — overstates the panel. Judge text on the panel or not at all.
+30. **R1's hue split inverts the hierarchy at urban density.** `road_minor` `0xC1` is warm and
+    saturated, `road_major` `0xC0` is neutral black. R1 treats that as a distinction; on the panel
+    the *saturated* class is also the far more numerous one, so at z13–z14 the maroon minor mesh
+    reads as louder than the black skeleton it is supposed to sit beneath. Hue-coding the more
+    numerous class makes it dominant. `CONFIRMED` on the panel; the fix is `PLAUSIBLE` — thin or
+    drop minors at the wide zooms, and let the neutral ink carry the hierarchy — and what would
+    settle it is another trial with minors suppressed below z15.
+31. **Garmin's answer to the label problem, from a side-by-side on comparable hardware.** Its
+    labels are **horizontal, never rotated along the road**; **offset beside the line rather than
+    drawn over it**, so the stroke does not run through the glyphs; noticeably **larger**, in the
+    16–20 px range the arcminute maths calls marginal-to-comfortable; and **sparse**, a handful per
+    screen. Its roads are correspondingly **thin**, leaving the text room. This style's labels do
+    the opposite on all four counts — `symbol-placement: line` rotates them along the street, and
+    angled strokes rasterise worst at this pitch. The comparison area is rural, so it is not a
+    density comparison; the label treatment is the transferable part.
+32. **The `Acquiring GPS …` overlay ruins the map screen, and always.** Confirmed always that
+    prominent: large text across the lower third, over live map content, for the whole
+    fix-acquisition window — which is exactly the first minute of a run, when a runner is checking
+    where they are going. App-side rather than cartography, but it defeats the map face regardless.
 
 ---
 
