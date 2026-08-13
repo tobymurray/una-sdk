@@ -349,6 +349,110 @@ one-step AA tie onto the same slot and restore determinism — which would make 
 `CONFIRMED`; what would settle it is running these five builds again with snap-to-slots
 enabled and checking whether the two unstable pixels stop moving.
 
+## Notes — the identity problem, and the shape of the way out
+
+Written after L3, because L3's nondeterminism reads like a dead end and is not one. It looked
+that way because three findings were being filed under one name.
+
+### Two problems, not three instances
+
+| | what it is | fixable by descriptor keys? |
+|---|---|---|
+| `M1` — compression absent | the derivation is **incomplete**: two different builds collide | **yes**, and that is what `M1` does |
+| `B1`/`B2` — renderer, style, fonts invisible | same: incomplete derivation | **yes**, and that is what those cards do |
+| L3 — same renderer disagrees with itself | the bytes are **not a function** of the inputs | **no.** The descriptor is already complete and correct here |
+
+The first two are defects in a derivation. The third is not: nothing is missing from the
+descriptor, the render is simply not a function of it. That is why adding keys cannot touch it,
+and why it felt terminal.
+
+**§ A.4 is where the conflation lives.** It takes an identifier derived from *inputs* and
+promises it delivers *byte* identity. That promise is the bug — not the renderer.
+
+### The two questions one field is being asked to answer
+
+- **"Did I ask for the same thing?"** — build avoidance, catalog lookup, deciding whether to
+  download at all. Must be computable **before** the pack exists, which is exactly what
+  `debug uuid` is for. This is `pack_uuid`'s real job and it should stay derived from the
+  descriptor.
+- **"Do I have the same bytes?"** — integrity, dedup, resumable transfer. Only answerable
+  **from** the bytes.
+
+Replacing `pack_uuid` with a content hash is therefore *not* the fix: it would answer the
+second question by destroying the ability to answer the first.
+
+### Three parts to the way out
+
+1. **Publish a content digest alongside the derived UUID.** The format already streams a
+   whole-file CRC-32 over every byte as it writes (`format/crc.rs`), so hashing during write is
+   mechanically in place. What is missing is a *strong* digest, exposed where a recipient can
+   compare it **before** transferring tens of MB rather than buried in the footer. This is
+   `G7`'s neighbourhood — the verifiable prefix wants per-region integrity for the same reason —
+   and the two should be designed together.
+2. **The determinism may come free from `C3`.** The unstable pixels are antialiasing coverage
+   ties. The cartography spec already wants palette-first, effectively aliased output, and `E5`
+   found that snapping to declared palette slots recovers that from an ordinary AA renderer.
+   Snapping lands both sides of a tie on the same slot. `PLAUSIBLE`; settled by rerunning L3's
+   five builds with snap enabled.
+3. **Weaken § A.4 to what is true.** Even with 1 and 2 done, the honest statement is that the
+   UUID identifies the recipe and the digest identifies the bytes. Free during v0.x, expensive
+   after.
+
+### How much this matters, and when
+
+Two pixels in a map is visually nothing. The harm is operational, and concentrated:
+
+- **Resumable or chunked transfer** — resume against a rebuilt pack and the chunks do not
+  stitch. This is the real one, and it is the BLE story (`G4`, `G7`).
+- Any reproducible-build gate.
+- Delta updates and dedup.
+
+So the urgency tracks the transfer work, not the map's appearance. While delivery is a
+whole-file USB-MSC copy, this can wait. The moment BLE transfer of a large pack becomes real,
+it cannot.
+
+### On writing our own deterministic renderer
+
+Recorded because it is a live question and the answer has a cheap decision point in front of it.
+
+**The choice is not MapLibre-versus-DIY; there is a third option in between.** L3's
+nondeterminism is characteristic of a GPU or thread-ordered pipeline. A **single-threaded CPU
+rasteriser is deterministic close to by construction** — no GPU driver, no worker-order
+dependence — and maintained ones exist (mapnik/AGG; in Rust, a `tiny-skia`-class rasteriser).
+Evaluating a renderer swap is much cheaper than owning one.
+
+Arguments genuinely in DIY's favour, and they are not weak:
+
+- Determinism **by construction**, permanently, rather than "plausibly, if snapping helps".
+- **Palette-first output natively.** `E5`'s snap-to-slots is a workaround for not having a
+  palette-first renderer; a renderer of ours would emit palette indices directly, and with no
+  antialiasing there is no coverage arithmetic to tie.
+- It collapses `B1`/`B2` almost entirely: no glyph or sprite URLs, no upstream version to track,
+  and the style becomes a small local file that is trivially hashed into the descriptor.
+- The target is 240 × 240 at 64 colours with hairline-to-3px strokes. Scanline fills and
+  integer-edge lines for that are textbook and small.
+
+What it actually costs, and the reason not to start now:
+
+- **Text.** Glyph rasterisation, and above all label *placement* — collision, priority,
+  along-line labels, continuity across tile seams — is the majority of the work and the majority
+  of what separates a professional-looking map from a hobby one. The stated bar is the best map
+  on any watch at this price, and labels are where that is won or lost. Latin-only at fixed
+  sizes from a prebaked atlas is tractable; the general case is not.
+- You would own the schema semantics (kinds, sort ranks, per-zoom visibility) — bounded, but
+  real, and the appendix's verdict on raw OSM ("maximum control, maximum work") applies to
+  rendering too.
+
+**Recommendation, in order:**
+
+1. Run `C3`'s snap-to-slots experiment first. It is planned work, it takes minutes to evaluate
+   against L3's five-build harness, and it removes DIY's strongest argument if it succeeds.
+2. If snapping does not fix determinism, price a **swap to a deterministic CPU rasteriser**
+   before pricing a rewrite.
+3. Consider DIY only if palette-first native output is wanted for its own sake *and* someone is
+   willing to own label placement. If it happens, scope it to fills and lines with a prebaked
+   glyph atlas — not a general-purpose renderer.
+
 ## L4 — Validate independently
 
 **Hypothesis.** The pack passes an independent reader, not just the writer's own round-trip.
