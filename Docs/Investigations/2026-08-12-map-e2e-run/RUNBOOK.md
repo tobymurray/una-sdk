@@ -374,17 +374,171 @@ counts against entries actually present, and the whole-file CRC.
 
 ---
 
-## Step 12 onward — **not yet verified. Stop here.**
+## Before you connect the watch — read this once
 
-Everything above was run end to end. What follows has not been, so it is not written as
-instructions yet — see the investigation README's L5–L6 sections for the hypotheses and the
-known traps.
+**Do not write to the watch's filesystem while its BLE sync is running.** USB mass-storage
+writes from the host and the watch's own BLE sync collide on the same exFAT partition and
+**will corrupt files** — not the one you are writing, potentially the partition. Nothing in the
+steps below can detect that state for you, which is exactly why card `E2` exists: a deploy tool
+that refuses while sync is active. Until it exists, this is a rule you follow by hand.
 
-In outline, so you know where you are:
+The other thing to know before you start: **the watch cannot read its own filesystem while your
+host has the volume mounted.** So testing on-watch always means unmounting first, and a pack that
+"does not load" is very often a pack on a still-mounted volume.
+
+## Step 12 — Mount the watch
+
+Connect the watch's **own data cable** (not the Dev Tool cable — that is debug UART only and
+cannot carry files). It enumerates as USB mass storage: `/dev/sda1`, exFAT, label `UNA WATCH`,
+3.3 GB.
+
+It arrives **unmounted**, so mount it explicitly:
+
+```sh
+lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT /dev/sda
+udisksctl mount -b /dev/sda1
+# → Mounted /dev/sda1 at /run/media/toby/UNA WATCH
+WATCH="/run/media/toby/UNA WATCH"
+```
+
+If `lsblk` shows a different device, use that — do not assume `sda1`.
+
+## Step 13 — Put the pack where the app actually looks
+
+The app reads a **sandbox-relative** path. On branch `poc/athensrun`,
+`Examples/Apps/AthensRun/Software/Libs/Header/MapPackPaths.hpp` declares exactly one candidate:
+
+```
+../SharedData/maps/athens.rawtiles
+```
+
+That is the **shared MapManager directory**, deliberately not a copy private to AthensRun, so
+every app reads the same already-verified location. Two consequences for you:
+
+- The filename is fixed. The app does not scan for packs; it opens that name or nothing.
+- The volume-absolute location is wherever `../SharedData/maps/` resolves to from the app's own
+  directory on the volume. Find it rather than guessing:
+
+```sh
+find "$WATCH" -maxdepth 3 -type d -name SharedData
+mkdir -p "<that>/maps"
+MAPS="<that>/maps"
+```
+
+Then copy, and let the copy finish before you do anything else:
+
+```sh
+cp ~/maps/athens.rawtiles "$MAPS/athens.rawtiles"
+sync
+```
+
+**If a pack is already there, move it aside rather than deleting it** — the old one is the only
+thing you can fall back to if the new one is bad. A pre-effort pack from the OSM-CDN era was set
+aside as `athens.rawtiles.old-preeffort` on this run. Watch the free space if you do that: those
+older packs run to hundreds of MB on a 3.3 GB volume.
+
+## Step 14 — Publish the trust marker, or the app will ignore the pack
+
+This is the step nobody guesses. The app does not trust a pack because it parses; it trusts a
+pack because a **trust marker** beside it says a full CRC-32 scan passed. The marker is
+`<pack>.trust`, 16 bytes, fixed layout, little-endian — see
+`Examples/Apps/AthensRun/Software/Libs/Header/MapPackTrustMarker.hpp` on `poc/athensrun`:
+
+| bytes | field |
+|---|---|
+| `[0..3]` | magic — `MPT1` = Good, `MPTX` = known bad |
+| `[4..11]` | pack size, u64 |
+| `[12..15]` | the pack's declared footer CRC-32, u32 |
+
+Normally the separate MapManager app writes this in the background after scanning. A
+hand-installed pack has nobody to write it, so **you write it or the pack is dead weight** —
+present, well-formed, and ignored, with nothing in the filesystem to suggest why.
+
+The CRC is the one `rawtiles_validate` printed in step 11 for *this* pack. Take it from there;
+do not reuse a value from another build.
+
+```sh
+SIZE=$(stat -c%s "$MAPS/athens.rawtiles")
+CRC=0x9c01a4d4     # ← the crc32 rawtiles_validate printed for THIS pack
+
+python3 - "$MAPS/athens.rawtiles" "$SIZE" "$CRC" <<'EOF'
+import struct, sys
+pack, size, crc = sys.argv[1], int(sys.argv[2]), int(sys.argv[3], 16)
+with open(pack + '.trust', 'wb') as f:
+    f.write(b'MPT1' + struct.pack('<QI', size, crc))
+EOF
+sync
+ls -l "$MAPS/athens.rawtiles.trust"    # expect exactly 16 bytes
+```
+
+**The marker binds to `(size, CRC)`.** So the failure mode that costs an afternoon is:
+**replace the pack and leave the old marker in place.** The app then sees a size/CRC mismatch and
+declines the pack it was just given. Every time the pack changes, rewrite the marker.
+
+## Step 15 — Verify the bytes on the watch, not the bytes you sent
+
+Three checks, and they are independent of each other. Do all three:
+
+```sh
+sha256sum ~/maps/athens.rawtiles "$MAPS/athens.rawtiles"     # expect identical digests
+
+/tmp/wt-slippy/spec-validator-cpp/build/rawtiles_validate "$MAPS/athens.rawtiles"
+# expect: OK  <uuid> ... — run against the file ON THE WATCH, not your local copy
+```
+
+and confirm the marker you just wrote agrees with the pack:
+
+```sh
+python3 - "$MAPS/athens.rawtiles" <<'EOF'
+import struct, sys, os
+p = sys.argv[1]
+m = open(p + '.trust','rb').read()
+magic, size, crc = m[:4], *struct.unpack('<QI', m[4:16])
+print(magic, size, hex(crc), 'size matches:', size == os.path.getsize(p))
+EOF
+```
+
+Validating off the watch rather than off a copy is the point: it exercises the write, the
+filesystem and the read path in one go. A digest match alone would not tell you the file is
+readable in place.
+
+## Step 16 — Unmount before you test. This is required, not tidy.
+
+```sh
+sync
+udisksctl unmount -b /dev/sda1
+```
+
+While the host holds the partition, the watch **cannot read its own filesystem**, so the app
+will find no pack. Unmount, disconnect, then launch the app.
+
+## Step 17 — Swapping packs by rename
+
+The app opens exactly one filename, so keep several packs on the volume and make one live by
+renaming. Rename the marker with it — the marker's name is derived from the pack's:
+
+```sh
+mv "$MAPS/athens.rawtiles"        "$MAPS/athens-rural.rawtiles"
+mv "$MAPS/athens.rawtiles.trust"  "$MAPS/athens-rural.rawtiles.trust"
+mv "$MAPS/athens-trails.rawtiles"       "$MAPS/athens.rawtiles"
+mv "$MAPS/athens-trails.rawtiles.trust" "$MAPS/athens.rawtiles.trust"
+sync && udisksctl unmount -b /dev/sda1
+```
+
+Because each pack keeps its own marker, a swap is two renames and no re-scan. Skip the marker
+rename and you get the size/CRC mismatch from step 14.
+
+**A pack of anywhere works on the bench.** The app centres the view on the *pack's* bbox centre
+when it opens, so you can evaluate a Toronto pack in a field in Ontario. The corollary bites in
+the field: once a real GPS fix arrives from outside the pack's bbox, the view pans off-pack and
+goes **blank**. That is expected behaviour for a foreign pack, not a corrupt file.
+
+---
+
+## Step 18 onward — **not yet verified. Stop here.**
 
 | next | what happens |
 |---|---|
-| L5 | copy to the watch over USB mass storage — **never while BLE sync is running**, or you will corrupt the partition |
-| L6 | open it in the AthensRun app on the watch. Needs the unresolved `MapPackTrustMarker.hpp` conflict settled first |
+| L6 | open the pack in the AthensRun app and photograph the panel. Needs the unresolved `MapPackTrustMarker.hpp` conflict in the index settled before a build is worth trusting |
 
 Update this file as each link lands, and keep the "verified on" date at the top honest.

@@ -857,6 +857,87 @@ Labels are where this is won or lost. § 4 wants aliased 11–12 px text with a 
 and the renderer antialiases, so label edges will blend off-palette — which is where `C3` earns
 its keep, and the one part of § 4 that a laptop preview cannot settle on its own.
 
+## Dense urban — what Athens could not have shown
+
+Everything above was measured on Athens, Ontario, because that is the bbox the PoC pack used and
+comparability was worth having. Athens is a village. With a watch connected (L5 below), packs of
+**downtown Toronto** (`-79.42,43.63,-79.35,43.68`) and **Gatineau Park**
+(`-75.92,45.46,-75.82,45.53`) were built with the palette-locked watch style and deployed, and
+dense urban geometry broke things rural geometry cannot reach. Four of the five findings below
+are about `MAP_CARTOGRAPHY_SPEC.md`, and none of them are cases the spec got wrong — they are
+cases it never had in front of it.
+
+22. **The app centres on the pack, which is what makes bench testing possible at all.**
+    `Model.cpp:533-536` (`poc/athensrun`) initialises the map centre to the **pack's bbox
+    centre** the moment the pack opens; a GPS fix overrides it later
+    (`Model.cpp:417-428`). `CONFIRMED` from the source. So a pack of anywhere renders on the
+    bench with no fix — which is the only reason a tester in rural Ontario could evaluate
+    Toronto cartography on real hardware. The same mechanism has a matching failure: **once a
+    fix arrives from outside the pack's bbox the view pans off-pack and goes blank**, so the
+    thing that makes bench testing work makes field testing of a foreign pack impossible.
+    Worth stating in the runbook, because "the map went blank when I walked outside" is
+    otherwise indistinguishable from a corrupt pack.
+23. **Sidewalks swamp the map, and R1 needs a rule about which paths earn ink.** Toronto's roads
+    layer carries `path:sidewalk`, `path:crossing`, `path:footway`, `path:cycleway`, `path:path`,
+    `path:steps`, `path:pedestrian`, `path:alley` and `path:corridor`. Athens carried **none** of
+    these — only `major_road:secondary`, `minor_road:residential` and `minor_road:service`.
+    Downtown has a sidewalk on both sides of every street and a crossing at every corner, and all
+    of it renders as 2 px `path` `0xD0` cool ink, producing a dense mesh that competes with the
+    road network it is supposed to sit beneath. `CONFIRMED` by the render. R1 fixes the *hue*
+    meaning — warm `0xC1` vehicular, cool `0xD0` foot — and that part holds; what it does not say
+    is **which path kinds deserve ink at all, or at which zooms**, and on urban data that is the
+    question that decides whether the map is readable. Note this also finally exercises R1: the
+    warm/cool split could not be judged on Athens because no path existed there.
+24. **Antialiased label text lands off-palette, and § 3 has no neutral mid-grey to catch it.**
+    § 4 specifies 11–12 px `ink` text with a 1 px `halo` ring "rendered aliased". MapLibre
+    antialiases and cannot be told not to. Blending `ink` `0xC0` (0,0,0) against `halo` `0xFF`
+    (255,255,255) produces mid-greys such as `0xD5` (85,85,85), which is **not one of § 3's
+    fourteen slots** — the palette has no neutral between `0xEA` (170,170,170) and `0xC0`. So
+    every label's edge pixels are colours the style never declared. `CONFIRMED`. This is the
+    concrete casualty of the antialiasing question that `C3` and `G8` circle at arm's length: it
+    is not a fringe on the odd building corner, **it is the text**, which is the part § 4 calls
+    the thing the map is won or lost on.
+25. **§ 3 has no rail slot, and cities have railways.** Toronto carries `rail:rail`,
+    `rail:subway` and `rail:tram`; the palette's fourteen slots contain nothing for any of them,
+    so rail corridors render as **nothing at all** — not miscoloured, absent. `CONFIRMED` that
+    the gap exists. The spec was written against a rural PoC where the case never arose, and
+    there is room to fix it: § 3 spends 14 of 64 codes and calls the remaining 50 deliberate
+    headroom. But the fix is constrained twice over. The code has to come from the ~29 codes § 3
+    describes as mutually separable at ΔE2000 ≥ 10, and it has to respect **R4** ("one code per
+    feature class, no exceptions", which is what makes § 5's activity LUTs work). Borrowing
+    `contour` `0xC5` is tempting because terrain is deferred out of v1 (§ 6) — and it would
+    violate R4 the moment terrain ships, which on § 6's own schedule is v1.5. So: the gap is
+    `CONFIRMED`, the right code is `PLAUSIBLE` pending the ΔE separability check that `E1` ran
+    when it picked the original fourteen.
+26. **Buildings crowd a dense viewport.** § 3 casts `building` `0xEA` as "context only". In a z15
+    downtown viewport buildings cover roughly **40 %** of the area, which is not context. Compare
+    finding 15's rural measurement from the other direction — the built-up wash at 72.5 % of a
+    village viewport against 9.2 % `paper`. Both point at the same thing: **§ 3's area-fill
+    hierarchy was tuned on sparse geometry**, and the roles it assigns ("ground", "wash one step
+    off paper", "context only") describe proportions that only hold there.
+
+**Also worth recording, because it re-prices finding 21.** Off-palette codes per viewport rose
+from 4 distinct at z16 on the rural pack to 16 at z16 and 17 at z14 on Toronto. The
+antialiasing fringe therefore **scales with feature density**, which finding 21 had no way to
+see: it argued `C3`'s remaining justification is R4 and the activity LUTs, and this says the R4
+violation grows with exactly the content the product is most likely to be used on. The argument
+gets stronger in cities, not weaker.
+
+### Three additions `MAP_CARTOGRAPHY_SPEC.md` now needs
+
+Recorded here rather than edited in: `Docs/External/slippypack/` is an explicitly read-only
+proxy of another repository and its own README says not to edit files there. These belong on a
+`slippypack` branch.
+
+1. **Path-kind selection** (finding 23) — which of the `path:*` kinds get ink, and from which
+   zoom. § 4 gives `path` a weight and a dash; nothing gives it a *filter*.
+2. **A rail treatment** (finding 25) — a slot from the separable set, plus a weight and a
+   pattern, or an explicit statement that rail is deliberately not drawn.
+3. **An answer on aliased text** (finding 24) — either a neutral mid-grey slot so blends land
+   somewhere declared, or `C3` snapping text edges, or the acceptance that label edges are
+   off-palette and R4 is a rule with a stated exception. § 4 currently assumes a property of the
+   renderer ("rendered aliased") that no renderer in this pipeline has.
+
 ## L5 — Get it onto the watch
 
 **Hypothesis.** USB mass storage delivery works today, at an app-sandbox-relative path.
@@ -866,9 +947,76 @@ USB-MSC writes and the watch's own BLE sync collide on the same exFAT partition 
 corrupt files**, and no absolute `N:/`-style volume path resolves from an app. Byte-verify
 after copying. Whatever the safe sequence turns out to be is `E2`'s specification.
 
-**Log.**
+**Log.** Watch connected over its own data cable. Three things had to be established before
+any bytes moved — where the app looks, how the volume behaves, and what makes the app *trust*
+what it finds — and only the first of those is in the card.
 
-**Verdict.**
+**Where the app looks.** `kMapPackCandidatePaths` in
+`Examples/Apps/AthensRun/Software/Libs/Header/MapPackPaths.hpp` (branch `poc/athensrun`) holds a
+single **sandbox-relative** entry, `../SharedData/maps/athens.rawtiles`. That is deliberately
+the *shared* MapManager directory rather than a copy private to this app, so every app reads the
+same already-verified location. The card's "no absolute `N:/`-style path resolves" trap is
+therefore already avoided by the app, not something the deploy step has to work around — what
+the deploy step has to do is resolve that relative path against the volume itself.
+
+**How the volume behaves.** `/dev/sda1`, exFAT, label `UNA WATCH`, 3.3 GB. It arrives
+**unmounted** on this machine, so there is a step the earlier `.uapp` deploy notes do not have:
+
+```
+udisksctl mount -b /dev/sda1     # → /run/media/toby/UNA WATCH
+```
+
+**What makes the app trust the pack.** A **trust marker** beside the pack, `<pack>.trust`,
+documented in `Examples/Apps/AthensRun/Software/Libs/Header/MapPackTrustMarker.hpp`
+(`poc/athensrun`). 16 bytes, fixed layout, little-endian:
+
+| bytes | field |
+|---|---|
+| `[0..3]` | magic — `MPT1` (Good) or `MPTX` (Bad) |
+| `[4..11]` | pack size, u64 |
+| `[12..15]` | the pack's declared footer CRC-32, u32 |
+
+Normally it is the separate MapManager app that writes this, after a full CRC scan. A
+hand-installed pack has nobody to write it, so **the marker has to be published by hand or the
+pack is never trusted** — and the marker binds to `(size, CRC)`, which means *replacing a pack
+without rewriting its marker leaves the app seeing a mismatch* rather than seeing the new pack.
+That is the single most surprising thing in this link, and it is invisible from the file system:
+the pack is present, well-formed, and ignored.
+
+**What was deployed.** The point of this run was no longer Athens — see the urban section
+above — so three packs went across, named so that any of them can be made the live one by a
+rename:
+
+| file | area | size (B) | tiles |
+|---|---|---:|---:|
+| `athens.rawtiles` | downtown Toronto | 17,044,896 | 260 |
+| `athens-trails.rawtiles` | Gatineau Park | 35,662,800 | 544 |
+| `athens-rural.rawtiles` | Athens, Ontario | 45,037,308 | |
+
+The pre-effort pack was set aside as `athens.rawtiles.old-preeffort` rather than deleted —
+201,257,272 B, `build_timestamp` 0, an OSM-CDN-era artifact from before this workflow existed.
+
+**Verification, in three independent directions.** Source and on-device copies are **SHA-256
+identical**; `spec-validator-cpp` reports `OK` **reading directly off the watch** rather than
+off a copy; and the published marker's size and CRC both cross-check against the pack. Then
+the volume was unmounted cleanly, which is not hygiene but a **requirement** — while the host
+holds the partition as USB mass storage the watch cannot read its own filesystem, so a pack left
+mounted is a pack the app cannot open.
+
+**Verdict. USB-MSC delivery works today at the app-sandbox-relative path — `CONFIRMED` — and
+the safe sequence is longer than "copy and verify".** It is: mount, copy, **publish a trust
+marker**, byte-verify, unmount before testing. Two of those five steps are ones a careful person
+would not think to take, and both fail silently: no marker means an ignored pack, and a still-
+mounted volume means an unreadable one. Written up as verified instructions in `RUNBOOK.md`.
+
+**What was not verified: whether BLE sync was active during the write.** That is precisely the
+known corruption mode — USB-MSC writes and the watch's own BLE sync collide on the same exFAT
+partition — and it is the reason card `E2` exists. This write verified clean in every direction
+checked, which is **evidence of one good outcome, not evidence of safety**; a race that is not
+observed is not a race that did not happen. What would settle it is knowing the sync state at
+write time, which nothing here exposes — and the right response is not to run the experiment
+deliberately but to make the state observable and the write refusable, which is `E2`'s whole
+content. Until then, treat "it worked last time" as the worthless evidence it is.
 
 ## L6 — See it
 
@@ -903,5 +1051,7 @@ investigation is done when
 
 **`RUNBOOK.md`, beside this file** — written incrementally rather than last, so the steps get
 recorded while the exact commands and versions are still known rather than reconstructed. It
-covers the installs and L1 as verified instructions with expected output, and stops hard at L2
-with "not yet verified" rather than guessing ahead. Extend it as each link lands.
+covers the installs and L1–L5 as verified instructions with expected output — through mounting
+the watch, publishing the trust marker, byte-verifying off the device and unmounting before a
+test — and stops hard at L6 with "not yet verified" rather than guessing ahead. Extend it as each
+link lands.
