@@ -23,6 +23,9 @@ The TouchGFX port implementation for the UNA SDK provides a comprehensive hardwa
 
 The implementation comprises custom HAL classes that extend TouchGFX-generated code, a robust command processor for kernel integration, and stub implementations for hardware interfaces not currently utilized in the UNA platform configuration. The port supports a 240x240 pixel display with 8-bit color depth using ABGR2222 format, software-based rendering, and button-based input handling through the UNA kernel messaging system.
 
+An app may instead render into the framebuffer itself through the SDK's CustomGUI
+entry point. See [Custom GUI](custom-gui.md).
+
 Key architectural principles include:
 - **Modular Design**: Separation between TouchGFX framework and UNA platform specifics
 - **Message-Based Communication**: Asynchronous integration with the UNA kernel

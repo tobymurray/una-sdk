@@ -77,10 +77,15 @@ if(LIBS_PATH)
     get_filename_component(_una_abs "${LIBS_PATH}" ABSOLUTE)
     list(APPEND _una_app_prefix_maps "${_una_abs}=/una-app-libs")
 endif()
-if(TOUCHGFX_PATH)
-    get_filename_component(_una_abs "${TOUCHGFX_PATH}" ABSOLUTE)
-    list(APPEND _una_app_prefix_maps "${_una_abs}=/una-app-gui")
-endif()
+#
+# GUI_PATH names the app's GUI source root; TOUCHGFX_PATH is the older alias for
+# it. Both map to the same label, since an app has one GUI half whatever draws it.
+foreach(_una_gui_path IN ITEMS "${GUI_PATH}" "${TOUCHGFX_PATH}")
+    if(_una_gui_path)
+        get_filename_component(_una_abs "${_una_gui_path}" ABSOLUTE)
+        list(APPEND _una_app_prefix_maps "${_una_abs}=/una-app-gui")
+    endif()
+endforeach()
 foreach(_una_map IN LISTS _una_app_prefix_maps)
     add_compile_options(
         $<$<COMPILE_LANGUAGE:C,CXX>:-fmacro-prefix-map=${_una_map}>
@@ -88,6 +93,7 @@ foreach(_una_map IN LISTS _una_app_prefix_maps)
 endforeach()
 unset(_una_abs)
 unset(_una_map)
+unset(_una_gui_path)
 unset(_una_app_prefix_maps)
 
 # Common compile options (match CubeIDE exactly)
@@ -264,8 +270,9 @@ endfunction()
 # - TARGET_NAME - arg
 # - GUI_SOURCES
 # - GUI_INCLUDE_DIRS
-# - UNA_APP_SERVICE_RAM_LENGTH - optional
-# - UNA_APP_SERVICE_STACK_SIZE - optional 
+# - GUI_LIBS (or TOUCHGFX_LIBS) - optional
+# - UNA_APP_GUI_RAM_LENGTH - optional
+# - UNA_APP_GUI_STACK_SIZE - optional
 function(una_app_build_gui TARGET_NAME)
     if(NOT DEFINED UNA_APP_GUI_STACK_SIZE)
         if(DEFINED GUI_STACK_SIZE)
@@ -285,13 +292,15 @@ function(una_app_build_gui TARGET_NAME)
     message("UNA_APP_GUI_STACK_SIZE: ${UNA_APP_GUI_STACK_SIZE}")
     message("UNA_APP_GUI_RAM_LENGTH: ${UNA_APP_GUI_RAM_LENGTH}")
 
-    # Compute library directories from TOUCHGFX_LIBS
-    set(TOUCHGFX_LIBS_DIRS "")
-    foreach(lib IN LISTS TOUCHGFX_LIBS)
-    get_filename_component(lib_dir "${lib}" DIRECTORY)
-    list(APPEND TOUCHGFX_LIBS_DIRS "-L${lib_dir}")
+    # Archives for the GUI process. GUI_LIBS is the current name; TOUCHGFX_LIBS is
+    # the alias each app's touchgfx.cmake sets.
+    set(_una_gui_libs ${GUI_LIBS} ${TOUCHGFX_LIBS})
+    set(_una_gui_lib_dirs "")
+    foreach(lib IN LISTS _una_gui_libs)
+        get_filename_component(lib_dir "${lib}" DIRECTORY)
+        list(APPEND _una_gui_lib_dirs "-L${lib_dir}")
     endforeach()
-    list(REMOVE_DUPLICATES TOUCHGFX_LIBS_DIRS)
+    list(REMOVE_DUPLICATES _una_gui_lib_dirs)
 
     add_executable(${TARGET_NAME} ${GUI_SOURCES})
 
@@ -302,12 +311,12 @@ function(una_app_build_gui TARGET_NAME)
     target_link_libraries(${TARGET_NAME} PRIVATE
         -Wl,--start-group
         -l:libstdc++.a
-        ${TOUCHGFX_LIBS}
+        ${_una_gui_libs}
         -Wl,--end-group
     )
 
     target_link_options(${TARGET_NAME} PRIVATE
-        ${TOUCHGFX_LIBS_DIRS}
+        ${_una_gui_lib_dirs}
         -Wl,-L "$ENV{UNA_SDK}/Libs/Source/AppSystem/Libc++"
         -T "$ENV{UNA_SDK}/Libs/Source/AppSystem/linker/Main/Sections.ld"
         -Wl,--defsym=STACK_SIZE=${UNA_APP_GUI_STACK_SIZE}

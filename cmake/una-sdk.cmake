@@ -60,6 +60,8 @@ set(UNA_SDK_SOURCES_SERVICE
     "${UNA_SDK_SOURCES_VARIANT}"
 )
 
+# GUI process on TouchGFX: entry point, port, and the stubs the framework expects.
+# Pair with UNA_SDK_INCLUDE_DIRS_GUI and the app's own touchgfx.cmake.
 set(UNA_SDK_SOURCES_GUI
     "$ENV{UNA_SDK}/Libs/Source/AppSystem/EntryPoint/TouchGFX/main.cpp"
     "$ENV{UNA_SDK}/Libs/Source/Port/TouchGFX/STM32TouchController.cpp"
@@ -70,6 +72,15 @@ set(UNA_SDK_SOURCES_GUI
     "$ENV{UNA_SDK}/Libs/Source/Port/TouchGFX/generated/STM32DMA.cpp"
     "$ENV{UNA_SDK}/Libs/Source/Port/TouchGFX/generated/TouchGFXConfiguration.cpp"
     "$ENV{UNA_SDK}/Libs/Source/Port/TouchGFX/generated/TouchGFXGeneratedHAL.cpp"
+)
+
+# GUI process without TouchGFX: the CustomGUI entry point alone. It constructs the
+# app's Gui class and calls run(); the app owns the kernel message loop and draws
+# into its own framebuffer. No TouchGFX include dirs are needed, but the app's own
+# Gui.hpp must be on the include path (the entry point includes it by bare name).
+# See Docs/custom-gui.md.
+set(UNA_SDK_SOURCES_GUI_CUSTOM
+    "$ENV{UNA_SDK}/Libs/Source/AppSystem/EntryPoint/CustomGUI/main.cpp"
 )
 
 set(UNA_SDK_INCLUDE_DIRS_COMMON

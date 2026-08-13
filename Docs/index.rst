@@ -68,6 +68,7 @@ Next steps:
    Scripts
    TouchGFX-Port-Architecture
    touchgfx-widgets
+   custom-gui
    FitFiles-Structure
 
 .. toctree::
