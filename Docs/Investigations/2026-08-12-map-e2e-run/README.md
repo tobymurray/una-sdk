@@ -521,9 +521,61 @@ the slippypack branch, and note what the absence of a subcommand costs in steps.
 identity defect is **live** at v0.6: `pack_uuid` does not determine the bytes, so a matching
 UUID proves nothing here (cards `B0`, `B1`).
 
-**Log.**
+**Log.** Cheaper than the card implies: **`spec-validator-cpp` is vendored in `slippypack`**, so
+no `rawtiles` clone is needed. `make` in that directory builds `build/rawtiles_validate` with
+`g++ -std=c++17` under `-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion`,
+silently. It re-derives parsing from the layout tables and calls no slippypack code.
 
-**Verdict.**
+All three packs from L3 pass, exit 0 — the full z12–16 pack and both the light and dark smoke
+packs:
+
+```
+OK  8520f25f-4786-5b2a-919e-79f510ed25c1
+    version 1.0   tile_dim_px 256   zoom_range 12..16
+    tile_count 687   file_size 45037308 bytes   crc32 0x9c01a4d4
+```
+
+Worth noticing in its own output: the light and dark smoke packs print the **same
+`pack_uuid` and different `crc32`**, side by side. The format already carries a bytes-identifier
+that distinguishes them; it is simply not published or used as one, and CRC-32 is error
+detection rather than a digest.
+
+**A green result is not evidence, so the validator was mutated against** (`scripts/mutate_pack.py`).
+Each of these is rejected with a specific, accurate message: a payload bitflip (CRC mismatch), a
+corrupted magic, truncation by one byte and by half the file, a zeroed CRC, an all-zero
+`pack_uuid`, a `tile_count` reduced below the entries actually present, and `tile_dim_px` set to
+zero. Structural checks fire independently of the CRC — each mutation above had the footer CRC
+repaired where relevant, so the checksum could not be doing the work. **The validator earns
+trust.**
+
+Two mutations were accepted, and that is the finding.
+
+**Verdict. The pack is well-formed by an independent reader — `CONFIRMED`, and the reader is
+worth believing.** Two gaps below, plus one property of validation that should not be
+over-read.
+
+### Findings
+
+12. **`tile_dim_px` is checked for `> 0` and never cross-checked against the tiles.** Setting it
+    to **128** — or to 255 — on a pack whose tile blobs are 65,536 bytes validates **clean**, and
+    `slippypack inspect` reports the false value back as fact. For ABGR2222 the relation is
+    exact and trivial (bytes per tile = `tile_dim_px²` at one byte per pixel), so this is
+    checkable in a line. It matters now because card `D2` is about to expose `--tile-dim` and
+    later move the default from 256 to 128: **the field most likely to be wrong during that
+    change is the one nothing verifies**, and the failure surfaces as garbage on the panel, with
+    tile offsets drifting, rather than as a validation error on a laptop.
+13. **`pack_uuid` is unattested by the pack.** Overwrite the header's UUID with `deadbeef…`,
+    repair the CRC, and both the independent validator and `slippypack inspect` accept it and
+    report it back as the pack's identity. Only all-zero is rejected. So the break runs **both
+    ways**: the UUID does not determine the bytes (L3), *and* the bytes do not attest the UUID.
+    A recipient cannot check either direction. CRC-32 does not help, because anything editing the
+    file repairs the CRC as a matter of course — it is error detection, not authentication. The
+    detached-signature work that was on the lost `spec-0.7-adequacy-fixes` branch is the
+    mechanism that closes this, which gives card `B0` a second reason to exist beyond `M1`.
+14. **"Validated" means well-formed, never correct.** Flip a pixel, repair the CRC, and the pack
+    passes — as it must; nothing in the file says what the pixels *should* be. Worth stating
+    plainly in the runbook, because a green validator on a 45 MB pack invites exactly the wrong
+    inference after a style change.
 
 ## L5 — Get it onto the watch
 

@@ -323,10 +323,50 @@ a changed footer CRC is normal here; it is not corruption.
 
 ---
 
-## Step 11 onward — **not yet verified. Stop here.**
+## Step 11 — Validate the pack with something that isn't slippypack
+
+You do **not** need to clone the `rawtiles` repo for this. The independent validator ships inside
+slippypack:
+
+```sh
+cd /tmp/wt-slippy/spec-validator-cpp
+make                     # needs only a C++17 compiler, no libraries
+./build/rawtiles_validate ~/maps/athens.rawtiles
+```
+
+Expect:
+
+```
+OK  <uuid>
+    version 1.0   tile_dim_px 256   zoom_range 12..16
+    tile_count 687   file_size 45037308 bytes   crc32 0x...
+```
+
+Exit 0 means well-formed. It re-derives the byte layout from the spec and calls no slippypack
+code, so it catches writer bugs that the Rust writer and reader would agree on and therefore miss
+between themselves. If it rejects your pack, believe it and do not deploy — a malformed pack on
+the watch gives you nothing to debug with.
+
+**Do not over-read a green result.** Specifically, "OK" does *not* mean:
+
+- **that the pixels are right.** Change a pixel, repair the footer CRC, and the pack still
+  validates. Nothing in the file says what the map should look like.
+- **that `tile_dim_px` is right.** It is only checked for being greater than zero. A pack
+  claiming 128 px tiles while containing 256 px ones validates clean, and `inspect` will repeat
+  the wrong number back to you. If you ever build with a non-default tile size, verify by hand
+  that bytes-per-tile equals `tile_dim_px²`.
+- **that `pack_uuid` is genuine.** Any non-zero value in that header field is accepted and
+  echoed as the pack's identity. It is not derived from or checked against the bytes.
+
+What it *does* prove is real and worth having: magic, offsets, the extension walk, per-zoom index
+counts against entries actually present, and the whole-file CRC.
+
+---
+
+## Step 12 onward — **not yet verified. Stop here.**
 
 Everything above was run end to end. What follows has not been, so it is not written as
-instructions yet — see the investigation README's L4–L6 sections for the hypotheses and the
+instructions yet — see the investigation README's L5–L6 sections for the hypotheses and the
 known traps.
 
 In outline, so you know where you are:
