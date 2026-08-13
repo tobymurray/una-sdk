@@ -105,6 +105,13 @@ must-fix items M1–M8, E1's identity defect, and § 11's change list. **Read
 list no longer exists on any remote, so § 11 is a set of instructions again rather than a
 description of something landed. Card `B0` exists because of this.
 
+**And `Docs/Investigations/2026-08-12-map-e2e-run/` — the only document here written from
+running the thing rather than reading about it.** Card `E3`'s links L1–L4 are done: data
+downloaded, tiles rendered, a validated 45 MiB Athens pack built, all by a compliant route.
+`RUNBOOK.md` beside it is reproducible instructions with expected output, and stops hard at the
+first unverified step. **Several cards below were rewritten by what it found, and where this
+board and that investigation disagree, the investigation measured it.**
+
 ---
 
 ## 2. Settled — do not re-litigate
@@ -172,6 +179,11 @@ that implemented `M1`–`M8`, the extension registry, the widened corpus and the
 RLE encoder is gone — not on GitHub, not on the Gitea, not on this machine. Full account and
 probable cause in `Docs/External/rawtiles/README.md`.
 
+**A second reason to exist, from the 2026-08-12 run:** the lost branch also carried **detached
+signatures**, and that run showed `pack_uuid` is unattested by the pack — any non-zero value is
+accepted and echoed back as identity by both readers. Signatures are the mechanism that closes
+that, so `B0` is not only about `M1` any more.
+
 The recipe survives intact: `RAWTILES_SPEC_ADEQUACY.md` § 11 is a change list written as
 instructions, and the v0.6 corpus survives in this repo on
 `origin/tmp/rawtiles-container-pr-description` (`d2f26542`, under `Tests/Host/rawtiles/corpus/`),
@@ -206,8 +218,48 @@ changes pixels must be in the descriptor or explicitly declared out of it.* Enum
 render inputs — font stack availability and fallback, sprite pixel ratio, label language
 selection, palette table version, quantiser dither policy — and for each, either commit it
 to the descriptor or record why it cannot change output.
+
+**Two additions from the 2026-08-12 run, one of which the list did not reach:**
+
+- **The data producer's version, upstream of the renderer.** The PMTiles extract carries
+  `planetiler:version`, its githash, and the basemap `version` — all of which change pixels and
+  none of which the list mentions, because the list starts at the renderer.
+- **Font stack availability is not hypothetical.** The renderer image ships exactly one stack
+  (`Noto Sans Regular`). Any style asking for Medium or Italic silently drops those labels. It
+  is the first item on this card and it fired on the first render anyone attempted.
+
 → same branch stack as `B1`, or its own follow-up. Done when: the list is exhaustive and
 each entry has a verdict. **Small-medium.**
+
+**B3 — Separate "same recipe" from "same bytes". *New; forced by the 2026-08-12 run.***
+That run found something no descriptor key can fix: **the renderer is not deterministic.** One
+tile in 480 returns more than one distinct PNG; forty fetches of it returned three. The
+difference is a single pixel off by one in a channel, which the ABGR2222 quantiser then amplifies
+into a whole palette level whenever the pre-quantisation value sits beside a decision boundary —
+about 4 % of pixels do. Five builds from identical inputs produced three distinct packs.
+
+So `pack_uuid` is stable while the bytes are not, and the break runs both ways: **the bytes do
+not attest the UUID either.** Overwrite the header UUID with anything non-zero, repair the CRC,
+and both the independent validator and `slippypack inspect` accept it and report it as identity.
+
+The fix is not a new key, because nothing is *missing* from the descriptor — the render simply is
+not a function of it. § A.4 conflates two questions that need two answers:
+
+| question | answered by | must be computable |
+|---|---|---|
+| "did I ask for the same thing?" | `pack_uuid`, derived from the descriptor | **before** the pack exists — that is what `debug uuid` is for |
+| "do I have the same bytes?" | a published content digest | only **from** the bytes |
+
+Replacing `pack_uuid` with a content hash is therefore the wrong fix: it answers the second
+question by destroying the ability to answer the first. Do both. The writer already streams a
+whole-file CRC-32 as it writes, so hashing during write is mechanically in place; what is missing
+is a strong digest exposed where a recipient can compare it **before** transferring tens of MB,
+and § A.4 saying what is true. Design this with `G7` — the verifiable prefix wants per-region
+integrity for the same reason — and note the detached signatures from the lost 0.7 branch are
+what close the attestation half.
+→ `rawtiles` (Appendix A + § A.4 wording) then `slippypack`. Stack on `B0`/`B1`; all three edit
+Appendix A. Done when: a recipient can check both directions, and neither promise overstates.
+**Medium, and cheap only while v0.x lets identity change.**
 
 ### Group C — The renderer, re-scoped (depends on B1)
 
@@ -237,21 +289,44 @@ measurement behind it, and boundary correctness is shown on a rendered seam, not
 ordinary anti-aliasing renderer at negligible byte cost, so no custom aliased rasteriser is
 needed. Small in code, and only meaningful once `C2` lands — palette-first is a property of
 the render, and `E6` showed a blit-time LUT cannot rescue an anti-aliased pack.
-→ `slippypack`, `feat/palette-snap-quantiser`, stacked on `C2`. **Small, high leverage.**
+
+**`E5` needs a precision, measured 2026-08-12: snapping recovers the palette-first *appearance*,
+not palette-first *determinism*.** Those were being treated as one property. Perturbing every
+pixel by one unit puts about **4.2 %** of them beside a quantiser decision boundary today and
+**1.0 %** under snap-to-declared-slots — four-fold better, not zero. So snapping does **not** fix
+`B3`'s nondeterminism; it moves the boundaries further apart, and when a pixel does flip the flip
+is larger, because declared slots sit further apart than adjacent ABGR2222 levels. Only output
+with no intermediate values — genuinely aliased rendering — removes the boundary, because then
+there is nothing to round. Do `C3` on its own merits; do not budget it as the determinism fix.
+→ `slippypack`, `feat/palette-snap-quantiser`, stacked on `C2`. **Small, high leverage — for
+appearance and bytes.**
 
 ### Group D — CLI ergonomics (independent, small, each its own branch)
 
-Ordered by leverage per line changed. `D1` alone materially speeds up the local workflow.
+Ordered by leverage per line changed. **`D1` is measured at 43× and belongs first.**
 
 **D1 — Don't rate-limit loopback.** Builds against a renderer on your own machine are
 throttled to the default non-OSM 4 req/s. Special-case `127.0.0.1`, `::1` and `localhost`
-to unlimited. **Trivial.**
+to unlimited. **Measured 2026-08-12: the Athens pack takes 172 s at the default rate and 4 s
+with the limit raised** — 687 tiles against a 4 req/s floor of 171.5 s, so **the limiter is
+essentially the entire build time and rendering is free beside it.** Every style iteration
+currently pays three minutes to look at an idea. **Trivial, and it is the highest
+leverage-per-line card on this board.**
 
 **D2 — `--tile-dim`.** `tile_dim_px` is hardcoded to 256 for URL-template builds. The
 cartography spec prescribes **128** (a 240×240 viewport can straddle four 256 px tiles =
 43 % of the GUI RAM budget on cache alone; nine 128 px tiles is 144 KiB). Expose the flag;
 **do not change the default** until the app's tile constants move with it, and say so in
-the flag's help. **Small — but note the app-side coupling.**
+the flag's help.
+
+**Add a cross-check while you are in here, because nothing verifies this field.** Measured
+2026-08-12: `tile_dim_px` is checked only for being greater than zero. Set it to 128 on a pack
+whose tile blobs are 65,536 bytes and the independent validator passes it and `inspect` repeats
+the false value back. For ABGR2222 the relation is exact — bytes per tile = `tile_dim_px²` at one
+byte per pixel — so this is a line of code. **The field this card is about to start changing is
+the one with no verification behind it, and it fails as garbage on the panel with drifting tile
+offsets, not as an error on a laptop.**
+→ **Small — but note the app-side coupling, and pair it with `D4`.**
 
 **D3 — `pmtiles` and `mbtiles` source kinds.** Already Phase 1.x. Include remote PMTiles
 via HTTP range reads, which removes a separate extract step from every local build.
@@ -261,13 +336,33 @@ via HTTP range reads, which removes a separate extract step from every local bui
 already the independent second opinion; wiring them to a subcommand removes "go clone
 rawtiles and build the C reader" from every validation. **Small.**
 
+Two corrections from 2026-08-12. **`spec-validator-cpp` is vendored in `slippypack` already** —
+`make`, a C++17 compiler, no libraries — so nobody ever needed to clone `rawtiles` for this; the
+cost is a `make` and a path, not a repo. And the validator has the blind spots `D2` names:
+`tile_dim_px` unchecked against tile size, and any non-zero `pack_uuid` accepted. A `verify`
+subcommand should close both rather than inherit them.
+
 **D5 — `slippypack estimate`.** Pure math, no network: tiles, bytes at the measured
 per-zoom compression ratios, and whether the result fits the device's budgets. Reframed
 from the PWA's API-quota guard to a flash-budget guard. **Small.**
 
-**D6 — Local-source freshness.** A local renderer sends no `Last-Modified`, so every local
-build warns and writes the zero sentinel. Accept `--timestamp now`, or derive from source
-mtime. **Trivial.**
+**D6 — Local-source freshness. *This card's premise was wrong, and the truth is worse.***
+It said: a local renderer sends no `Last-Modified`, so every local build warns and writes the
+zero sentinel; accept `--timestamp now` or derive from source mtime.
+
+Measured 2026-08-12: **tileserver-gl does send `Last-Modified`, and the value is the renderer
+process's start time.** So there is no warning, no sentinel, and the pack records that as its
+freshness — observed `build_timestamp` 2026-08-13T00:41:57Z on data whose actual OSM replication
+time was 2026-08-12T04:00:00Z. Restarting the container changes the claim. A pack now asserts
+freshness it does not have, silently, which is worse than the zero sentinel honestly saying
+"unknown".
+
+Both proposed fixes are also wrong: `now` records when someone ran a build and mtime records when
+a file was written, and § 4.10's field means *source-data* freshness. **The right value is
+already in the PMTiles metadata** — `planetiler:osm:osmosisreplicationtime` — and `--timestamp`
+already exists to carry it, documented as a "CI override". So this is derive-and-pass plus a
+warning when a source's `Last-Modified` cannot be trusted, not a new flag. **Trivial, and
+`build_timestamp` is not in the descriptor, so none of this moves `pack_uuid`.**
 
 **D7 — Canonical bbox.** The writer emits the *requested* bbox verbatim rather than
 § 4.9's canonical tile-coverage bbox. Harmless to readers, wrong for a writer claiming
@@ -292,14 +387,31 @@ files, and no absolute `N:/`-style volume path resolves from an app.
 → `una-sdk`, `feat/pack-deploy-tool`. Done when the corruption mode is unreachable through
 the tool. **Medium.**
 
-**E3 — Validate the power-user workflow end to end, and write it down.** The fastest way
-to find the real friction. Compliant by construction, because the renderer is yours:
-`pmtiles extract` a region from the Protomaps planet → serve raster locally (tileserver-gl
-is BSD-3 open source and unrelated to MapTiler's data terms) → `slippypack make --source
-'http://localhost:.../{z}/{x}/{y}.png'` (**`http://` is accepted**) → validate → deploy →
-view in the PoC app. Record what broke, and land the result as a runbook.
-→ `slippypack` or `una-sdk` `Docs/Investigations/`. Done when someone else can follow it
-without improvising. **Medium — and it will reorder Group D.**
+**E3 — Validate the power-user workflow end to end, and write it down. *Started 2026-08-12;
+L1–L4 done, L5–L6 open.*** Live in `Docs/Investigations/2026-08-12-map-e2e-run/`, with
+`RUNBOOK.md` as the reproducible instructions. Data extracted, tiles rendered, a 45 MiB Athens
+pack built and independently validated, all compliant by construction because the renderer is
+ours. It did reorder Group D, and it rewrote `C3`, `D1`, `D2`, `D4`, `D6`, `F1` and this card,
+and produced `B3`.
+
+**The one-line recipe below hid a prerequisite, so read it as corrected.** "Serve raster locally
+(tileserver-gl)" is not a step you can follow: pointed at a Protomaps archive the server starts,
+warns that the data is not `openmaptiles` format, serves **vector** happily and **404s every
+raster request**. It reads as working until you ask for a PNG. Rendering needs a style written for
+the Protomaps schema — its layers are `earth`, `landuse_park`, `roads_minor` — while the bundled
+style targets OpenMapTiles. **Cartography therefore stops being a later phase at exactly this
+point:** you cannot render without choosing a style, whether or not you meant to.
+
+Corrected chain: `pmtiles extract` a region from the Protomaps planet (2.3 MB and six seconds for
+Athens, against ~120 GB for the planet) → **build a schema-matched style and give the renderer its
+fonts** → serve raster locally (tileserver-gl is BSD-3 and unrelated to MapTiler's data terms) →
+`slippypack make --source 'http://localhost:.../{z}/{x}/{y}.png'` (**`http://` is accepted**;
+raise `--rate-per-sec` or pay `D1`'s 43×) → validate with the vendored `spec-validator-cpp` → deploy →
+view in the PoC app.
+→ `una-sdk` `Docs/Investigations/`, because the run terminates in deploy and the PoC app, which
+exist only there. Done when someone else can follow it without improvising — and **L5 and L6 are
+what remain**, L6 gated on the unresolved `MapPackTrustMarker.hpp` conflict in AthensRun.
+**Medium.**
 
 ### Group F — Product decisions (not code)
 
@@ -323,6 +435,15 @@ first**:
 
 Never, and enforced by `A2`: the OSM tile CDN, MapTiler Cloud, OpenMapTiles' pre-generated
 tilesets (the schema is fine), and the API-metered majors.
+
+**An axis this ranking could not see, found 2026-08-12: the choice carries a style bill.** The
+Protomaps basemap uses the Protomaps schema, so nothing off the shelf renders it — a
+schema-matched style has to be generated and its fonts supplied before a single raster tile
+exists. **OpenFreeMap, ranked second here, is OpenMapTiles-schema and would have rendered with
+tileserver-gl's bundled style and no style work at all.** Permission does not distinguish the two;
+tooling cost does, against the one ranked first. This does not overturn permission-first — it is a
+real cost that belongs in the decision, and it partly evaporates once the watch has its own
+cartography, since then the style is ours either way.
 → decision, recorded. Done when the picker's ordering and the docs both derive from it.
 
 **F2 — Catalog design.** Which regions, what sizes, how named, how indexed — and whether
@@ -366,7 +487,26 @@ simulation; per-frame cost unmeasured. Decides whether activity variants are fre
 
 **G7 — A verifiable prefix (`blkh`, change C2 of the adequacy report).** The format has no
 per-region integrity, so a chunked or resumable transfer has no integrity story. Blocks
-BLE transfer of anything large.
+BLE transfer of anything large. **Design with `B3`** — both are about identifying bytes rather
+than recipes, and `B3` found the second half of why this matters: a resumed transfer against a
+*rebuilt* pack will not stitch, because two builds of the same inputs are not byte-identical.
+
+**G8 — Is byte-reproducibility required at all? *New; forced by `B3`.*** Not a task — a decision,
+and it now blocks pricing the renderer question rather than the other way round. The renderer is
+nondeterministic by about one pixel per few hundred tiles, and `C3` was measured and does **not**
+fix it. Two honest positions:
+
+- **No.** While delivery is a whole-file USB copy, one pixel in 45 MiB costs nothing. `B3`'s
+  content digest plus § A.4 saying what is true make that safe and honest, and it is cheap.
+- **Yes,** in which case **aliased rendering is the requirement**, not snapping — and the order to
+  price it in is: a deterministic single-threaded CPU rasteriser (mapnik/AGG, or a
+  `tiny-skia`-class Rust stack, antialiasing off) **before** writing one ourselves. A rewrite buys
+  determinism *and* palette-first output natively *and* collapses most of `B1`/`B2`, but the bill
+  is label placement — collision, priority, along-line, continuity across seams — which is the
+  majority of the work and of what separates a professional map from a hobby one.
+
+The answer tracks the transfer story, not the map's appearance: harmless under USB, load-bearing
+the moment `G4`/`G7`/BLE become real. Decide it before anyone starts `C2`.
 
 ### Group H — Logged debt, cheap to clear
 
@@ -387,13 +527,20 @@ a prohibited source, and every other card's documentation quotes them. `A2` is h
 is larger than this board first carded it — `PLAN.md` leans on MapTiler structurally, not
 just in its first-run list, and the prompt scopes that.
 
-**Then `B0` + `B1` as one pass**, because they edit the same appendix and because `B1` is the
-card whose cost grows with delay: additive now, invalidating every issued `pack_uuid` later.
-`B0` also has a second clock on it — the analysis that specifies it is a year of context away
-from being hard to act on, and it has already been lost once.
+**Then `B0` + `B1` + `B3` as one pass**, because all three edit Appendix A and because their cost
+grows with delay: additive now, invalidating every issued `pack_uuid` later. `B0` also has a second
+clock on it — the analysis that specifies it is a year of context away from being hard to act on,
+and it has already been lost once.
 
-**Then `E3`**, because a validated end-to-end run will reorder Group D more reliably than
-this prompt's guesses about which friction matters.
+**`D1` before any of that if you are about to iterate on cartography.** It is trivial and measured
+at 43× on a local build; every style attempt currently pays three minutes to look at an idea.
+
+~~**Then `E3`**~~ — **`E3` is underway.** L1–L4 are done in
+`Docs/Investigations/2026-08-12-map-e2e-run/`; it has already reordered Group D and rewritten seven
+cards. What remains is L5 and L6, and L6 needs the AthensRun conflict resolved first.
+
+**And answer `G8` before anyone starts `C2`,** because whether the renderer must be deterministic
+decides what `C2` is even choosing between.
 
 ---
 
@@ -412,6 +559,15 @@ Verified; do not re-derive, and do not trust older documents that contradict the
 | "The pack can use RLE" | The vendored reader fails closed on RLE until its decoder lands, so build `--compression none` for now. This is a capacity feature, not a latency one — a 64 KiB tile read measured 7–9 ms on hardware |
 | "`pack_uuid` identifies the bytes" | **It does not.** `M1` fixed this on a branch that no longer exists, so both remotes still hold the defect: same UUID over 6.9× different bytes. Anything written after 2026-08-06 claiming otherwise describes lost work — see `B0` |
 | "The rawtiles spec is at 0.7" | Both remotes are at **v0.6** (`38d4d26`). Treat every 0.7 claim as a specification of intended work, not of shipped work |
+| "`tileserver-gl` renders a Protomaps archive" | Not out of the box. It warns, serves **vector**, and 404s raster until you supply a Protomaps-schema style and fonts — see `E3` |
+| "A local renderer sends no `Last-Modified`" | It sends one, and it is the **renderer's process start time**, recorded as the pack's freshness with no warning — see `D6` |
+| "Two builds of the same pack are byte-identical" | **They are not.** The renderer is nondeterministic by a pixel; the same inputs gave three distinct packs across five builds — see `B3` |
+| "Snap-to-slots will make the render deterministic" | Measured: exposure to a one-unit jitter drops from ~4.2 % of pixels to ~1.0 %. Four-fold, **not zero** — see `C3` |
+| "Pack size tells you something about content" | Uncompressed ABGR2222 is `tile_dim_px²` bytes per tile regardless of content. Two completely different maps over one bbox are the **same size to the byte** |
+| "A validated pack is a correct pack" | Validation proves well-formedness only. Change a pixel, repair the CRC, it passes — as it must |
+| "`tile_dim_px` is verified" | Checked for `> 0` and never against tile size. A pack claiming 128 px tiles full of 256 px ones validates clean — see `D2` |
+| "`pack_uuid` in the header is trustworthy" | Any non-zero value is accepted and echoed as identity by both readers. The bytes do not attest the UUID — see `B3` |
+| "Validating needs the `rawtiles` repo cloned" | `spec-validator-cpp` is vendored in `slippypack`: `make`, a C++17 compiler, no libraries |
 
 ---
 
