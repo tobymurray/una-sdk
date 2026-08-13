@@ -645,6 +645,83 @@ transflective panel in daylight that is a white screen with faint marks.
     have told anyone that, which is the strongest argument on this board for building `E1` before
     more of Group C or D.
 
+## Cartography — what the preview unblocks, and the one thing blocking it
+
+The panel preview settles that the cartography must be designed against the palette, and
+`MAP_CARTOGRAPHY_SPEC.md` **already does that** — § 3 spends 14 of 64 slots with exact bytes,
+roles and rules R1–R5, and § 2 is titled "Palette-first, and why quantise-after loses". So this
+run did not discover a gap in the spec; it demonstrated the spec's own argument end to end with a
+real pack. The remaining work is implementation.
+
+Measured against § 3, the stock-theme pack is wrong in exactly the predicted places:
+
+| feature | spec | this pack |
+|---|---|---|
+| ground | `paper` `0xFF` | `0xFF` — right by accident |
+| major road | `road_major` `0xC0`, L\* 23.7, **25 : 1** | `0xFF` — invisible at 1 : 1 |
+| minor road | `road_minor` `0xC1`, 10.7 : 1 | `0xFF` — invisible |
+| building | `building` `0xEA`, "context only" | `0xEF` — yellow |
+| park | `landuse` `0xEE` / `wood_lt` `0xDD` | `0xEA` — neutral grey |
+
+### Finding 18 — § 4's pixel weights and § 7's zoom ladder cannot both hold with `tile_dim = 128`
+
+§ 4 specifies line weights in pixels: major road **4 px**, roads floored at 2 px, text 11–12 px.
+§ 7 gives z14 = 6.75 m/px with 240 px spanning 1.6 km. **Those m/px figures are standard 256 px
+tile pixels** — verified, every row of § 7's table reproduces
+`156543.034 · cos 45° / 2^z` to two decimals. The same section then prescribes `tile_dim = 128`.
+
+At 128 px per tile each pixel covers twice the ground, so **`z@128` ≡ `(z−1)@256`**. Build the
+ladder as literally written — z12–16 at `tile_dim = 128` — and every zoom lands one level
+coarser than intended: z14 becomes 13.5 m/px, 240 px spans 3.2 km, and a 4 px "major road"
+covers 54 m of ground rather than 27.
+
+**The weights are not the problem — they are already `tile_dim`-independent.** They are panel
+pixels, and the panel is 240 × 240 whatever the tiles do. It is the *zoom numbers* that are
+`tile_dim`-dependent, and § 7 states them for 256.
+
+Restated on the invariant (m/px), so the ladder survives any `tile_dim` change:
+
+| m/px | 240 px spans | role | zoom @256 | zoom @128 |
+|---:|---:|---|---:|---:|
+| 54.05 | 12.97 km | region orientation | z11 | z12 |
+| 27.02 | 6.49 km | route overview | z12 | z13 |
+| 13.51 | 3.24 km | | z13 | z14 |
+| 6.76 | 1.62 km | **default running zoom** | z14 | z15 |
+| 3.38 | 0.81 km | | z15 | z16 |
+| 1.69 | 0.41 km | junction detail — **the floor** | z16 | **z17** |
+
+So at `tile_dim = 128` the ladder is **z12–z17**, and § 7's objection that "z17 is below the
+useful range … z16 is the floor" does not apply to it: that objection is about ground span, and
+z17@128 spans 405 m — identical to z16@256. It would apply to z18@128.
+
+Nothing else in the § 7 argument for 128 px is affected, and the RAM win is real: worst-case
+viewport coverage is four 256 px tiles (256 KiB) against nine 128 px tiles (**144 KiB**), and
+total pack bytes are unchanged, since four times the tiles at a quarter the size each is a wash.
+
+**A dependency this creates, which the board does not record:** if the ladder is 128 px, then
+iterating cartography at the correct pixel scale needs **`D2`** first, because `tile_dim_px` is
+hardcoded to 256 and there is no flag. Judging 4 px strokes at 256 px and shipping at 128 px
+would invalidate every judgement in § 4 — which § 4 itself already flags as the part most likely
+to change after a hardware legibility trial. Neither `E1` nor `C3` mentions needing `D2`.
+
+### The implementation order this implies
+
+1. **Settle the ladder in m/px** — the table above is the proposed restatement. Until it is
+   settled every line weight in § 4 is unfalsifiable, because "4 px" has no ground meaning
+   without a stated m/px.
+2. **`D2`** if the answer is 128 px — now a prerequisite, not an ergonomic nicety.
+3. **Write the palette-locked style**: Protomaps schema layers → the 14 slots, honouring R1–R5.
+   Mechanical given § 3. Note the spec's own warning — the `preview` sRGB column is *not* what
+   goes in a style file; the ABGR2222 byte is authoritative, so `road_major` is `#000000` in the
+   style and the panel renders it as roughly `#383838`.
+4. **Iterate on the fast loop** — render a viewport, quantise, look. Seconds per cycle, and it
+   needs neither a pack build nor slippypack. Only then rebuild a pack and re-run the panel
+   preview end to end.
+
+Labels are where this is won or lost. § 4 wants aliased 11–12 px text with a 1 px `halo` ring,
+and the renderer antialiases, so label edges will blend off-palette — which is where `C3` earns
+its keep, and the one part of § 4 that a laptop preview cannot settle on its own.
+
 ## L5 — Get it onto the watch
 
 **Hypothesis.** USB mass storage delivery works today, at an app-sandbox-relative path.

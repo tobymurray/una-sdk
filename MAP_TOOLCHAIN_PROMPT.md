@@ -319,6 +319,14 @@ cartography spec prescribes **128** (a 240×240 viewport can straddle four 256 p
 **do not change the default** until the app's tile constants move with it, and say so in
 the flag's help.
 
+**Promoted 2026-08-12: this is a prerequisite for cartography, not an ergonomic nicety.**
+`MAP_CARTOGRAPHY_SPEC.md` § 4 specifies line weights in panel pixels and § 7 prescribes
+`tile_dim = 128`, but § 7's m/px table is arithmetically 256 px-tile pixels — so `z@128` is one
+level coarser than the ladder intends, and judging a 4 px stroke at 256 px then shipping at 128 px
+invalidates every weight in § 4. Style iteration therefore needs this flag before it can produce a
+falsifiable judgement. **Settle the ladder in m/px first** — restatement and arithmetic in
+`Docs/Investigations/2026-08-12-map-e2e-run/`, finding 18; at 128 px the ladder is z12–z17.
+
 **Add a cross-check while you are in here, because nothing verifies this field.** Measured
 2026-08-12: `tile_dim_px` is checked only for being greater than zero. Set it to 128 on a pack
 whose tile blobs are 65,536 bytes and the independent validator passes it and `inspect` repeats
@@ -370,14 +378,25 @@ reproducibility. Logged spin-off **S4**. **Small.**
 
 ### Group E — The tools that are not slippypack
 
-**E1 — A panel preview.** Render a pack region to a 240×240 PNG through the real ABGR2222
+**E1 — A panel preview. *A working minimal one exists as of 2026-08-12; re-scope this card to
+productionising it.*** Render a pack region to a 240×240 PNG through the real ABGR2222
 palette, optionally through the four activity LUTs. The panel has **only three of 64 codes
 below L\* 40 and no neutral dark grey between L\* 23.7 and L\* 66.5** — style iteration
 against that without a preview is guesswork, and the watch round-trip is minutes per
 attempt. Highest-value new surface for cartography, and it needs no hardware.
-→ decide the seam: a `slippypack preview` subcommand (it already owns the quantiser) that
-must **not** pull in the renderer dependency, or a separate tool. Done when a style change
-is judgeable on a laptop. **Medium.**
+
+**The seam question this card spends its length on dissolves: a preview needs no renderer
+dependency at all.** `Docs/Investigations/2026-08-12-map-e2e-run/scripts/panel_preview.py` decodes
+tiles straight out of a finished pack, composes the viewport and writes it — a short script, no
+slippypack code, no renderer. So `slippypack preview` is viable without the dependency the card
+feared. What remains is productionising: the activity LUTs, a `--zoom`/`--centre` interface, and
+RLE once a decoder exists.
+
+**And it paid for itself immediately.** L1–L4 all passed, the pack validates, and the preview
+showed the map is a **white screen with faint marks** — roads gone, buildings yellow, ~94 % of the
+viewport above L\* 93. Nothing upstream of a rendered preview would have revealed that. This is
+the strongest argument on the board for doing `E1` before more of Group C or D.
+→ Done when a style change is judgeable on a laptop — **which it now is.** **Small, from here.**
 
 **E2 — A deploy command.** One invocation that finds the mounted watch volume, **refuses
 while BLE sync is active**, copies to the app-sandbox-relative path, byte-verifies, and
