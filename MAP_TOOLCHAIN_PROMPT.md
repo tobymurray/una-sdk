@@ -105,6 +105,12 @@ must-fix items M1–M8, E1's identity defect, and § 11's change list. **Read
 list no longer exists on any remote, so § 11 is a set of instructions again rather than a
 description of something landed. Card `B0` exists because of this.
 
+**Prior art: `Docs/Research/2026-08-13-watch-cartography-prior-art.md` on the `research` branch**
+(commit `74d8327a`). Read it before any further cartography work. Several cards below were derived
+by photographing a watch and turn out to have published names, numbers and standards — OSM Carto
+shipped this board's zoom-selection fix in 2015 with thresholds, and IHO S-52 settles two things
+treated here as open questions. It also flags where *not* to trust the literature.
+
 **And `Docs/Investigations/2026-08-12-map-e2e-run/` — the only document here written from
 running the thing rather than reading about it.** Card `E3`'s links L1–L4 are done: data
 downloaded, tiles rendered, a validated 45 MiB Athens pack built, all by a compliant route.
@@ -413,6 +419,34 @@ viewport above L\* 93. Nothing upstream of a rendered preview would have reveale
 the strongest argument on the board for doing `E1` before more of Group C or D.
 → Done when a style change is judgeable on a laptop — **which it now is.** **Small, from here.**
 
+**E4 — Carry labels as data, not pixels. *New; the highest-leverage architectural change on this
+board.*** Today a label is baked into the tile. Three separate problems all resolve to the same
+change, and none of them resolves without it:
+
+- **Course-up orientation.** The app is north-up today (`TrackFaceMap::update` takes centre, zoom and
+  fix — no heading), but a running watch plausibly wants direction-of-travel up. **A label baked into
+  a tile rotates with the tile**, so IHO S-52's "symbols and text should always be drawn screen-up"
+  becomes unsatisfiable offline at any price. The upright-label algorithms do not rescue a
+  pre-rendered pack: they assume a live renderer that knows the current heading.
+- **Boundary/orbital labelling**, which the prior-art report recommends as the strongest available
+  reframing, anchors labels to the *screen* while the map pans beneath — so they cannot be baked
+  either, whatever the orientation.
+- **S-52 § 3.4.3 chrome placement** (see `E5`), which needs the app to own text placement.
+
+→ A label section in the `.rawtiles` extension mechanism carrying position, text and class, drawn
+on-device at draw time. Note the frequent claim that the device has no font engine is wrong as
+stated — there is none for *map* text, but the app already renders UI text and draws the GPS trace
+over the blit. Done when a pack's labels stay upright while the map rotates. **Medium-large, and it
+gates the cartography work that follows it.**
+
+**E5 — Move the status overlay off the chart. *New; a settled requirement, not a design question.***
+`Acquiring GPS …` sits across the lower third of the live map for the whole fix-acquisition window —
+the first minute of every run. IHO S-52 § 3.4.3 requires the text panel **outside** the reserved
+chart area, permitting overlays only when temporary, drawn in dedicated UI colours, and
+user-relocatable. This one is none of those, and it also collides with map labels because two text
+systems share a framebuffer with nothing arbitrating.
+→ `una-sdk`, app-side. **Small, and it is currently defeating the map face it sits on.**
+
 **E2 — A deploy command.** One invocation that finds the mounted watch volume, **refuses
 while BLE sync is active**, copies to the app-sandbox-relative path, byte-verifies, and
 tells you to eject. This encodes two traps as code instead of tribal knowledge: USB-MSC
@@ -532,6 +566,10 @@ fix it. Two honest positions:
 
 - **No.** While delivery is a whole-file USB copy, one pixel in 45 MiB costs nothing. `B3`'s
   content digest plus § A.4 saying what is true make that safe and honest, and it is cheap.
+  **But the prior-art report argues the "yes" branch is cheaper than assumed:** because tiles are
+  pre-rendered offline rather than drawn live, byte-reproducibility is *achievable* rather than only
+  mitigable, and one-pixel instability is a regulated defect class in the display standards this
+  board is now borrowing from. Re-price before answering.
   **This branch got cheaper 2026-08-12:** a palette-first style cuts the *exposure surface*
   tenfold (4.16 % → 0.42 % of pixels beside a decision boundary) for free, as a side effect of
   cartography work that has to happen anyway.
@@ -600,6 +638,10 @@ Verified; do not re-derive, and do not trust older documents that contradict the
 | "A local renderer sends no `Last-Modified`" | It sends one, and it is the **renderer's process start time**, recorded as the pack's freshness with no warning — see `D6` |
 | "Two builds of the same pack are byte-identical" | **They are not.** The renderer is nondeterministic by a pixel; the same inputs gave three distinct packs across five builds — see `B3` |
 | "Snap-to-slots will make the render deterministic" | It will not, and its effect on exposure **reverses** once the style is palette-first (0.42 % → 0.77 %, i.e. worse) — see `C3` |
+| "Rotated map labels are unreadable, so along-line placement is out" | Rotation costs little *perceptually* (±45° is not significantly slower than upright). The cost is the **glyph matrix** — ~1.5× the upright one — so along-line labels are priced, not prohibited. See the prior-art report |
+| "Per-feature perpendicular label offset can't be expressed" | It is a mandated standard (S-52 § 3.1.6, screen-up always) with a studied algorithm. It belongs in a renderer, not a style sheet — and under course-up, in the *app*, not the pack. See `E4` |
+| "The map is north-up, so baked labels are fine" | True **today** — there is no heading in the map face. The moment course-up is wanted, every baked label rotates with its tile and no offline fix exists. See `E4` |
+| "Per-zoom feature thresholds have to be found by experiment" | OSM Carto published theirs in 2015: residential z10→z13, unclassified z10→z11. Start there and shift for this pitch |
 | "Low quantiser exposure means reproducible builds" | Exposure counts pixels that *could* flip. A tenfold cut in it changed the build-to-build divergence **not at all** — the jitter is localised to the few antialiased pixels that remain exposed. See `G8` |
 | "Pack size tells you something about content" | Uncompressed ABGR2222 is `tile_dim_px²` bytes per tile regardless of content. Two completely different maps over one bbox are the **same size to the byte** |
 | "A validated pack is a correct pack" | Validation proves well-formedness only. Change a pixel, repair the CRC, it passes — as it must |

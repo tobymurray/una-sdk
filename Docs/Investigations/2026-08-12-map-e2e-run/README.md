@@ -1176,6 +1176,68 @@ and against § 4's own 1:1-render evidence.
     for association and the trade is visible; the next attempt should try along-line placement with
     upright text, which keeps association without arbitrary rotation.
 
+### Prior art — what the literature already settled, and what it overturns
+
+A prior-art search ran against this investigation's findings; the report is on the `research`
+branch, `Docs/Research/2026-08-13-watch-cartography-prior-art.md` (commit `74d8327a`). Read it
+before any further style work. The short version, and the corrections it forces:
+
+**Several findings here have names and published numbers.** Finding 1's U-shape fix is
+*cartographic generalization* — selection, specifically — and **OSM Carto shipped the same change in
+2015** (PR #1682) with thresholds: residential z10→z13, unclassified z10→z11. Findings 3, 4 and 9
+are likewise re-derivations of non-ordered visual variables, S-52's background-first colour-token
+method, and FAA HFDS's colour-fringe clause. This section exists so the next person starts from
+those numbers rather than from photographs.
+
+38. **Finding 5 was wrong twice, and the first half reopens a decision v4 already made.** It merged
+    two separable effects. *Rotation* costs little perceptually — reading times at ±45° are not
+    significantly different from upright, and even 90° costs about a quarter for short words. The
+    real cost is the **glyph matrix**: FAA HFDS asks ≥ 8 × 11 px and preferably 15 × 21 for
+    non-vertical characters, against 9 × 13 upright. So along-line labels are **priced, not
+    prohibited** — roughly 1.5× the glyph matrix plus a bearing limit — and v4 abandoned them on a
+    misdiagnosis. The same matrix argument explains finding 28 better than angular size did:
+    11–12 px is unreadable here because at 9 × 13 the glyph is *no longer being formed*, not because
+    it is small.
+39. **The overlay is not a collision to arbitrate, it is a prohibited placement.** IHO S-52 § 3.4.3
+    requires the text panel to sit **outside** the reserved chart area, permitting overlays only if
+    temporary, drawn in dedicated UI colours, and user-relocatable. `Acquiring GPS …` is none of
+    those. Finding 32 and finding 36 both collapse into "move it off the chart", which is a settled
+    requirement rather than an open design question.
+40. **Course-up orientation, if it is ever adopted, makes baked labels unsalvageable — and that
+    changes the architecture, not the style.** The app is **north-up today**: `TrackFaceMap::update`
+    takes centre, zoom and fix, and there is no heading anywhere in the map face. But a running watch
+    plausibly wants direction-of-travel up, and **a label baked into a tile rotates with the tile**.
+    Under course-up, S-52's "always screen-up" is not satisfiable offline at any price, and the
+    upright-label literature does not rescue it — those algorithms assume a *live* renderer that
+    knows the current heading, which a pre-rendered pack by definition does not.
+
+    The way out is the same one the report's strongest reframing needs anyway: **carry labels as
+    data, not pixels** — position, text and class in a pack extension section — and draw them on the
+    device, upright, at draw time. Note the brief's claim that there is "no font engine on the
+    device" is wrong as stated: there is none for *map* text, but the app already renders UI text and
+    draws the GPS trace over the blit, so the capability exists.
+
+    **Orbital boundary labelling requires exactly the same thing, independent of rotation**, because
+    a ring of labels is anchored to the *screen* while the map pans beneath it. So labels-as-data is
+    the common prerequisite for (a) the reframing the prior-art report recommends, (b) any future
+    course-up mode, and (c) S-52 compliance on chrome. That makes it the highest-leverage
+    architectural change available, and it is a format question — `.rawtiles` is blit-ready raster
+    with an extension mechanism, so a label section is the natural home.
+
+41. **`G8` gets easier, not harder.** Because tiles are pre-rendered offline, byte-reproducibility is
+    *achievable* rather than merely mitigable — the report's point, and it reframes that open
+    question from "decide whether we need it" toward "decide whether to buy it."
+
+**Where not to believe the literature:** its null result on grid-fitting came from displays with
+antialiasing enabled, none as coarse as this panel. Open question 4 — aliased versus antialiased
+text at 126 µm on 64 colours — sits outside every tested space and is cheap to settle here, since
+text is baked offline.
+
+**Vendor practice is confirmed closed.** Garmin, Suunto, Coros and Wahoo publish nothing
+substantive; Garmin's 64-colour palette is community-enumerated. That thread also independently
+corroborates finding 29: a device snapshot "looks the same as the simulator, it doesn't look the
+same to the human eye."
+
 ---
 
 ## Exit criteria
