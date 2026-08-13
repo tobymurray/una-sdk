@@ -55,22 +55,33 @@ the consequence of that one sentence.
 
 | repo | role | local |
 |---|---|---|
-| `una-sdk` | the watch SDK, the PoC app, deploy | `~/git/una-sdk` |
-| `slippypack` | the pack writer (Rust CLI + core, PWA later) | `~/git/slippypack` |
-| `rawtiles` | the byte format spec + conformance corpus | clone as needed |
+| `una-sdk` | the watch SDK, the PoC app, deploy | `~/git/cpp/una-sdk` |
+| `slippypack` | the pack writer (Rust CLI + core, PWA later) | `~/git/rust/slippypack` |
+| `rawtiles` | the byte format spec + conformance corpus | no clone on this machine; `git clone http://nas:3000/toby/rawtiles.git` |
+
+**The local `slippypack` clone is behind.** It sits on `main` @ `1f9132d` ("docs: drop
+Tier-1/Tier-2 vocabulary"), which is spec-0.5-era, and it did not have
+`map-delivery-workflow` fetched at all until 2026-08-12. `main` matches both remotes, so
+nothing is lost — but `git fetch` before reading anything, and do not assume the worktree
+reflects the branch the audit was written on.
 
 **The Gitea at `nas:3000` is authoritative; the GitHub copies of `slippypack` and `rawtiles`
-are downstream mirrors of it.** Verified reachable 2026-08-12. Push to the Gitea and confirm
-with `git ls-remote` afterwards — a branch pushed only to GitHub can be removed by a sync
-from the authoritative side, and **that has already happened once**: see
-`Docs/External/rawtiles/README.md`. Never force-push blind on a shared branch either; other
-sessions push to these.
+are downstream mirrors of it.** Both re-verified 2026-08-12: `slippypack` matches GitHub
+commit-for-commit on `main` and `map-delivery-workflow` (`b8d5464`); `rawtiles` is `main` @
+`38d4d26` and nothing else. **The Gitea speaks HTTP on port 3000, not SSH** —
+`git ls-remote http://nas:3000/toby/<repo>.git` works, `ssh://nas:3000/…` is refused by the
+listener. Push to the Gitea and confirm with `ls-remote` afterwards — a branch pushed only to
+GitHub can be removed by a sync from the authoritative side, and **that has already happened
+once**: see `Docs/External/rawtiles/README.md`. Never force-push blind on a shared branch
+either; other sessions push to these.
 
 ---
 
 ## 1. Where the truth lives — read before deciding anything
 
-On `slippypack`, branch **`map-delivery-workflow`** (head `b8d5464`, unmerged):
+On `slippypack`, branch **`map-delivery-workflow`** (head `b8d5464`, unmerged — `git fetch
+origin map-delivery-workflow` first; see the clone caveat above). The proxied copies under
+`Docs/External/slippypack/docs/` in this repo are the same content and are the durable ones:
 
 - `MAP_DELIVERY_WORKFLOW.md` — candidate scoring W-A…W-H, the recommendation, sequencing,
   risks R1–R*, spin-offs S1–S6, charter experiments X1–X7 with what was cut.
@@ -80,9 +91,12 @@ On `slippypack`, branch **`map-delivery-workflow`** (head `b8d5464`, unmerged):
   quantise pipeline, activity LUTs.
 - `Docs/Investigations/2026-08-07-watch-cartography/` — E1–E7 plus the retrieved terms as
   committed HTML, so every quote is checkable.
-- `MAP_END_USER_PATH.md` — **uncommitted in the worktree as of 2026-08-12.** Commit it
-  there or fold it in; § 3's ranking is reproduced in card `F1` below so this board does
-  not depend on it surviving.
+- `MAP_END_USER_PATH.md` — **it survives only as the proxy in this repo.** Checked
+  2026-08-12: not in `origin/map-delivery-workflow`'s tree, not in the local worktree
+  (which is clean, on old `main`). Whatever worktree held it uncommitted is gone. The copy
+  at `Docs/External/slippypack/docs/MAP_END_USER_PATH.md` is now the original; commit it to
+  `slippypack` from there if that repo should carry it. § 3's ranking is also reproduced in
+  card `F1` below, which is why the board did not depend on it.
 - `PLAN.md` — phasing. Parts of it predate the audit; see `A1` and `C1`.
 
 On `una-sdk` (repo root): `RAWTILES_SPEC_ADEQUACY.md` — the v0.6 grading, needs matrix,
@@ -118,6 +132,11 @@ rough and deliberately coarse.
 Everything user-facing quotes these, and right now the tool's own documentation recommends
 a source whose terms forbid the tool's only use case.
 
+**`A1` and `A2` have a worked prompt: `MAP_SOURCE_COMPLIANCE_PROMPT.md`** (this repo root).
+It carries the appendix citations, the `PLAN.md` line references, the choke point in the CLI
+source, and the four decisions the cards leave open. Start there rather than from the two
+paragraphs below.
+
 **A1 — Strip the prohibited default from `PLAN.md`.** `PLAN.md`'s first-run flow lists
 sources "in order of expected friction" with **MapTiler first, Stadia second**; MapTiler
 Cloud's terms prohibit this product outright and Stadia reaches only a client-side
@@ -125,7 +144,9 @@ workflow. Replace the ordering with `F1`'s. Add a compliance note to `slippypack
 --source`'s help. This is logged spin-off **S2**.
 → `slippypack`, `fix/source-compliance-defaults`. Done when: no permitted-source claim in
 the repo rests on a source the appendix does not permit, and `--source --help` says which
-hosts are refused and why. **Small.**
+hosts are refused and why. **Small–medium** — "replace the ordering" undersells it; the
+worked config example, the attribution defaults, the quota threshold and the stated cost
+model all name MapTiler Cloud as well.
 
 **A2 — Refuse the prohibited hosts in code, not prose.** A URL-template box that accepts
 `tile.openstreetmap.org/{z}/{x}/{y}.png` and prints a warning is still a tool for
@@ -361,8 +382,10 @@ constrains UI design well beyond maps.
 
 ## 4. If you are picking one thing
 
-**A1 + A2 together.** They are hours, they stop the tool recommending a prohibited source,
-and every other card's documentation quotes them.
+**A1 + A2 together**, via `MAP_SOURCE_COMPLIANCE_PROMPT.md`. They stop the tool recommending
+a prohibited source, and every other card's documentation quotes them. `A2` is hours; `A1`
+is larger than this board first carded it — `PLAN.md` leans on MapTiler structurally, not
+just in its first-run list, and the prompt scopes that.
 
 **Then `B0` + `B1` as one pass**, because they edit the same appendix and because `B1` is the
 card whose cost grows with delay: additive now, invalidating every issued `pack_uuid` later.

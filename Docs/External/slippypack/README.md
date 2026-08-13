@@ -6,8 +6,11 @@ Gitea instance at `nas:3000` that is not always reachable. A branch pushed to th
 be clobbered by a sync from the authoritative side, so content that lives only there is not
 safely stored. `una-sdk`'s `origin` is a normal fork and is durable, so it acts as the proxy.
 
-**Copied 2026-08-12** from `~/git/slippypack`, which at that moment matched its own origin
-exactly on both refs:
+**Copied 2026-08-12** from the local clone — which is at `~/git/rust/slippypack`, not
+`~/git/slippypack` — whose `main` matches its origin. Note that clone is **behind**: it sits
+on `main` @ `1f9132d` and did not have `map-delivery-workflow` fetched at all. The refs below
+were read from the remotes, and re-verified against both the GitHub mirror and the Gitea on
+2026-08-12:
 
 | ref | commit |
 |---|---|
@@ -43,19 +46,33 @@ verbatim quote can be checked against what was served on 2026-08-07 rather than 
 a page says today. This is the least reproducible thing in the directory: terms change
 silently and without versioning.
 
-## `MAP_END_USER_PATH.md` was uncommitted upstream
+## `MAP_END_USER_PATH.md` exists only here — confirmed
 
-At copy time that file was untracked in the `slippypack` worktree — it existed in no
-repository at all. **This copy is currently its only stored version.** If `slippypack`
-becomes authoritative again, commit it there.
+At copy time that file was untracked in the `slippypack` worktree, so it existed in no
+repository at all. **Re-checked 2026-08-12, and it is worse than "uncommitted":** the file is
+not in `origin/map-delivery-workflow`'s tree, not in the Gitea's copy of that branch, and not
+in the local worktree — which is clean, on old `main`. Whatever worktree held it is gone.
+
+**This copy is the original, not a copy.** It is not recoverable from `slippypack` at all, so
+treat it as first-class content of *this* repository. Committing it back to `slippypack` is
+now a publish, not a sync.
+
+The proxy is what saved it. This is the same failure that took `rawtiles`'
+`spec-0.7-adequacy-fixes` — work that existed in exactly one place, which turned out not to
+be a place that keeps things — caught here only because copying it out happened first.
 
 ## Not covered by this proxy
 
-The **`rawtiles`** repository has the same exposure and is *not* proxied here: it is not
-cloned on this machine, and its `spec-0.7-adequacy-fixes` branch — the Appendix A identity
-fix, the first canonical RLE encoder, and the widened corpus — exists only on the same mirror
-plus the unreachable Gitea. That is the largest unprotected body of work in this effort, and
-unlike the crates it is *not* easily reproducible. Worth handling separately.
+The **`rawtiles`** repository had the same exposure and the exposure already cost something:
+its `spec-0.7-adequacy-fixes` branch — the Appendix A identity fix, the first canonical RLE
+encoder, the widened corpus — **is gone from every remote and from this machine.** The loss
+record and the rebuild recipe are in `Docs/External/rawtiles/README.md`; the board tracks the
+redo as card `B0`.
+
+A correction to what this section used to say: the Gitea is **not** unreachable. Verified
+2026-08-12 over HTTP — `git ls-remote http://nas:3000/toby/rawtiles.git` answers, and reports
+`main` @ `38d4d26` and nothing else. It listens for HTTP on 3000, not SSH, which is probably
+why it read as down. The branch was never pushed there; it went to the mirror only.
 
 ## Keeping this current
 
