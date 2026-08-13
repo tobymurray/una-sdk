@@ -1111,9 +1111,36 @@ that does not work.
     fix-acquisition window — which is exactly the first minute of a run, when a runner is checking
     where they are going. App-side rather than cartography, but it defeats the map face regardless.
 
----
+### Style v4 — built against the trial, and what it traded
 
-## Exit criteria
+`scripts/gen-watch-style-v4.js`. One idea: legibility is U-shaped, so **make the wide zooms a
+skeleton and let detail arrive where there is room for it.** Minor roads, paths and building fills
+are withheld below `DETAIL_Z = 15`; majors, water, area fills and place names stay at every zoom.
+Labels become horizontal, offset off the line, 22 px for roads and 26 px for places, and only
+major roads are named. (`scripts/gen-watch-style-v3.js` is the previous full-detail version, kept
+because it is the A/B partner — v3 is what the panel found unreadable at z13/z14.)
+
+Measured, not judged: at z14 the off-palette code count halves, 17 → 8, and
+`images/panel_v3_vs_v4_z14.png` shows the difference — texture becomes a black major-road grid on
+paper with green blocks and one large place name.
+
+**Two things it trades, which the next trial should look at rather than assume:**
+
+33. **The skeleton hides the street you are standing on.** Below z15 a runner on a residential
+    street now sees no street — only the arterial grid. That is the direct cost of finding 30's
+    fix, and whether it is the right trade is a product judgement nobody has made yet: a shape map
+    you can place yourself on beats a detailed one you cannot read, but only if the shape includes
+    something near you. `PLAUSIBLE` that z15 is the right boundary; what would settle it is running
+    a route on minor roads and seeing whether the z14 view is still orienting.
+34. **Horizontal labels rasterise better and associate worse.** `symbol-placement: point` anchors
+    at the line's midpoint and draws the text centred, so on a north–south road half the label
+    drifts over the adjacent block and the reader cannot tell which line it names —
+    `images/panel_v4_z16_label.png`. The vertical `text-offset` only clears the line for
+    east–west roads. Garmin offsets *perpendicular* to the line and stays adjacent, which is
+    presumably why its labels read as belonging to something. Fixing this properly needs
+    per-feature offset direction, which a static style cannot express — so it is either
+    `symbol-placement: line` with upright text, or accepting the ambiguity, or a renderer that can
+    do it.
 
 The card's bar is: **someone else can follow this without improvising.** Concretely, this
 investigation is done when
