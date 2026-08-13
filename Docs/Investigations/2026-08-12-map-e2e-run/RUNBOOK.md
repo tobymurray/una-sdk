@@ -151,18 +151,121 @@ the rest of this workflow does not apply.
 
 ---
 
-## Step 6 onward — **not yet verified. Stop here.**
+## Step 6 — Build a style for your renderer
+
+**Do not skip this and just point tileserver-gl at the file.** It will start, log
+`WARN: PMTiles not in "openmaptiles" format. Serving raw data only...`, serve vector tiles
+happily, and return **404 for every raster tile**. It looks like it is working. It is not
+rendering.
+
+The reason: tileserver-gl ships a style for the *OpenMapTiles* schema, and the Protomaps
+basemap uses a different one. Rendering needs a style written for Protomaps.
+
+```sh
+cd /tmp
+mkdir -p styleboot && cd styleboot
+npm install protomaps-themes-base@^4      # 4.5.0 was used here
+```
+
+Copy `scripts/gen-protomaps-style.js` (beside this runbook) into that directory, then:
+
+```sh
+mkdir -p ~/maps/styles/watch
+node gen-protomaps-style.js light ~/maps/styles/watch/style.json
+# expect: theme=light layers=68 font-stacks-remapped=11
+```
+
+Two things that script does which you must not drop:
+
+- It passes the theme **object** (`namedTheme('light')`), not the string `'light'`. Passing the
+  string silently produces `null` colours, and tileserver-gl then rejects the style with
+  `layers[2].paint.fill-color[2]: Expected color but found null instead` — an error that points
+  nowhere near the cause.
+- It rewrites every `text-font` to `Noto Sans Regular`. That is the **only** font stack in the
+  image; any other stack means those labels silently do not draw.
+
+## Step 7 — Give the renderer its fonts and config
+
+The fonts live inside the image, so copy them out into the directory you mount:
+
+```sh
+docker rm -f tsgl 2>/dev/null
+docker run -d -p 8081:8080 -v ~/maps:/data --name tsgl \
+  maptiler/tileserver-gl:latest --file /data/athens.pmtiles
+sleep 10
+mkdir -p ~/maps/fonts
+docker cp 'tsgl:/usr/src/app/node_modules/tileserver-gl-styles/fonts/Noto Sans Regular' ~/maps/fonts/
+docker rm -f tsgl
+```
+
+Copy `scripts/tileserver-config.json` (beside this runbook) to `~/maps/config.json`. Your
+`~/maps` should now look like:
+
+```
+~/maps/
+├── athens.pmtiles
+├── config.json
+├── fonts/Noto Sans Regular/*.pbf
+└── styles/watch/style.json
+```
+
+## Step 8 — Start the renderer and fetch a raster tile
+
+Port 8080 was taken on the machine this was written on, so everything here uses **8081** on the
+host. Change it if you like; keep the container side at 8080.
+
+```sh
+docker run -d -p 8081:8080 -v ~/maps:/data --name tsgl \
+  maptiler/tileserver-gl:latest -c /data/config.json
+sleep 15
+docker logs tsgl | grep -i "not a valid"   # expect: no output
+curl -sS http://localhost:8081/styles.json
+# expect: one style, "name": "protomaps-light", "id": "watch"
+```
+
+If `docker logs` prints `is not a valid style file`, fix the style before going further — the
+server keeps running with **no styles loaded**, which fails as a 404 later and looks unrelated.
+
+Now the tile that proves it:
+
+```sh
+curl -o ~/maps/athens_z14_render.png \
+  http://localhost:8081/styles/watch/14/4735/5917.png
+file ~/maps/athens_z14_render.png
+# expect: PNG image data, 256 x 256, 8-bit/color RGBA
+```
+
+Open it. You should see the village of Athens with roads, buildings, green space and the label
+"Athens" — compare against `images/athens_z14_render.png` beside this runbook. If your PNG is a
+uniform colour, the style loaded but matched no data: check that the style's source name matches
+the `data` key in `config.json`.
+
+To find the tile numbers for your own area at a given zoom:
+
+```sh
+python3 -c "
+import math; lat,lon,z = 44.6259,-75.9523,14
+n=2**z; lr=math.radians(lat)
+print(int((lon+180)/360*n), int((1-math.log(math.tan(lr)+1/math.cos(lr))/math.pi)/2*n))"
+```
+
+Note the map you get is the stock Protomaps *light* theme: pale, thin, and designed for a phone
+screen. It is deliberately not the watch cartography — that is a separate piece of work
+(`MAP_CARTOGRAPHY_SPEC.md`). It is good enough to prove the pipeline.
+
+---
+
+## Step 9 onward — **not yet verified. Stop here.**
 
 Everything above was run end to end. What follows has not been, so it is not written as
-instructions yet — see the investigation README's L2–L6 sections for the hypotheses and the
+instructions yet — see the investigation README's L3–L6 sections for the hypotheses and the
 known traps.
 
 In outline, so you know where you are:
 
 | next | what happens |
 |---|---|
-| L2 | run tileserver-gl against `athens.pmtiles`; confirm a raster tile renders in a browser |
-| L3 | `slippypack make --source 'http://localhost:…/{z}/{x}/{y}.png'` → a `.rawtiles` pack. Needs `--compression none` |
+| L3 | `slippypack make --source 'http://localhost:8081/styles/watch/{z}/{x}/{y}.png'` → a `.rawtiles` pack. Needs `--compression none` |
 | L4 | validate the pack with an independent reader (`spec-validator-cpp`) |
 | L5 | copy to the watch over USB mass storage — **never while BLE sync is running**, or you will corrupt the partition |
 | L6 | open it in the AthensRun app on the watch |

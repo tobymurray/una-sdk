@@ -142,9 +142,85 @@ no key, and no third-party request path. It is BSD-3 and unrelated to MapTiler's
 before involving slippypack. Record the style used and its provenance — the style is a render
 input and `MAP_CARTOGRAPHY_SPEC.md` has opinions the default style will not satisfy.
 
-**Log.**
+**Log.** `maptiler/tileserver-gl:latest`, digest
+`sha256:3a9ccdb24820b6814c8119bcc8a4376c39867cb0ffe69d62919ef898b90c2427`, reporting
+**tileserver-gl v5.6.0**. Port 8080 was already occupied on this machine, so 8081 throughout.
 
-**Verdict.**
+Pointed straight at the extract, it refuses to render anything:
+
+```
+$ docker run -d -p 8081:8080 -v /home/toby/maps:/data --name tsgl \
+    maptiler/tileserver-gl:latest --file /data/athens.pmtiles
+WARN: PMTiles not in "openmaptiles" format. Serving raw data only...
+"styles": {}
+```
+
+`GET /styles.json` → `[]`. A raster request 404s. The vector path is fine —
+`/data/pmtiles/14/4735/5917.pbf` returns 7,906 B, z12 12,441 B, z15 11,871 B — so the failure
+is precisely "no style", not "no data". (An earlier 204 was my own wrong tile coordinate, not a
+gap in the extract.)
+
+Getting to raster took three fixes, each of which is a finding below:
+
+1. a style for the **Protomaps** schema, generated with `protomaps-themes-base` 4.5.0 —
+   `scripts/gen-protomaps-style.js`;
+2. every `text-font` remapped to `Noto Sans Regular`, the only stack in the image;
+3. the theme passed as an **object**, not a name.
+
+With `scripts/tileserver-config.json` and fonts copied out of the image to `~/maps/fonts/`:
+
+```
+$ docker run -d -p 8081:8080 -v /home/toby/maps:/data --name tsgl \
+    maptiler/tileserver-gl:latest -c /data/config.json
+$ curl -o athens_z14_render.png http://localhost:8081/styles/watch/14/4735/5917.png
+HTTP 200  20,179 B  image/png   → PNG 256 × 256, 8-bit RGBA
+```
+
+| tile | rendered |
+|---|---|
+| z12 `1183/1479` | `images/athens_z12_render.png`, 29,688 B |
+| z14 `4735/5917` | `images/athens_z14_render.png`, 20,179 B (SHA-256 `975441aadacbeee1…`) |
+| z16 `18941/23673` | `images/athens_z16_render.png`, 31,591 B — **overzoomed from z15 data** |
+
+**Verdict. Raster renders, but tileserver-gl is not a turnkey step for this source, and the
+card reads as though it were.** `CONFIRMED`: a legible map of Athens with road, street and
+place labels, from a renderer on this machine, with no account and no third-party request in
+the path. The z16 overzoom hypothesis from L1 is `CONFIRMED` as well — z16 is crisp, with
+labels re-placed rather than scaled, because vector geometry rescales cleanly. What z16 does
+*not* gain is features absent from z15 data.
+
+The style shipped here is the stock Protomaps **light** theme, and it is obviously wrong for
+the panel: pale grey on white, hairline roads, small labels. That is expected, not a defect —
+it is what `MAP_CARTOGRAPHY_SPEC.md` exists to replace. L3 can proceed against it, because
+L3's question is whether the pipeline moves bytes, not whether the map is readable at arm's
+length.
+
+### Findings
+
+5. **`E3`'s recipe hides a prerequisite: "serve raster locally" needs a style, and a style for
+   *this schema*.** The Protomaps basemap is not OpenMapTiles-schema — its layers are `earth`,
+   `landuse_park`, `roads_minor`, `boundaries` — and tileserver-gl's bundled `basic-preview`
+   style targets OpenMapTiles. The server detects the mismatch and degrades to serving raw
+   vector, which reads like success until you request a PNG. **Cartography stops being a later
+   phase at exactly this point**: you cannot render without a style, so somebody chooses one
+   here whether or not they meant to.
+6. **This re-prices `F1`'s ranking on an axis the ranking does not consider.** `F1` ranks
+   permission-first, which is right, and Protomaps wins. But OpenFreeMap — its number two — is
+   **OpenMapTiles-schema**, so it would have rendered with the bundled style and no style work
+   at all. Permission does not distinguish them; tooling cost does, in Protomaps' disfavour.
+   Worth recording against `F1` and `C1`: the primary source choice carries a style bill that
+   the compliance analysis had no reason to surface.
+7. **The renderer image ships exactly one font stack.** `Noto Sans Regular`, nothing else. Any
+   style asking for Medium, Bold or Italic silently loses those labels. This is not a
+   footnote — it is item one on `B2`'s list of pixel-changing inputs ("font stack availability
+   and fallback"), and here it is, live, on the first render anyone attempts.
+8. **`protomaps-themes-base` 4.5.0 fails soft on a bad theme argument, and tileserver-gl fails
+   hard on the result.** `layers(src, 'light', …)` — a plain string — returns a style with
+   `null` where colours should be, silently. MapLibre GL JS tolerates that; tileserver-gl's
+   validator rejects the whole style with
+   `layers[2].paint.fill-color[2]: Expected color but found null instead`. The correct call is
+   `layers(src, namedTheme('light'), …)`. Both halves are worth knowing: the generator lies
+   quietly, and the consumer's error message names a layer index rather than the real cause.
 
 ## L3 — Build a pack from loopback
 
