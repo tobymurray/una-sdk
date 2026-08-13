@@ -371,8 +371,9 @@ known traps.
 
 In outline, so you know where you are:
 
-| L4 | validate the pack with an independent reader (`spec-validator-cpp`) |
+| next | what happens |
+|---|---|
 | L5 | copy to the watch over USB mass storage — **never while BLE sync is running**, or you will corrupt the partition |
-| L6 | open it in the AthensRun app on the watch |
+| L6 | open it in the AthensRun app on the watch. Needs the unresolved `MapPackTrustMarker.hpp` conflict settled first |
 
 Update this file as each link lands, and keep the "verified on" date at the top honest.
