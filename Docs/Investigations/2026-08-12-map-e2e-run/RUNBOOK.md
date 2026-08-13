@@ -161,28 +161,40 @@ rendering.
 The reason: tileserver-gl ships a style for the *OpenMapTiles* schema, and the Protomaps
 basemap uses a different one. Rendering needs a style written for Protomaps.
 
-```sh
-cd /tmp
-mkdir -p styleboot && cd styleboot
-npm install protomaps-themes-base@^4      # 4.5.0 was used here
-```
-
-Copy `scripts/gen-protomaps-style.js` (beside this runbook) into that directory, then:
+**Use `scripts/gen-watch-style-v4.js`. It is the current style and the only one that produces a
+readable map.** It needs no `npm install` and no theme package — it emits the palette directly.
 
 ```sh
 mkdir -p ~/maps/styles/watch
-node gen-protomaps-style.js light ~/maps/styles/watch/style.json
-# expect: theme=light layers=68 font-stacks-remapped=11
+node gen-watch-style-v4.js ~/maps/styles/watch/style.json
+# expect: layers=16 colours used=10 all legal slots=yes
 ```
 
-Two things that script does which you must not drop:
+That `all legal slots=yes` is the point: every colour it emits is one of the panel's 64, derived
+from its `ABGR2222` byte rather than typed, and the script throws if an off-palette literal survives
+into the output. Quantisation is then close to a no-op instead of a lottery.
 
-- It passes the theme **object** (`namedTheme('light')`), not the string `'light'`. Passing the
-  string silently produces `null` colours, and tileserver-gl then rejects the style with
-  `layers[2].paint.fill-color[2]: Expected color but found null instead` — an error that points
-  nowhere near the cause.
-- It rewrites every `text-font` to `Noto Sans Regular`. That is the **only** font stack in the
-  image; any other stack means those labels silently do not draw.
+What v4 does, and why each part is not optional:
+
+- **Only the 14 slots** of `MAP_CARTOGRAPHY_SPEC.md` § 3. A phone-oriented theme quantised to 64
+  colours puts road fill and ground fill on the *same slot* and the road network vanishes entirely.
+- **Detail is withheld below z15** — no minor roads, paths or building fills at the wide zooms. Map
+  legibility is U-shaped in zoom, and drawing everything everywhere makes the middle zooms
+  unreadable texture. This is cartographic *generalization*; OSM Carto shipped the same fix in 2015.
+- **Labels at 22–26 px, horizontal, offset off the line, majors only.** At this pixel pitch 11–12 px
+  text is detectable but not readable.
+- **Every `text-font` rewritten to `Noto Sans Regular`** — the only stack in the renderer image. Any
+  other stack means those labels silently do not draw.
+
+### The other generators beside this runbook, and why you do not want them
+
+`gen-protomaps-style.js` renders the **stock Protomaps light theme** and exists to document what
+goes wrong: quantised to the panel it is a white screen with faint marks, roads invisible. If you
+run it, note that it passes the theme **object** (`namedTheme('light')`) rather than the string
+`'light'` — passing the string silently emits `null` colours and tileserver-gl then rejects the
+whole style with `layers[2].paint.fill-color[2]: Expected color but found null instead`, an error
+pointing nowhere near the cause. `gen-watch-style.js` and `-v3.js` are earlier palette-locked
+versions kept for A/B comparison. **v4 is the one to use.**
 
 ## Step 7 — Give the renderer its fonts and config
 
@@ -249,37 +261,40 @@ n=2**z; lr=math.radians(lat)
 print(int((lon+180)/360*n), int((1-math.log(math.tan(lr)+1/math.cos(lr))/math.pi)/2*n))"
 ```
 
-Note the map you get is the stock Protomaps *light* theme: pale, thin, and designed for a phone
-screen. It proves the pipeline, and **it produces an unusable pack** — quantised to the panel's
-64 colours its roads vanish into the background entirely. See the investigation README.
-
-**If you want a pack worth looking at, use the watch style instead:**
-
-```sh
-node gen-watch-style.js ~/maps/styles/watch/style.json   # scripts/, beside this runbook
-# expect: layers=16 colours used=10 all legal slots=yes
-docker restart tsgl && sleep 15
-```
-
-That emits only the 14 palette slots from `MAP_CARTOGRAPHY_SPEC.md` § 3, so quantisation is
-close to a no-op and roads survive. It needs no `npm install` — no theme package involved.
+The map should look like a map: dark arterial roads on a pale ground, water in blue, one or two
+large place names. If it is a pale wash with barely visible roads, you are running the stock theme
+from step 6's warning rather than v4.
 
 ---
 
 ## Step 9 — Build slippypack
 
-The clone on this machine sits on an old `main`, and the work you want is on an unmerged
-branch. Build it in a separate worktree so your checkout is left alone:
+The work you want is spread across **three unmerged branches**, so build a worktree that has all of
+them. Nothing is merged into `main` yet, and `main` itself is well behind.
 
 ```sh
 cd ~/git/rust/slippypack
-git fetch origin map-delivery-workflow
+git fetch origin
 git worktree add /tmp/wt-slippy origin/map-delivery-workflow
 cd /tmp/wt-slippy
+git switch -c local/mvp
+git merge --no-edit origin/fix/no-loopback-rate-limit origin/feat/tile-dim
 cargo build --release -p slippypack-cli     # ~30 s; toolchain 1.95.0 is pinned
 ```
 
+What each branch gives you, and what you lose without it:
+
+| branch | what it is for |
+|---|---|
+| `map-delivery-workflow` | the base — the audit documents and the CLI as it stood |
+| `fix/no-loopback-rate-limit` | stops the 4 req/s limiter applying to your own machine. **Without it every build takes 172 s instead of 3 s** |
+| `feat/tile-dim` | `--tile-dim`, plus the check that the header's tile size matches the tiles. Only needed if you build at anything other than 256 px |
+
 The binary lands in `target/release/slippypack` (or wherever `CARGO_TARGET_DIR` points).
+
+**If the merge conflicts**, the branches are independent — take both sides. If you would rather not
+merge, build from `origin/fix/no-loopback-rate-limit` alone and pass `--rate-per-sec 10000` on every
+`make`; you then simply have no `--tile-dim`.
 
 ## Step 10 — Build the pack
 
@@ -292,15 +307,15 @@ $SP make \
   --bbox=-76.015,44.590,-75.889,44.662 \
   --zoom 12-16 \
   --compression none \
-  --attribution "© OpenStreetMap contributors" \
-  --rate-per-sec 10000
+  --attribution "© OpenStreetMap contributors"
 ```
 
-Five things about that command:
+Four things about that command:
 
-- **`--rate-per-sec 10000` is not optional in practice.** Without it you get the default 4
-  req/s applied to your own machine, and the build takes **172 s instead of 4 s**. The limiter
-  exists to be polite to other people's servers; there is nobody to be polite to on loopback.
+- **No `--rate-per-sec` is needed** if you merged `fix/no-loopback-rate-limit` in step 9 — verified
+  at **3 s** for this bbox. If you skipped that branch, add `--rate-per-sec 10000` or the same build
+  takes **172 s**, because the 4 req/s limiter meant for other people's servers gets applied to your
+  own machine.
 - **`--compression none` is required.** The reader vendored into the watch app fails closed on
   RLE, so a compressed pack will not open on the device.
 - **`--attribution` is required and must say this.** The data is OSM-derived under ODbL.
@@ -535,10 +550,49 @@ goes **blank**. That is expected behaviour for a foreign pack, not a corrupt fil
 
 ---
 
-## Step 18 onward — **not yet verified. Stop here.**
+## Step 18 — Look at it on the watch
+
+**Unplug the watch.** It cannot read its own filesystem while a host holds it as mass storage, so
+an unmount alone is not enough to be sure.
+
+**Stay somewhere with no GPS fix** — indoors, away from a window. The map centres on the pack until
+a fix arrives; the moment one does, the view jumps to where you actually are, and if that is outside
+the pack you get an off-coverage screen instead of a map. This is the single thing that most often
+makes people think the pack is broken.
+
+1. Launch **AthensRun** from the app launcher.
+2. Select **Start**. With no fix this routes to a start-confirmation screen — confirm through it.
+   (With a fix it goes straight in, which is what you do *not* want for bench evaluation.)
+3. You land on the track screen. **Swipe through the faces to the last one**: Total → Lap → Status →
+   **Map**. The scroll indicator shows where you are.
+4. **R2 — the amber button — cycles the zoom** through z12–z16. It is the only zoom control; all
+   other buttons were already spoken for.
+
+You should see the map immediately, centred on the pack. If instead the face shows an error or a
+"validating" state, the trust marker from step 14 is wrong — recheck its size and CRC against the
+pack, since nothing else in the pipeline reports that mismatch.
+
+Discard the activity rather than saving it when you are done, unless you want the FIT file.
+
+### Judging what you see
+
+Two traps make this harder than it looks, and both have caught this project:
+
+- **Judge on the panel, not on a photograph.** A close-up photo resolves detail your eye at glance
+  distance does not, and a "1:1" render on a monitor is physically about **twice** the size, because
+  a monitor's pixel pitch is roughly 0.25 mm against this panel's 0.126 mm. Text that is perfectly
+  legible in both can be unreadable on the wrist.
+- **Judge with the backlight off.** Backlit, the whole panel reads strongly blue and nominal white
+  looks like light cyan. Reflective is the panel's normal mode and the one the palette is designed
+  against.
+
+---
+
+## Step 19 onward — **not yet verified. Stop here.**
 
 | next | what happens |
 |---|---|
-| L6 | open the pack in the AthensRun app and photograph the panel. Needs the unresolved `MapPackTrustMarker.hpp` conflict in the index settled before a build is worth trusting |
+| daylight | the reflective panel in direct sun. Untested — and it is the case that stresses the palette's contrast floors hardest |
+| a bare watch | this runbook assumes AthensRun is **already installed**. Building and installing the app from `poc/athensrun` is not written up anywhere |
 
 Update this file as each link lands, and keep the "verified on" date at the top honest.
