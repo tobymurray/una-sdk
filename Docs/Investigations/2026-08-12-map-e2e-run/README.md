@@ -1082,14 +1082,30 @@ that does not work.
     numerous class makes it dominant. `CONFIRMED` on the panel; the fix is `PLAUSIBLE` — thin or
     drop minors at the wide zooms, and let the neutral ink carry the hierarchy — and what would
     settle it is another trial with minors suppressed below z15.
-31. **Garmin's answer to the label problem, from a side-by-side on comparable hardware.** Its
-    labels are **horizontal, never rotated along the road**; **offset beside the line rather than
-    drawn over it**, so the stroke does not run through the glyphs; noticeably **larger**, in the
-    16–20 px range the arcminute maths calls marginal-to-comfortable; and **sparse**, a handful per
-    screen. Its roads are correspondingly **thin**, leaving the text room. This style's labels do
-    the opposite on all four counts — `symbol-placement: line` rotates them along the street, and
-    angled strokes rasterise worst at this pitch. The comparison area is rural, so it is not a
-    density comparison; the label treatment is the transferable part.
+31. **Garmin's answer to the label problem, from a side-by-side on comparable hardware.** Three
+    things are visible and survive the confound below:
+    - **Offset beside the line rather than drawn over it**, so the road stroke does not run through
+      the glyphs and the halo has nothing to fight.
+    - **Larger** — cap height is roughly a twentieth of the screen height, so of the order of
+      20 px, in the range the arcminute maths calls marginal-to-comfortable rather than
+      threshold. Note this is a *ratio* measured against a known 240 px panel, which is why it
+      survives photography where finding 29's legibility judgements do not.
+    - **Sparse**, a handful per screen, with correspondingly **thin** roads leaving the text room.
+
+    This style does the opposite on all three: labels sit on the line, at 11–12 px, as densely as
+    collision detection permits.
+
+    **What is *not* established: whether Garmin holds labels horizontal.** They appear horizontal
+    in the photograph, but the comparison area is an Ontario survey grid where roads run nearly
+    north–south and east–west, so text placed *along* a road would look horizontal too. The
+    evidence cannot separate the two, and the first version of this finding wrongly asserted it.
+    What would settle it: a label on a road that runs diagonally **on screen** — either somewhere
+    with non-grid roads, or, if that map face is course-up rather than north-up, by facing a
+    different direction and seeing whether the labels re-orient with the map or stay level.
+
+    The orientation question matters on its own terms regardless of what Garmin does: angled
+    strokes rasterise worst at 126 µm with no antialiasing to soften them, so rotated text is
+    likely the wrong choice here even if a competitor uses it.
 32. **The `Acquiring GPS …` overlay ruins the map screen, and always.** Confirmed always that
     prominent: large text across the lower third, over live map content, for the whole
     fix-acquisition window — which is exactly the first minute of a run, when a runner is checking
