@@ -78,6 +78,7 @@ Next steps:
    touchgfx-widgets
    writing-a-clockface
    figma-ui-kit
+   custom-gui
    FitFiles-Structure
    shared-data
 
