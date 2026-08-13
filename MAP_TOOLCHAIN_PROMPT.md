@@ -290,16 +290,31 @@ ordinary anti-aliasing renderer at negligible byte cost, so no custom aliased ra
 needed. Small in code, and only meaningful once `C2` lands — palette-first is a property of
 the render, and `E6` showed a blit-time LUT cannot rescue an anti-aliased pack.
 
-**`E5` needs a precision, measured 2026-08-12: snapping recovers the palette-first *appearance*,
-not palette-first *determinism*.** Those were being treated as one property. Perturbing every
-pixel by one unit puts about **4.2 %** of them beside a quantiser decision boundary today and
-**1.0 %** under snap-to-declared-slots — four-fold better, not zero. So snapping does **not** fix
-`B3`'s nondeterminism; it moves the boundaries further apart, and when a pixel does flip the flip
-is larger, because declared slots sit further apart than adjacent ABGR2222 levels. Only output
-with no intermediate values — genuinely aliased rendering — removes the boundary, because then
-there is nothing to round. Do `C3` on its own merits; do not budget it as the determinism fix.
-→ `slippypack`, `feat/palette-snap-quantiser`, stacked on `C2`. **Small, high leverage — for
-appearance and bytes.**
+**Re-scoped 2026-08-12 after measurement. `E5`'s benefit was an artifact of the style it was
+measured against, and this card's real justification turns out to be `R4` and the activity LUTs.**
+
+Snapping recovers the palette-first *appearance*, never palette-first *determinism* — those were
+treated as one property and are not. Worse, its effect **reverses** once the style is palette-first,
+which the cartography spec mandates. Perturbing every pixel by one unit, measured:
+
+| style | exposed @ 64 slots | exposed @ declared |
+|---|---:|---:|
+| stock off-palette theme | 4.16 % | 0.99 % — snapping helps |
+| palette-locked watch style | **0.42 %** | 0.77 % — **snapping hurts** |
+
+With only ten declared slots an antialiasing blend lands near the midpoint *between* two of them
+more often than near a slot centre in the dense 64-code lattice. And neither number buys
+determinism: five builds of the palette-locked pack still produce three distinct outputs (see
+`B3`, `G8`).
+
+What survives is `R4`: § 3 says "one code per feature class, no exceptions — this is what makes
+§ 5's LUT work", and an antialiasing fringe introduces codes no feature class owns, which a
+per-activity LUT cannot map predictably. **So do `C3` for the activity variants (`G6`), not for
+determinism and not on the assumption that appearance needs it** — the fringe pixels are legal,
+displayable panel codes, and whether a softened road edge is a defect has never been checked on
+hardware.
+→ `slippypack`, `feat/palette-snap-quantiser`, stacked on `C2`. **Small — and now gated on a
+hardware look, not on `C2` alone.**
 
 ### Group D — CLI ergonomics (independent, small, each its own branch)
 
@@ -517,6 +532,9 @@ fix it. Two honest positions:
 
 - **No.** While delivery is a whole-file USB copy, one pixel in 45 MiB costs nothing. `B3`'s
   content digest plus § A.4 saying what is true make that safe and honest, and it is cheap.
+  **This branch got cheaper 2026-08-12:** a palette-first style cuts the *exposure surface*
+  tenfold (4.16 % → 0.42 % of pixels beside a decision boundary) for free, as a side effect of
+  cartography work that has to happen anyway.
 - **Yes,** in which case **aliased rendering is the requirement**, not snapping — and the order to
   price it in is: a deterministic single-threaded CPU rasteriser (mapnik/AGG, or a
   `tiny-skia`-class Rust stack, antialiasing off) **before** writing one ourselves. A rewrite buys
@@ -581,7 +599,8 @@ Verified; do not re-derive, and do not trust older documents that contradict the
 | "`tileserver-gl` renders a Protomaps archive" | Not out of the box. It warns, serves **vector**, and 404s raster until you supply a Protomaps-schema style and fonts — see `E3` |
 | "A local renderer sends no `Last-Modified`" | It sends one, and it is the **renderer's process start time**, recorded as the pack's freshness with no warning — see `D6` |
 | "Two builds of the same pack are byte-identical" | **They are not.** The renderer is nondeterministic by a pixel; the same inputs gave three distinct packs across five builds — see `B3` |
-| "Snap-to-slots will make the render deterministic" | Measured: exposure to a one-unit jitter drops from ~4.2 % of pixels to ~1.0 %. Four-fold, **not zero** — see `C3` |
+| "Snap-to-slots will make the render deterministic" | It will not, and its effect on exposure **reverses** once the style is palette-first (0.42 % → 0.77 %, i.e. worse) — see `C3` |
+| "Low quantiser exposure means reproducible builds" | Exposure counts pixels that *could* flip. A tenfold cut in it changed the build-to-build divergence **not at all** — the jitter is localised to the few antialiased pixels that remain exposed. See `G8` |
 | "Pack size tells you something about content" | Uncompressed ABGR2222 is `tile_dim_px²` bytes per tile regardless of content. Two completely different maps over one bbox are the **same size to the byte** |
 | "A validated pack is a correct pack" | Validation proves well-formedness only. Change a pixel, repair the CRC, it passes — as it must |
 | "`tile_dim_px` is verified" | Checked for `> 0` and never against tile size. A pack claiming 128 px tiles full of 256 px ones validates clean — see `D2` |

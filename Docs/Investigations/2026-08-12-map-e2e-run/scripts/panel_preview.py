@@ -63,6 +63,34 @@ def decode_abgr2222(buf):
     return img
 
 
+# MAP_CARTOGRAPHY_SPEC.md § 3's `preview` column: the sRGB rendering of what the eye
+# sees on the panel once adapted. Device RGB (the x85 expansion above) is the
+# authoritative byte but oversaturates badly -- judging cartography from it leads you
+# to "fix" saturation that is not there. See finding 19.
+AS_SEEN = {
+    0xFF: (255, 255, 255), 0xEE: (233, 246, 232), 0xDD: (208, 237, 205),
+    0xEA: (215, 215, 215), 0xD8: (147, 202, 181), 0xF4: (98, 183, 213),
+    0xC5: (165, 148, 122), 0xF0: (0, 132, 194), 0xC3: (210, 79, 98),
+    0xC1: (135, 65, 73), 0xD0: (40, 91, 125), 0xC0: (56, 56, 56),
+}
+
+
+def as_seen(rgb):
+    """Map a device-RGB triple back to its byte, then to the panel's appearance.
+
+    Off-palette pixels (antialiasing blends between two legal slots) have no spec
+    entry, so they are mapped through the nearest slot that does.
+    """
+    r, g, b = rgb
+    code = 0xC0 | ((b // 85) << 4) | ((g // 85) << 2) | (r // 85)
+    if code in AS_SEEN:
+        return AS_SEEN[code]
+    best = min(AS_SEEN, key=lambda c: (((c & 3) * 85 - r) ** 2
+                                       + (((c >> 2) & 3) * 85 - g) ** 2
+                                       + (((c >> 4) & 3) * 85 - b) ** 2))
+    return AS_SEEN[best]
+
+
 def tile_of(lat, lon, z):
     import math
     n = 1 << z
@@ -96,5 +124,23 @@ for z in range(zmax, zmin - 1, -1):
     view.save(p)
     view.resize((VIEW * 3, VIEW * 3), Image.NEAREST).save(
         OUT.parent / f"{OUT.stem}_z{z}_3x.png")
-    distinct = len(set(view.getdata()))
-    print(f"  z{z}: tiles {found}/9 -> {p.name}, distinct colours in viewport: {distinct}")
+
+    # The honest view: what the wearer sees, not what the bytes are.
+    seen = Image.new("RGB", view.size)
+    vp, sp2 = view.load(), seen.load()
+    cache = {}
+    for y in range(VIEW):
+        for x in range(VIEW):
+            v = vp[x, y]
+            if v not in cache:
+                cache[v] = as_seen(v)
+            sp2[x, y] = cache[v]
+    seen.save(OUT.parent / f"{OUT.stem}_z{z}_aseen.png")
+    seen.resize((VIEW * 3, VIEW * 3), Image.NEAREST).save(
+        OUT.parent / f"{OUT.stem}_z{z}_aseen_3x.png")
+
+    codes = {(0xC0 | ((b // 85) << 4) | ((g // 85) << 2) | (r // 85))
+             for r, g, b in set(view.getdata())}
+    off = sorted(c for c in codes if c not in AS_SEEN)
+    print(f"  z{z}: tiles {found}/9 -> {p.name}, slots in viewport: {len(codes)}, "
+          f"off-palette: {len(off)}{' ' + ' '.join(hex(c) for c in off) if off else ''}")

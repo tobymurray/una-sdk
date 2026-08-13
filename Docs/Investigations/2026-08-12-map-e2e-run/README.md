@@ -759,6 +759,78 @@ This does not change finding 15: that was about *lightness* collapse — roads a
 the same slot, ~94 % of the viewport above L\* 93 — which is unaffected by how saturation is
 displayed.
 
+### End to end with the watch style, and what it did to the identity problem
+
+Rebuilt with the palette-locked style: **3 s** unthrottled, 687 tiles, 45,037,308 B, validated
+clean by `spec-validator-cpp`. `images/panel_stock_vs_watch_z14.png` is the stock-theme pack and
+this one at the default running zoom, both through the § 3 perceptual mapping — one is a
+near-empty white field, the other a complete street network. Same data, same bbox, same
+pipeline.
+
+**And the same `pack_uuid`: `8520f25f-4786-5b2a-919e-79f510ed25c1`, identical to the unusable
+pack, at identical size.** `B3`'s defect at full scale on a real deliverable, not a smoke test.
+
+`--timestamp 1786507200` also demonstrates `D6`'s fix: `build_timestamp` now decodes to
+2026-08-12T04:00:00Z, the actual OSM replication time from the PMTiles metadata, rather than
+whenever the renderer happened to start. Existing flag, no code change, and `pack_uuid` is
+unaffected because `build_timestamp` is not in the descriptor.
+
+### Finding 20 — palette-first cuts the exposure surface tenfold and does not fix determinism
+
+Re-measuring the ±1 perturbation exposure against the palette-locked style:
+
+| style | exposed @ 64 slots | exposed @ declared slots |
+|---|---:|---:|
+| stock Protomaps light | 4.16 % | 0.99 % |
+| palette-locked watch | **0.42 %** | 0.77 % |
+
+A tenfold reduction, because most pixels now sit exactly *on* a slot value — maximally far from
+any decision boundary — instead of clustered in the 215–250 range where the boundary at 212.5
+lives.
+
+**I was about to conclude that palette-first therefore buys determinism. It does not.** The direct
+test — five builds, identical inputs, palette-locked style — still yields **three distinct
+outputs** with five to six differing bytes, exactly the pattern the stock theme gave:
+
+```
+8e56e86fc4ea44ebab7e4135   (×2)
+a6bc5f5dc84ce2ae9d453df6   (×1)
+9d3bd376f1d0b7fe9b86bf61   (×2)
+```
+
+**So exposure is a misleading proxy for determinism, and that is the finding.** It counts pixels
+that *could* flip. The renderer's jitter is not spread across them — it is localised to a handful
+of specific antialiased edge pixels, and those are precisely the ones still exposed under any
+quantisation strategy. Shrinking the exposed population by 10× removed none of the actual
+divergence.
+
+`G8` therefore stands unchanged: its "yes" branch still requires **aliased rendering**, and no
+styling or quantiser choice substitutes for it. What did change is the cheap branch's price —
+palette-first is worth doing on its own merits and costs nothing here.
+
+### Finding 21 — `C3`'s measured benefit was an artifact of the style it was measured against
+
+Note the second column above: snapping to declared slots **improves** the stock theme
+(4.16 % → 0.99 %) and **worsens** the palette-locked style (0.42 % → **0.77 %**). The mechanism is
+sparsity — with only ten declared slots, an antialiasing blend more often lands near the midpoint
+*between* two of them than it would near some slot centre in the dense 64-code lattice.
+
+So `C3` was measured against an off-palette style, and its case does not survive the spec's own
+palette-first mandate being satisfied:
+
+- **Determinism: no.** Finding 20 — nothing here reaches it.
+- **Appearance: now an open design question rather than an assumed win.** With the watch style, the
+  off-palette pixels are antialiasing fringes at feature edges — 2.1 % at z16 — and every one of
+  them is a *legal, displayable* panel code. § 4 assumes "no anti-aliasing available" and specifies
+  aliased text, but the panel can in fact show those intermediate shades, and a softened road edge
+  may be an asset rather than a defect. Nobody has looked at that on hardware.
+- **`R4`: yes, and this is the reason `C3` survives.** § 3's R4 says "one code per feature class,
+  no exceptions — this is what makes § 5's LUT work." An antialiasing fringe introduces codes no
+  feature class owns, which is exactly what a per-activity LUT cannot map predictably. So `C3`'s
+  real justification is the activity variants (`G6`), not determinism and not obviously appearance.
+
+Re-scope `C3` accordingly, and stop budgeting it as the fix for anything else.
+
 ### One design question this raises for the spec
 
 At z16 over a village, the built-up wash `landuse` `0xEE` covers **72.5 %** of the viewport and
