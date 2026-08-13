@@ -72,9 +72,65 @@ from `Docs/Investigations/2026-08-06-athens-pack/` so the result is comparable t
 pack. Record: bytes transferred, wall time, resulting file size, and the source URL with
 retrieval date.
 
-**Log.**
+**Log.** `pmtiles` v1.31.2 (`a3e4951`, built 2026-07-22), prebuilt `Linux_x86_64` release
+binary installed to `~/.local/bin/`. Run 2026-08-12 20:20 local.
 
-**Verdict.**
+```
+pmtiles extract https://build.protomaps.com/20260812.pmtiles athens.pmtiles \
+  --bbox=-76.015,44.590,-75.889,44.662
+```
+
+| measurement | value |
+|---|---|
+| wall time | 5.98 s, 4 download threads |
+| transferred | 2.3 MB, **overfetch 0.05**, 47 HTTP range requests |
+| result | `~/maps/athens.pmtiles`, 2,255,635 B |
+| SHA-256 | `23975d648ace2c5360e67f50cba088429fac794ff141f5215eec2ed088312733` |
+| contents | PMTiles spec 3, tile type **mvt**, gzip, 230 tile entries, clustered |
+| zooms present | **0–15** |
+| data freshness | `planetiler:osm:osmosisreplicationtime 2026-08-12T04:00:00Z`, seq 121965 |
+| producer | `planetiler:version 0.10.2` (`0e5588c4`), Protomaps Basemap `version 4.15.2` |
+
+Build-URL availability: `20260812`, `20260811` and `20260810` all answer HTTP 206 to a range
+request; `20260805` and `20260801` are already **404**. Retention on the daily builds is
+roughly a week, so the source URL in a runbook goes stale fast — pin the *date you used*, not
+a "latest" URL.
+
+**Verdict. Works, and it is cheap — far cheaper than the card assumed.** 2.3 MB and six
+seconds for the whole Athens region, against ~120 GB for the planet, because `pmtiles extract`
+range-reads only the region's chunks (overfetch 0.05 = about 5 % waste). Compare the existing
+raster pack: 43 MiB of ABGR2222 for z12–16 of the same bbox. The vector extract carries z0–15
+of it in 2.2 MB. `CONFIRMED` by the run.
+
+On compliance: ranged reads against the published download URL are what `pmtiles extract`
+exists to do, and the appendix's § 3.2 quote asks that you "copy the tileset to your own Cloud
+Storage" rather than hotlink. Reading that as *do not hotlink when serving*, while a one-off
+extract to local disk is the intended use, is `PLAUSIBLE` — not `CONFIRMED`. What would settle
+it: Protomaps' own wording about `extract` as a client. It costs nothing to be safe here, so
+if this becomes a repeated or automated step, mirror the archive first.
+
+### Four findings that touch other cards
+
+1. **The vector source stops at z15; AthensRun's pack wants z16.** Not a blocker — vector
+   tiles overzoom at render time, so L2 can serve z16 raster from z15 vector — but it means
+   **z16 raster detail is interpolated geometry, not surveyed detail at that zoom**, and label
+   density at z16 is whatever the style does with z15 data. Confirm what it looks like at L2
+   before assuming the zoom ladder in `MAP_CARTOGRAPHY_SPEC.md` survives contact.
+2. **Card `D6` has a better answer than the one on the board.** The card proposes
+   `--timestamp now` or source mtime for local builds. But the extract *carries* real data
+   freshness — `planetiler:osm:osmosisreplicationtime`, an actual OSM replication timestamp —
+   which is exactly what § 4.10's `build_timestamp` is supposed to mean. Deriving it from
+   PMTiles metadata beats both proposals: `now` records when you happened to run a build, and
+   mtime records when a file was written. Neither is source-data freshness.
+3. **`B2`'s enumeration is incomplete.** The extract's metadata carries `planetiler:version`,
+   its githash, and the basemap `version` — data-side provenance that changes pixels and that
+   nothing in the descriptor captures. `B2` lists render inputs (fonts, sprites, dither
+   policy); it should also list the *data* producer's version, upstream of the renderer.
+4. **The metadata's attribution string cannot be used verbatim.** It is HTML:
+   `<a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>`. The pack's
+   `ATTR` section is plain UTF-8 and the ODbL obligation wants `© OpenStreetMap contributors`.
+   Anything automating `--attribution` from source metadata has to strip markup and knows to
+   append "contributors" — do not wire them together naively.
 
 ## L2 — Stand up a renderer we own
 
@@ -173,5 +229,7 @@ investigation is done when
 
 ## Runbook
 
-*Written last, from the logs above. If this section is still empty, the investigation is not
-finished.*
+**`RUNBOOK.md`, beside this file** — written incrementally rather than last, so the steps get
+recorded while the exact commands and versions are still known rather than reconstructed. It
+covers the installs and L1 as verified instructions with expected output, and stops hard at L2
+with "not yet verified" rather than guessing ahead. Extend it as each link lands.
