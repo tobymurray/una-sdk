@@ -244,9 +244,110 @@ Record the full invocation, the pack size, and the per-zoom byte breakdown. **Sa
 against the board's premise traps:** RLE ≈ 7.7 % and each zoom level ≈ 2.2×, not the 32.4 %
 and 4× that older documents claim.
 
-**Log.**
+**Log.** Built from `origin/map-delivery-workflow` `b8d5464` in a throwaway worktree so the
+existing clone's checkout was left alone; `cargo build --release -p slippypack-cli` under the
+pinned 1.95.0 toolchain, 32 s cold.
 
-**Verdict.**
+```
+slippypack make \
+  --source 'http://localhost:8081/styles/watch/{z}/{x}/{y}.png' \
+  --out athens-e2e.rawtiles --bbox=-76.015,44.590,-75.889,44.662 --zoom 12-16 \
+  --compression none --attribution "© OpenStreetMap contributors"
+```
+
+Silent on success — no progress output at all, which for a run of this length reads as a hang.
+
+| | value |
+|---|---|
+| wall time, default rate | **172 s** |
+| wall time, `--rate-per-sec 10000` | **4 s** |
+| size | 45,037,308 B |
+| tiles | 687 — z12: 6, z13: 16, z14: 42, z15: 143, z16: 480 |
+| `tile_dim_px` | 256 |
+| `pack_uuid` | `8520f25f-4786-5b2a-919e-79f510ed25c1` |
+| `build_timestamp` | 1786581717 = 2026-08-13T00:41:57Z |
+| `ATTR` | `© OpenStreetMap contributors` |
+
+An aborted first attempt is worth recording because the failure was clean: I restarted the
+renderer while a build was in flight, and it died in 8 s with
+`url-template source: HTTP transport error: io: Connection refused`, leaving **no `.partial`
+file behind**. The atomic-rename contract holds under transport failure.
+
+**Verdict. The pipeline works end to end on the writer side, and three things it revealed
+matter more than that it worked.** `CONFIRMED` by the run.
+
+### Findings
+
+9. **`D1` is worth 43×, not "materially".** 172 s throttled versus 4 s at an effectively
+   unlimited rate, over the same bbox against the same local renderer. 687 tiles at the
+   non-OSM default of 4 req/s has a floor of 171.5 s, and the measurement lands on it — so
+   **the rate limiter is essentially the entire build time, and rendering is free by
+   comparison.** Every style iteration against a local renderer currently pays three minutes
+   to look at a two-minute-old idea. `D1` should move to the front of Group D.
+10. **`D6`'s premise is false, and the truth is worse than the card assumes.** tileserver-gl
+    *does* send `Last-Modified`, so there is no warning and no zero sentinel — but the value is
+    **the renderer process's start time**, which the pack then records as its freshness.
+    Measured: `build_timestamp` 2026-08-13T00:41:57Z against underlying OSM data from
+    2026-08-12T04:00:00Z. So the pack claims freshness it does not have, restarting the
+    container changes the claim, and nothing warns. A loud "unknown" (the zero sentinel) is
+    better than a confident wrong answer. The right value is in the PMTiles metadata (finding
+    2), and `--timestamp` already exists to carry it — documented as a "CI override", but it is
+    the actual fix.
+11. **Pack size carries no information about content.** This pack is 45,037,308 B — the same
+    size, to the byte, as the 2026-08-06 pack built from OSM CDN raster over the same bbox,
+    because uncompressed ABGR2222 is 65,536 B per tile regardless of what is in it. Anything
+    that treats size as a content check — a sync, a cache, a "did this change" heuristic — is
+    checking nothing.
+
+### `B1`'s defect, demonstrated
+
+The card argues the renderer can re-enter the identity hole that `M1` closed for compression.
+It can, and it takes two commands. Regenerate the style with the **dark** theme, keeping the
+style id and therefore the URL template identical, and rebuild:
+
+| pack | `pack_uuid` | size | SHA-256 |
+|---|---|---:|---|
+| light theme | `832cd0e7-f9aa-5d83-9196-a4d9058094dd` | 393,672 | `3722741984e1470f…` |
+| dark theme | `832cd0e7-f9aa-5d83-9196-a4d9058094dd` | 393,672 | `6a28c485a9406294…` |
+
+Same UUID, same size, completely different map. `CONFIRMED`. `PackDescriptor` does carry
+`style_hash`, but it is documented as "SHA-256 of the `--style` JSON … `None` for non-renderer
+builds" — and a URL-template build against a local renderer *is* a non-renderer build as far as
+the descriptor is concerned. The style lives on the far side of an HTTP boundary the descriptor
+cannot see. A recipient caching on `(pack_uuid, size)` cannot tell these apart at all.
+
+### The render is not byte-reproducible — and `B1` cannot fix this
+
+Five builds, identical inputs, same renderer instance, same binary. **Three distinct
+outputs:**
+
+| build | SHA-256 (first 24) |
+|---|---|
+| throttled | `c5043a7680ff05f8c564715a` |
+| unthrottled | `dc2b094a1e8e3d2b316e0ad6` |
+| run3 | `98d3cf0b943caa27a19a6680` |
+| run4 | `dc2b094a1e8e3d2b316e0ad6` (= unthrottled) |
+| run5 | `98d3cf0b943caa27a19a6680` (= run3) |
+
+The divergence is tiny and precisely located: **two pixels**, at byte offsets 17,475,603 and
+32,825,851, each flipping between two values (`0xEE`↔`0xFE` and `0xFF`↔`0xEB`), plus the footer
+CRC reacting. In ABGR2222 those are single-step changes in one or two channels — the signature
+of an antialiasing coverage tie resolved differently run to run, not corruption. Descriptor
+metadata is identical across all five, so `pack_uuid` is stable while the bytes are not.
+
+**This is a third instance of the identity problem, and it is not fixable by adding descriptor
+keys.** `M1` was compression; `B1` is renderer version and glyph/sprite URLs; this is the same
+renderer, same version, same style, disagreeing with itself. Recording more inputs cannot make
+a nondeterministic rasteriser deterministic, so § A.4's promise that a cached `pack_uuid`
+entitles a recipient to assume *byte-identical* tile blobs is **unachievable for rendered
+packs** as the pipeline stands. Either the render becomes deterministic, or the guarantee gets
+weakened, or something downstream canonicalises the output.
+
+Which points at card `C3`. Snapping to declared palette slots would plausibly collapse a
+one-step AA tie onto the same slot and restore determinism — which would make `C3` not merely
+"small, high leverage" but **load-bearing for reproducibility**. That is `PLAUSIBLE`, not
+`CONFIRMED`; what would settle it is running these five builds again with snap-to-slots
+enabled and checking whether the two unstable pixels stop moving.
 
 ## L4 — Validate independently
 

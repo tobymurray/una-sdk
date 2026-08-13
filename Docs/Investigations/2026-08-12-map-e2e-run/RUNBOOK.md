@@ -255,17 +255,82 @@ screen. It is deliberately not the watch cartography — that is a separate piec
 
 ---
 
-## Step 9 onward — **not yet verified. Stop here.**
+## Step 9 — Build slippypack
+
+The clone on this machine sits on an old `main`, and the work you want is on an unmerged
+branch. Build it in a separate worktree so your checkout is left alone:
+
+```sh
+cd ~/git/rust/slippypack
+git fetch origin map-delivery-workflow
+git worktree add /tmp/wt-slippy origin/map-delivery-workflow
+cd /tmp/wt-slippy
+cargo build --release -p slippypack-cli     # ~30 s; toolchain 1.95.0 is pinned
+```
+
+The binary lands in `target/release/slippypack` (or wherever `CARGO_TARGET_DIR` points).
+
+## Step 10 — Build the pack
+
+```sh
+SP=/tmp/wt-slippy/target/release/slippypack
+cd ~/maps
+$SP make \
+  --source 'http://localhost:8081/styles/watch/{z}/{x}/{y}.png' \
+  --out athens.rawtiles \
+  --bbox=-76.015,44.590,-75.889,44.662 \
+  --zoom 12-16 \
+  --compression none \
+  --attribution "© OpenStreetMap contributors" \
+  --rate-per-sec 10000
+```
+
+Five things about that command:
+
+- **`--rate-per-sec 10000` is not optional in practice.** Without it you get the default 4
+  req/s applied to your own machine, and the build takes **172 s instead of 4 s**. The limiter
+  exists to be polite to other people's servers; there is nobody to be polite to on loopback.
+- **`--compression none` is required.** The reader vendored into the watch app fails closed on
+  RLE, so a compressed pack will not open on the device.
+- **`--attribution` is required and must say this.** The data is OSM-derived under ODbL.
+- **It prints nothing while it works.** A three-minute silent run looks like a hang. It isn't.
+- **Do not touch the renderer while it runs.** Restarting the container mid-build fails the
+  build with `HTTP transport error: io: Connection refused`. It aborts cleanly and leaves no
+  partial file, so just start over.
+
+Check what you got:
+
+```sh
+$SP inspect athens.rawtiles
+```
+
+Expect 687 tiles for this bbox — z12: 6, z13: 16, z14: 42, z15: 143, z16: 480 — and a size of
+45,037,308 bytes. That size is fixed by tile count alone: uncompressed ABGR2222 is exactly
+65,536 bytes per tile no matter what the map looks like.
+
+**Two things in that output are misleading, and neither is your fault:**
+
+- `build_timestamp` will show roughly when you started the *renderer*, not when the map data
+  was current. tileserver-gl sends its process start time as `Last-Modified` and the writer
+  believes it. If you care, pass `--timestamp` with the epoch seconds of the
+  `planetiler:osm:osmosisreplicationtime` value from step 5.
+- `pack_uuid` does **not** identify these bytes. Rebuild after editing your style and you get
+  the same UUID over a different map. Do not use it as a cache key.
+
+Also expect that **two builds from identical inputs are not byte-identical.** Renders differ by
+a pixel or two on antialiasing ties. If you are diffing packs, a handful of differing bytes plus
+a changed footer CRC is normal here; it is not corruption.
+
+---
+
+## Step 11 onward — **not yet verified. Stop here.**
 
 Everything above was run end to end. What follows has not been, so it is not written as
-instructions yet — see the investigation README's L3–L6 sections for the hypotheses and the
+instructions yet — see the investigation README's L4–L6 sections for the hypotheses and the
 known traps.
 
 In outline, so you know where you are:
 
-| next | what happens |
-|---|---|
-| L3 | `slippypack make --source 'http://localhost:8081/styles/watch/{z}/{x}/{y}.png'` → a `.rawtiles` pack. Needs `--compression none` |
 | L4 | validate the pack with an independent reader (`spec-validator-cpp`) |
 | L5 | copy to the watch over USB mass storage — **never while BLE sync is running**, or you will corrupt the partition |
 | L6 | open it in the AthensRun app on the watch |
