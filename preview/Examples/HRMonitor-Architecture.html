@@ -135,6 +135,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../touchgfx-widgets.html">TouchGFX Widgets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FitFiles-Structure.html">FIT Files Structure</a></li>
 </ul>
+<p class="caption" role="heading"><span class="caption-text">📡 BLE Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../BLE-File-Transfer-Service.html">UNA Watch — BLE File Transfer Service (FTS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BLE-File-Transfer-Service.html#classic-operations-protocol-version-4">Classic operations (protocol version 4)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BLE-File-Transfer-Service.html#fast-transfer-extensions-protocol-version-5">Fast-transfer extensions (protocol version 5)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BLE-Services-Overview.html">UNA Watch — BLE Services Overview</a></li>
+</ul>
 <p class="caption" role="heading"><span class="caption-text">🎋 Apps Sharing</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../deploy.html">How to Deploy</a></li>
@@ -595,10 +602,10 @@
 <h3>Build System Overview<a class="headerlink" href="#build-system-overview" title="Link to this heading"></a></h3>
 <p><strong>Primary Build File</strong>: <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> in <code class="docutils literal notranslate"><span class="pre">HRMonitor/Software/Apps/HRMonitor-CMake/</span></code></p>
 <div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="c"># App configuration</span>
-<span class="nb">set</span><span class="p">(</span><span class="s">APP_NAME</span><span class="w"> </span><span class="s2">&quot;HRMonitor&quot;</span><span class="p">)</span>
-<span class="nb">set</span><span class="p">(</span><span class="s">APP_TYPE</span><span class="w"> </span><span class="s2">&quot;Activity&quot;</span><span class="p">)</span>
-<span class="nb">set</span><span class="p">(</span><span class="s">DEV_ID</span><span class="w"> </span><span class="s2">&quot;UNA&quot;</span><span class="p">)</span>
-<span class="nb">set</span><span class="p">(</span><span class="s">APP_ID</span><span class="w"> </span><span class="s2">&quot;A14B7E9C2F8D6A53&quot;</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span><span class="s">APP_NAME</span><span class="w"> </span><span class="s2">"HRMonitor"</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span><span class="s">APP_TYPE</span><span class="w"> </span><span class="s2">"Activity"</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span><span class="s">DEV_ID</span><span class="w"> </span><span class="s2">"UNA"</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span><span class="s">APP_ID</span><span class="w"> </span><span class="s2">"A14B7E9C2F8D6A53"</span><span class="p">)</span>
 
 <span class="c"># Include SDK build scripts</span>
 <span class="nb">include</span><span class="p">(</span><span class="o">$ENV{</span><span class="nv">UNA_SDK</span><span class="o">}</span><span class="s">/cmake/una-app.cmake</span><span class="p">)</span>
