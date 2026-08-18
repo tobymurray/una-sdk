@@ -1,5 +1,7 @@
 #include <gui/main_screen/MainView.hpp>
 
+#include <cinttypes>
+
 #define LOG_MODULE_PRX      "MainView"
 #define LOG_MODULE_LEVEL    LOG_LEVEL_INFO
 #include "SDK/UnaLogger/Logger.h"
@@ -142,13 +144,13 @@ void MainView::refreshDisplay()
         // Group display
         if (verbosity >= BASIC) {
             len += snprintf(buffer + len, sizeof(buffer) - len, "HR: %.0f BPM\n", hr);
-            len += snprintf(buffer + len, sizeof(buffer) - len, "Steps: %lu\n", steps);
+            len += snprintf(buffer + len, sizeof(buffer) - len, "Steps: %" PRIu32 "\n", steps);
         }
         if (verbosity >= DETAILED) {
             len += snprintf(buffer + len, sizeof(buffer) - len, "GPS: %.2f, %.2f, %.0f\n", gpsLat, gpsLon, gpsAlt);
             len += snprintf(buffer + len, sizeof(buffer) - len, "Elev: %.1f m\n", elevation);
             len += snprintf(buffer + len, sizeof(buffer) - len, "Acc: %.2f, %.2f, %.2f\n", accX, accY, accZ);
-            len += snprintf(buffer + len, sizeof(buffer) - len, "Floors: %lu\n", floors);
+            len += snprintf(buffer + len, sizeof(buffer) - len, "Floors: %" PRIu32 "\n", floors);
         }
         if (verbosity >= FULL) {
             len += snprintf(buffer + len, sizeof(buffer) - len, "Compass: %.0f°\n", heading);
@@ -169,10 +171,10 @@ void MainView::refreshDisplay()
                 len += snprintf(buffer + len, sizeof(buffer) - len, "Accelerometer:\nX: %.2f G\nY: %.2f G\nZ: %.2f G\n", accX, accY, accZ);
                 break;
             case STEP:
-                len += snprintf(buffer + len, sizeof(buffer) - len, "Steps: %lu\n", steps);
+                len += snprintf(buffer + len, sizeof(buffer) - len, "Steps: %" PRIu32 "\n", steps);
                 break;
             case FLOOR:
-                len += snprintf(buffer + len, sizeof(buffer) - len, "Floors: %lu\n", floors);
+                len += snprintf(buffer + len, sizeof(buffer) - len, "Floors: %" PRIu32 "\n", floors);
                 break;
             case MAG:
                 len += snprintf(buffer + len, sizeof(buffer) - len, "Compass: %.0f\n", heading);
@@ -205,7 +207,7 @@ void MainView::refreshBattery()
 {
     char buffer[64];
     auto len = snprintf(buffer, sizeof(buffer), "Battery: %.1f%%\n", batteryLevel);
-    len += snprintf(buffer + len, sizeof(buffer) - len, "# %lu\nTime: %lu\n", mFrameCounter, rtcTime);
+    len += snprintf(buffer + len, sizeof(buffer) - len, "# %" PRIu32 "\nTime: %" PRIu32 "\n", mFrameCounter, rtcTime);
     Unicode::strncpy(text_headerBuffer, buffer, TEXT_HEADER_SIZE);
     text_header.invalidate();
 }

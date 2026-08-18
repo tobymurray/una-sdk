@@ -7,6 +7,7 @@
  ******************************************************************************
  */
 
+#include <cinttypes>
 #include <cstdio>
 #include <cstring>
 #include <cassert>
@@ -523,14 +524,14 @@ void JsonStreamWriter::writeChar(char c)
 void JsonStreamWriter::writeInt(int32_t value)
 {
     char buf[32] { };
-    int len = snprintf(buf, sizeof(buf), "%ld", value);
+    int len = snprintf(buf, sizeof(buf), "%" PRId32, value);
     writeData(buf, len);
 }
 
 void JsonStreamWriter::writeUint(uint32_t value)
 {
     char buf[32] { };
-    int len = snprintf(buf, sizeof(buf), "%lu", value);
+    int len = snprintf(buf, sizeof(buf), "%" PRIu32, value);
     writeData(buf, len);
 }
 

@@ -275,7 +275,7 @@ bool JsonStreamReader::getArrayLength(const char *query,
     JSONStatus_t status = JSONNotFound;
     char subquery[32] { };
     do {
-        size_t ql = snprintf(subquery, sizeof(subquery), "[%u]", i++);
+        size_t ql = snprintf(subquery, sizeof(subquery), "[%zu]", i++);
         status = JSON_SearchConst(pValue, valueLen, subquery, ql, &pDummyValue,
                 &dummyLen, &type);
     } while (status == JSONSuccess);
