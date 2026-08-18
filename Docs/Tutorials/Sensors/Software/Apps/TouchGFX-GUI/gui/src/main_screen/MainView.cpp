@@ -177,6 +177,12 @@ void MainView::refreshDisplay()
             case MAG:
                 len += snprintf(buffer + len, sizeof(buffer) - len, "Compass: %.0f\n", heading);
                 break;
+            case BASIC:
+            case DETAILED:
+            case FULL:
+            case VERB_LEVEL_MAX:
+                // Grouped levels are drawn above; VERB_LEVEL_MAX is the bound.
+                break;
         }
     }
 

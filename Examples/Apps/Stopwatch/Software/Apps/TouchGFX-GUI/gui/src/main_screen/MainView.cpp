@@ -22,7 +22,8 @@ static constexpr int16_t kScrollSteps = 6;
 static const MainView::TimeFace kCompactFace = {
     {50, 44, 115, 51},    // main
     {166, 68, 20, 20},    // tenths
-    99                    // line; the list keeps its Designer rect here
+    99,                   // line
+    {}                    // list; the compact face keeps its Designer rect
 };
 
 // The lap list is the one widget whose Designer rect belongs to the *compact*

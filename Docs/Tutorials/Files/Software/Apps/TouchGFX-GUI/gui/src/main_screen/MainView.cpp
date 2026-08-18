@@ -50,6 +50,7 @@ void MainView::updateSettingsDisplay(int32_t decimalCounter, CustomMessage::Acti
         case CustomMessage::ActivityType::CYCLING: activityStr = "CYCLING"; break;
         case CustomMessage::ActivityType::SWIMMING: activityStr = "SWIMMING"; break;
         case CustomMessage::ActivityType::WALKING: activityStr = "WALKING"; break;
+        case CustomMessage::ActivityType::_MAX_ACTIVITY_TYPE: break; // bound, not a value
     }
     Unicode::strncpy(setting2Buffer, activityStr, SETTING2_SIZE - 1);
     setting2.setColor(touchgfx::Color::getColorFromRGB(stgSel == StgType::STG2 ? 255 : 255, stgSel == StgType::STG2 ? 0 : 255, stgSel == StgType::STG2 ? 0 : 255));
@@ -62,6 +63,7 @@ void MainView::updateSettingsDisplay(int32_t decimalCounter, CustomMessage::Acti
         case CustomMessage::DisplayMode::SIMPLE: displayStr = "SIMPLE"; break;
         case CustomMessage::DisplayMode::DETAILED: displayStr = "DETAILED"; break;
         case CustomMessage::DisplayMode::COMPACT: displayStr = "COMPACT"; break;
+        case CustomMessage::DisplayMode::_MAX_DISPLAY_MODE: break; // bound, not a value
     }
     Unicode::strncpy(setting3Buffer, displayStr, SETTING3_SIZE - 1);
     setting3.setColor(touchgfx::Color::getColorFromRGB(stgSel == StgType::STG3 ? 255 : 255, stgSel == StgType::STG3 ? 0 : 255, stgSel == StgType::STG3 ? 0 : 255));
@@ -92,6 +94,8 @@ void MainView::handleKeyEvent(uint8_t key)
                 mDisplayMode = static_cast<CustomMessage::DisplayMode>(current);
                 break;
             }
+            case StgType::_MAX_STG:
+                break; // bound, not a selectable setting
         }
     }
 
@@ -116,6 +120,8 @@ void MainView::handleKeyEvent(uint8_t key)
                 mDisplayMode = static_cast<CustomMessage::DisplayMode>(current);
                 break;
             }
+            case StgType::_MAX_STG:
+                break; // bound, not a selectable setting
         }
     }
 

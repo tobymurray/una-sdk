@@ -81,18 +81,6 @@ struct Alarm {
     {
         return !(*this == other);
     }
-
-    Alarm& operator=(const Alarm& other)
-    {
-        if (this != &other) {
-            on          = other.on;
-            timeHours   = other.timeHours;
-            timeMinutes = other.timeMinutes;
-            repeat      = other.repeat;
-            effect      = other.effect;
-        }
-        return *this;
-    }
 };
 
 #endif // ALARM_HPP
