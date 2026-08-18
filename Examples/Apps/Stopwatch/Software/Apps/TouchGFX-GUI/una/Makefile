@@ -172,7 +172,10 @@ VPATH_dirs :=
 
 VPATH_dirs := $(sort $(VPATH_dirs))
 $(eval VPATH := $(VPATH):$(VPATH_dirs))
-override user_cflags += -Wno-error
+# -pedantic only flags the deliberate anonymous structs; all else is an error.
+override user_cflags += -Wno-error=pedantic
+# Vendored trees are built from source with our flags; we do not own their warnings.
+vendor_cflags := -Wno-error
 override user_cflags += -DBUILD_VERSION=\"1.2.3\" -DAPP_ID=\"A159B1C005CFD2A5\" -DDEV_ID=\"UNA\"
 #------------------------------------------------------------------------------
 
@@ -222,7 +225,7 @@ $(object_output_path)/touchgfx/%.o: $(touchgfx_path)/%.cpp config/gcc/app.mk
 	@echo Compiling $<
 	@mkdir -p $(@D)
 	@$(cpp_compiler) \
-		-MMD -MP $(cpp_compiler_options) $(cpp_compiler_options_local) $(user_cflags) \
+		-MMD -MP $(cpp_compiler_options) $(cpp_compiler_options_local) $(user_cflags) $(vendor_cflags) \
 		$(patsubst %,-I%,$(include_paths)) \
 		-c $< -o $@
 
@@ -231,6 +234,14 @@ $(object_output_path)/%.o: %.cpp config/gcc/app.mk
 	@mkdir -p $(@D)
 	@$(cpp_compiler) \
 		-MMD -MP $(cpp_compiler_options) $(cpp_compiler_options_local) $(user_cflags) \
+		$(patsubst %,-I%,$(include_paths)) \
+		-c $< -o $@
+
+$(object_output_path)/ThirdParty/%.o: ThirdParty/%.c config/gcc/app.mk
+	@echo Compiling $<
+	@mkdir -p $(@D)
+	@$(c_compiler) \
+		-MMD -MP $(c_compiler_options) $(c_compiler_options_local) $(user_cflags) $(vendor_cflags) \
 		$(patsubst %,-I%,$(include_paths)) \
 		-c $< -o $@
 
