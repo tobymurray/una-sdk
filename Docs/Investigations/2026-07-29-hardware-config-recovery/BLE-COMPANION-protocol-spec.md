@@ -225,6 +225,23 @@ Response (Notification, repeated until offset+chunklen == total, no per-chunk ac
 Confirmed concretely: request chunk length was `128` in every observed transfer; the server
 honored it exactly (every chunk except the final remainder was 128 bytes).
 
+**One response may span several notifications (firmware 1.4.0+).** A single notification can
+carry at most `ATT_MTU - 3 (opcode+handle) - 16 (0x11 header)` = 201 payload bytes at MTU=220.
+Requesting a larger `chunk_len` is legal and returns the remainder across follow-up
+notifications — **each of which repeats the full 16-byte header**, with `offset` advanced and
+`real_chunklen` describing only that notification. They are *not* headerless continuation
+payload. A client should therefore accumulate framed notifications until it has the
+`chunk_len` it asked for (or hits `total`), reassembling by each notification's declared
+`offset`, and should advance its next request by the bytes *actually delivered* rather than by
+any advertised length.
+
+On **firmware 1.3.0** this behaved differently and badly: `real_chunklen` was clamped to
+`MTU-16` while only `MTU-16-3` bytes were sent, with no continuation at all, so any `chunk_len`
+above `MTU-19` hung a header-trusting client. That was [#272](https://github.com/UNAWatch/una-sdk/issues/272),
+fixed in 1.4.0 — see `../2026-08-18-fts-read-chunklen-fix/`. Requesting `chunk_len <= 201`
+behaves identically on both firmwares, which is why the phone app's `chunk_len=128` never
+tripped it. Larger chunks are worth using: 4096 reads at 4.2 kB/s versus 1.4 kB/s at 128.
+
 **CORRECTED — "one request per file" was wrong; it's one request per chunk, via two opcodes.**
 The original phone-capture analysis (on two short, sub-2KB test files) concluded the client sends
 a single `0x10` request and the server streams the whole file back unprompted. A later live capture
@@ -355,11 +372,13 @@ images transit onto the device filesystem at a specific path, and CCS's `firmwar
 - ~~The `0x30` secondary command's exact purpose~~ — resolved, §2.2 (2026-08-08): DELETE/DELETE_STATUS.
 - ~~The `0x20/0x21/0x22` upload framing~~ — resolved, §2.2 (2026-08-08): fully decoded and
   measured up to 29 MiB. Full writeup at `../2026-08-07-ble-write-path/`.
-- **New from the write-path pass:** the read path's `real_chunklen` accounting has a firmware
+- ~~**New from the write-path pass:** the read path's `real_chunklen` accounting has a firmware
   bug — it clamps to `MTU-16` but only ever delivers `MTU-16-3` bytes in one notification with
-  no continuation, so a `chunk_len` request above `MTU-19` silently hangs rather than erroring.
-  See `../2026-08-07-ble-write-path/raw/m2_real_chunklen_clamp.txt`. Worth reporting upstream —
-  fixing it would raise read throughput for every client, not just this investigation's.
+  no continuation, so a `chunk_len` request above `MTU-19` silently hangs rather than erroring.~~
+  — resolved, §2.2 (2026-08-18): reported as
+  [#272](https://github.com/UNAWatch/una-sdk/issues/272) and **fixed in firmware 1.4.0**, validated
+  on hardware. The predicted throughput win landed: 2.1 kB/s → 4.2 kB/s. Full retest at
+  `../2026-08-18-fts-read-chunklen-fix/`.
 
 ---
 
@@ -560,7 +579,10 @@ Remaining work, roughly in priority order:
 watch with no phone involved, lists directories, and pulls a real `.fit` file that passes CRC
 validation — this is a working existence proof, not a plan: pair normally, use `AcquireNotify` on
 handle `0x0027` (UUID `adaf0002-...`), write `0x50 00 <len> <path>` to list or `0x10 00 <len>
-<offset> <chunk_len> <path>` per chunk to read, until `offset+chunklen == total_size`.
+<offset> <chunk_len> <path>` per chunk to read, advancing `offset` by the bytes actually
+delivered until it reaches `total_size`. On firmware 1.4.0+ one request may be answered by
+several notifications, each carrying its own header — accumulate them by declared `offset`
+(see §2.2) and prefer a large `chunk_len`, which is ~3x faster than the phone app's 128.
 
 ## Sources used
 

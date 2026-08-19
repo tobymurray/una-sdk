@@ -163,9 +163,11 @@ async def list_dir(bus, char_path: str, dirpath: str):
 async def read_file(bus, char_path: str, filepath: str, chunk_len: int = 128, mtu_out: dict = None):
     """FTS whole-file read: 0x10 request per chunk (offset advancing), 0x11 response per chunk.
 
-    NOTE: a single 0x10 request does NOT stream the whole file on this firmware/setup --
-    one request per chunk is required. See spec doc §6a for the full story; this differs
-    from what an earlier phone-capture analysis assumed.
+    NOTE: a single 0x10 request does NOT stream the whole *file* -- it delivers at most the
+    requested chunk_len and then stops, so one request per chunk is required. See spec doc §6a
+    for the full story; this differs from what an earlier phone-capture analysis assumed.
+    (Passing a chunk_len >= the file size does pull the whole file in one request on 1.4.0, but
+    that is the chunk_len window happening to cover the file, not whole-file streaming.)
 
     offset/total/chunklen are genuine 32-bit fields (matching Adafruit's real BLE File Transfer
     Service spec byte-for-byte -- see spec doc §1.2/§2.2). An earlier version of this function
@@ -173,13 +175,23 @@ async def read_file(bus, char_path: str, filepath: str, chunk_len: int = 128, mt
     ceiling" finding on a real >64KB file -- retracted once a live phone-sync capture showed the
     high 16 bits were non-zero and combined with the low 16 bits into the correct true size.
 
-    A single notification does NOT necessarily carry a whole response once chunk_len exceeds
-    roughly MTU-16: the response header declares real_chunklen, but the payload bytes arrive
-    split across as many raw notifications as it takes. The loop below keeps consuming
-    notifications (no header on the continuation ones) until real_chunklen payload bytes have
-    been collected for the current chunk, instead of assuming (and silently truncating to)
-    whatever the first notification happened to contain -- see M2 in the write-path prompt for
-    why the earlier single-notification assumption was never actually exercised at chunk_len=128.
+    FRAMING (retested on firmware 1.4.0, 2026-08-18 -- see ../../2026-08-18-fts-read-chunklen-fix/):
+    one 0x10 request is answered by one or MORE 0x11 notifications, and every one of them carries
+    its own 16-byte header whose offset/real_chunklen describe just that notification. A single
+    notification tops out at MTU-16-3 payload bytes (201 at MTU=220), so any chunk_len above that
+    simply arrives as several framed notifications. The loop below accumulates whole framed
+    notifications until the requested chunk_len (or EOF) is satisfied.
+
+    An earlier version of this docstring described continuation notifications as headerless raw
+    payload appended to the first one. That was never actually observed -- it was a hypothesis
+    left over from the 1.3.0 firmware, which sent no continuations at all (see below).
+
+    IMPORTANT: the loop advances `offset` by the bytes ACTUALLY delivered, never by the
+    advertised real_chunklen. On firmware 1.3.0 those two could disagree -- real_chunklen was
+    clamped to MTU-16 but only MTU-16-3 bytes were ever sent, with no continuation, so a client
+    trusting the header hung for any chunk_len above MTU-19 (upstream issue #272, fixed in 1.4.0).
+    Trusting delivered bytes instead keeps this function correct on both firmwares; on 1.3.0 an
+    oversized chunk_len merely costs one 8s stall per chunk rather than hanging outright.
 
     mtu_out, if given, is filled in with {'mtu': <negotiated MTU>} once AcquireNotify returns.
     """
@@ -198,28 +210,27 @@ async def read_file(bus, char_path: str, filepath: str, chunk_len: int = 128, mt
         offset = 0
         while True:
             await request_chunk(bus, offset)
-            try:
-                b = await stream.get(timeout=8.0)
-            except asyncio.TimeoutError:
-                break
-            if not b or b[0] != 0x11 or len(b) < 16:
-                break
-            got_offset, total, real_chunklen = struct.unpack("<III", b[4:16])
-            payload = bytearray(b[16:])
-            while len(payload) < real_chunklen:
+            got = 0  # bytes actually delivered for THIS request, across all its notifications
+            while True:
                 try:
-                    more = await stream.get(timeout=8.0)
+                    b = await stream.get(timeout=8.0)
                 except asyncio.TimeoutError:
                     break
-                payload += more
-            if len(payload) < real_chunklen:
-                break  # timed out mid-reassembly; bail rather than return a truncated chunk silently
-            payload = bytes(payload[:real_chunklen])
-            total_size = total
-            chunks[got_offset] = payload[:max(0, total - got_offset)]
-            if got_offset + real_chunklen >= total:
+                if not b or b[0] != 0x11 or len(b) < 16:
+                    break
+                got_offset, total, real_chunklen = struct.unpack("<III", b[4:16])
+                # Trust the bytes present, not the advertised length (see docstring re: #272).
+                payload = b[16:16 + real_chunklen]
+                total_size = total
+                chunks[got_offset] = payload[:max(0, total - got_offset)]
+                got += len(payload)
+                if got_offset + len(payload) >= total or got >= chunk_len:
+                    break
+            if got == 0:
+                break  # nothing delivered; bail rather than spin re-requesting the same offset
+            offset += got
+            if total_size is not None and offset >= total_size:
                 break
-            offset = got_offset + real_chunklen
 
     if total_size is None:
         return None

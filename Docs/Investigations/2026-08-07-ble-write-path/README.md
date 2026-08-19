@@ -4,6 +4,12 @@ Answers the question `BLE-COMPANION-write-path-prompt.md` posed: how fast can a 
 file to the UNA watch over BLE, and what is the framing that does it? Extends the working
 read-path client and investigation from `../2026-07-29-hardware-config-recovery/`.
 
+> **Firmware applicability:** every measurement in this document was taken on **firmware 1.3.0**.
+> The read-path `real_chunklen` bug found in M2 was filed as [#272][i272] and fixed in **1.4.0**,
+> which raises the read ceiling from 2.1 kB/s to 4.2 kB/s — see
+> [`../2026-08-18-fts-read-chunklen-fix/`](../2026-08-18-fts-read-chunklen-fix/). The **write**
+> numbers below have *not* been re-measured on 1.4.0 and should not be assumed to still hold.
+
 ## Headline number
 
 **Sustained write throughput: ~2220-2237 B/s (≈2.2 kB/s), CONFIRMED flat across a 30x size
@@ -25,7 +31,9 @@ bandwidth-bound: ~90ms per request regardless of chunk size, ≈2x the connectio
 The read path, for comparison (M1/M2, same watch, same session): 1394.7-1413.3 B/s at the
 phone-app's default chunk_len=128, or up to 2163.3 B/s at chunk_len=201 (the largest chunk the
 firmware actually honors at this MTU -- see M2). Write is very slightly *faster* than read at a
-comparable chunk size, both bound by the same ~90ms round trip.
+comparable chunk size, both bound by the same ~90ms round trip. *(On firmware 1.4.0 that last
+sentence no longer holds: read reaches 4.2 kB/s at chunk_len=4096, roughly 2x write, because a
+single request is no longer capped at one notification. Write remains ~2.2 kB/s.)*
 
 **A 3 MiB map pack over this channel takes ~23.5 minutes, not the optimistic "0.9 minutes"
 case and not quite the full pessimistic "20 minutes" either** -- it lands just past the bad end
@@ -99,6 +107,15 @@ turned out true in spirit but not the anticipated shape: it's not multi-notifica
 fragmentation to reassemble, it's a firmware short-delivery bug with no continuation at all.
 201 is the largest `chunk_len` that works cleanly at this MTU.
 Raw: `raw/m2_chunk_sweep.jsonl`, `raw/m2_real_chunklen_clamp.txt`.
+
+> **UPDATE 2026-08-18 — reported as [#272][i272] and FIXED in firmware 1.4.0.** Everything above
+> describes **firmware 1.3.0**, which is what this whole investigation ran on. On 1.4.0 the clamp
+> is correct and oversized chunks stream across follow-up notifications instead of hanging, which
+> lifts the practical ceiling well past 201 and takes read throughput from 2.1 kB/s to 4.2 kB/s.
+> The anticipated multi-notification shape *does* now occur — but each continuation carries its
+> own header, not headerless payload. Full retest: [`../2026-08-18-fts-read-chunklen-fix/`](../2026-08-18-fts-read-chunklen-fix/).
+
+[i272]: https://github.com/UNAWatch/una-sdk/issues/272
 
 ### M3 — connection parameters: CONFIRMED (interval), PLAUSIBLE (whether it can be shortened)
 Connection interval = 45.00ms, latency = 0, supervision timeout = 420ms -- CONFIRMED via a live
@@ -192,10 +209,14 @@ investigation.
   three real corrections beyond the read-path-derived Adafruit hypothesis (see M4).
 - **"`chunk_len=128` is a client choice, not a firmware limit"** — confirmed; 201 works and is
   faster (M2). But a *real*, previously-unknown firmware limit was found at 202+: not a
-  documented ceiling, an undocumented short-delivery bug.
+  documented ceiling, an undocumented short-delivery bug. *(2026-08-18: fixed in fw 1.4.0 — the
+  limit is gone entirely, and 4096 now works at 2x the throughput of 201.)*
 - **"One notification ≠ one response" at large chunk sizes** — the anticipated shape (multiple
   notifications, needing client-side reassembly) never actually occurred; the real failure mode
-  was single-notification short delivery, which reassembly code can't fix (see M2).
+  was single-notification short delivery, which reassembly code can't fix (see M2). *(2026-08-18:
+  on fw 1.4.0 the anticipated shape finally does occur — but with a per-notification header, so
+  the reassembly this prompt imagined would still have been the wrong code. Reassemble by each
+  notification's declared offset, not by concatenating headerless remainders.)*
 - **"BlueZ grants what the peripheral allows"** — M3 reports the granted 45ms interval from a
   live capture, not a requested value.
 - **"A fast desktop-Linux number may not transfer to Android"** — still true and still
@@ -247,7 +268,12 @@ asks rather than a vague request: (1) the actual usable write throughput on this
 out around 2.2 kB/s regardless of client tuning -- is there a faster path we're missing, or is
 this genuinely the ceiling? (2) the firmware performs no write-offset or chunk-order validation
 at all -- is that intentional, or would UNA consider adding it, since a companion app has no
-way to detect a corrupted resume without one? (3) the `real_chunklen` accounting bug found in
+way to detect a corrupted resume without one? (3) ~~the `real_chunklen` accounting bug found in
 M2 (advertises `MTU-16` but only delivers `MTU-16-3`) affects the *read* path too and would be
 a cheap, low-risk firmware fix that meaningfully raises read throughput for every client,
-UNA's own phone app included.
+UNA's own phone app included.~~ **Asked and answered** — filed as [#272][i272] on 2026-08-08,
+fixed in firmware 1.4.0, validated on hardware 2026-08-18. The predicted throughput win was
+real: 2.1 kB/s -> 4.2 kB/s. UNA's phone app still requests `chunk_len=128` (1.4 kB/s), so it
+has not yet claimed that win itself.
+
+Asks (1) and (2) remain open and unanswered.
