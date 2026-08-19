@@ -5,3 +5,6 @@ Docs/Templates/TouchGFX-Widgets/Unpacked
 
 .claude/
 build-host/
+# BLE investigation scratch (contains a device MAC; regenerated per session)
+Docs/Investigations/**/prototype/paired_address.txt
+__pycache__/

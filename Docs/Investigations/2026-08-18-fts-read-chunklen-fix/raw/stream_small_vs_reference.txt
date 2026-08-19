@@ -1,0 +1,20 @@
+# Single-request streaming read, small file, vs a chunk_len=128 reference read.
+# Captured 2026-08-18T21:28:21-04:00 on fw 1.4.0.
+
+reference (chunk_len=128): 1981 bytes  sha256=023ae4b10e43bf6d8dea76b54468e499dbfb07775b204528546138308c3e5e77
+
+streamed  (chunk_len=4096): 1981 bytes  sha256=023ae4b10e43bf6d8dea76b54468e499dbfb07775b204528546138308c3e5e77
+notifications: 10
+    offset=0      real_chunklen=201  payload=201 
+    offset=201    real_chunklen=201  payload=201 
+    offset=402    real_chunklen=201  payload=201 
+    offset=603    real_chunklen=201  payload=201 
+    offset=804    real_chunklen=201  payload=201 
+    offset=1005   real_chunklen=201  payload=201 
+    offset=1206   real_chunklen=201  payload=201 
+    offset=1407   real_chunklen=201  payload=201 
+    offset=1608   real_chunklen=201  payload=201 
+    offset=1809   real_chunklen=172  payload=172 
+
+header-accounting mismatches: 0  PASS
+bytes identical to reference: PASS

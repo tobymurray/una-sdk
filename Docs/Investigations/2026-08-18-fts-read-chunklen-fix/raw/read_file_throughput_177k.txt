@@ -1,0 +1,6 @@
+# Updated read_file() on the 177,756-byte file: throughput by chunk_len, fw 1.4.0.
+# Captured 2026-08-18T21:32:49-04:00. Expected sha256 prefix c69a1bb590fd41df (matches verify_large.py).
+
+chunk_len=128   ->  177756 bytes in  128.5s (  1.4 kB/s)  sha=c69a1bb590fd41df  match
+chunk_len=201   ->  177756 bytes in   81.1s (  2.1 kB/s)  sha=c69a1bb590fd41df  match
+chunk_len=4096  ->  177756 bytes in   41.4s (  4.2 kB/s)  sha=c69a1bb590fd41df  match
