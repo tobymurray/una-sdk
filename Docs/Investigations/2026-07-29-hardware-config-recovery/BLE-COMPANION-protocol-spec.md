@@ -820,14 +820,49 @@ ErrorCode             InvalidRequestFormat=128  NotificationUIDNotFound=129
 `ExecutePositiveAction` / `ExecuteNegativeAction` are the watch acting on a notification, which is
 where dismiss and reply would come from.
 
-### 3c.4 Still open
+### 3c.4 Watch → phone commands — notify on `-0002-`
 
-The **inbound** parse: the byte layout of the watch's `RequestAttributes` and `Execute*Action`
-commands as they arrive by notification on `-0002-`. Only the outbound encoders were decoded here.
-The app monitors that characteristic and has a `handleExecuteAction`, so the code to read is in the
-same bundle. Nothing end-to-end can be built until it is.
+Dispatched on the first byte by `handleServerCommand`, which warns and drops anything else.
 
-Untested against hardware — everything above is read from the app, not observed on the wire.
+**`RequestAttributes` (`0x03`)** — minimum 5 bytes, plus 3 per attribute requested:
+
+```text
+[0]     0x03            ServerCommand.RequestAttributes
+[1..4]  uid             uint32 LE
+then repeated while at least 3 bytes remain:
+[0]     attributeId     AttributeID
+[1..2]  maxLength       uint16 LE, what the value should be truncated to
+```
+
+**`ExecutePositiveAction` (`0x04`) / `ExecuteNegativeAction` (`0x05`)** — 5 bytes:
+
+```text
+[0]     0x04 or 0x05
+[1..4]  uid             uint32 LE
+```
+
+**Inbound fragmentation does not exist.** The app has an `isFragmenting` branch that appends to a
+`fragmentationBuffer`, then logs `Fragmentation not yet implemented. Discarding data.`, clears the
+buffer and gives up. So either the watch never splits a command, or the vendor app cannot receive
+one that is split. Both inbound frames are small enough to fit any negotiated MTU, so a companion
+can reasonably assume one command per notification — but this is the vendor app's limitation, not a
+property of the watch, and is worth confirming on the wire before relying on it.
+
+### 3c.5 Error response — phone → watch on `-0002-`, 1 byte
+
+```text
+[0]     errorCode       ErrorCode
+```
+
+Sent by `sendErrorResponse`. `NotificationUIDNotFound` answers a request for a UID the phone no
+longer holds; `InvalidRequestFormat` answers a malformed one. A companion that keeps no history
+still has to answer something, or the watch is left waiting.
+
+### 3c.6 Status
+
+The protocol is complete in both directions and nothing in it is now guessed. All of it is read
+from the vendor app, and **none of it has been observed on the wire** — the remaining validation is
+a live exchange with a real watch.
 
 **Adjacent find, not pursued:** the same bundle carries a `[CAMS]` module (`adjustMediaVolume`,
 `addMediaStateListener`), the media-control counterpart to AMS. Recoverable by the same method.
@@ -1023,8 +1058,8 @@ files carry discrete workouts rather than all-day monitoring.
 Remaining work, roughly in priority order:
 1. **CANS (notifications).** Still the largest remaining gap for any companion, but no longer a
    blind one: the outbound wire format is recovered from the vendor app and the expected
-   fragmentation layer is confirmed (§3c). What remains is the inbound parse (§3c.4) and then an
-   implementation, which needs a request/response state machine rather than the plain
+   fragmentation layer is confirmed (§3c), in both directions. What remains is an implementation
+   and a live validation, which needs a request/response state machine rather than the plain
    characteristic write this entry originally assumed.
 2. The CCS **event characteristic** `-0002-`, still completely unexercised. `sendEventActivityEnded`
    and `sendEventFindPhoneAlert` (§3) should surface here — the first would let the watch trigger
