@@ -1,8 +1,14 @@
 # Standalone phone-free prototypes
 
-Five scripts, all validated end-to-end against a real watch with no phone involved. Every one of
-them is **read-only**: none sends the FTS write/delete/move/mkdir opcodes, the unexplained `0x30`,
-or any CCS opcode other than the two daily-health reads.
+Scripts validated end-to-end against a real watch with no phone involved. All are **read-only**
+with respect to the watch's filesystem: none sends the FTS write/delete/move/mkdir opcodes, the
+`0x30` opcode, or any CCS opcode other than the two daily-health reads. The CANS probes write
+notification events, which is what sending a notification means, and nothing else.
+
+`una_v5_probe.py` and the CANS probes were added 2026-08-21; see
+`../CANS-LIVE-PROBE-2026-08-21.md` for what they found, and `transcripts/` for the raw JSONL from
+that session. `selftest.py` checks every frame codec offline and needs no hardware — run it first
+after any change.
 
 Run `una_gatt_dump.py` first in any session — it costs nothing, puts no traffic on the air, and
 the characteristic property flags tell you which direction every channel runs before you send

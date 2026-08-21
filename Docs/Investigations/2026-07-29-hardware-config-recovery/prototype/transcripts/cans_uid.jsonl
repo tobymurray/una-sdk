@@ -1,0 +1,16 @@
+{"t": "2026-08-21T16:01:34.936", "kind": "run", "address": "E8:DF:D5:49:4C:40", "now_s": 1787342494, "candidates": [{"label": "control: small uid, known silent", "uid": 9200}, {"label": "unix seconds, truncated to 24 bits", "uid": 8957598}, {"label": "unix seconds truncated, with a hash-like top byte", "uid": 1116253854}, {"label": "unix milliseconds, truncated to 24 bits", "uid": 15342808}, {"label": "all 24 low bits set (far future if it is a clock)", "uid": 16777215}, {"label": "every bit set", "uid": 4294967295}, {"label": "full 32-bit unix seconds, untruncated", "uid": 1787342494}]}
+{"t": "2026-08-21T16:01:35.015", "kind": "tx", "char": "CANS-0001", "hex": "0100f023000001", "note": "control: small uid, known silent", "decoded": {"uid": 9200, "action": "Add", "category": "Message"}}
+{"t": "2026-08-21T16:01:42.022", "kind": "finding", "question": "uid-theory", "label": "control: small uid, known silent", "uid": 9200, "frames": 0, "decoded": []}
+{"t": "2026-08-21T16:01:42.022", "kind": "tx", "char": "CANS-0001", "hex": "01009eae880001", "note": "unix seconds, truncated to 24 bits", "decoded": {"uid": 8957598, "action": "Add", "category": "Message"}}
+{"t": "2026-08-21T16:01:49.029", "kind": "finding", "question": "uid-theory", "label": "unix seconds, truncated to 24 bits", "uid": 8957598, "frames": 0, "decoded": []}
+{"t": "2026-08-21T16:01:49.029", "kind": "tx", "char": "CANS-0001", "hex": "01009eae884201", "note": "unix seconds truncated, with a hash-like top byte", "decoded": {"uid": 1116253854, "action": "Add", "category": "Message"}}
+{"t": "2026-08-21T16:01:56.036", "kind": "finding", "question": "uid-theory", "label": "unix seconds truncated, with a hash-like top byte", "uid": 1116253854, "frames": 0, "decoded": []}
+{"t": "2026-08-21T16:01:56.036", "kind": "tx", "char": "CANS-0001", "hex": "0100d81cea0001", "note": "unix milliseconds, truncated to 24 bits", "decoded": {"uid": 15342808, "action": "Add", "category": "Message"}}
+{"t": "2026-08-21T16:02:03.044", "kind": "finding", "question": "uid-theory", "label": "unix milliseconds, truncated to 24 bits", "uid": 15342808, "frames": 0, "decoded": []}
+{"t": "2026-08-21T16:02:03.044", "kind": "tx", "char": "CANS-0001", "hex": "0100ffffff0001", "note": "all 24 low bits set (far future if it is a clock)", "decoded": {"uid": 16777215, "action": "Add", "category": "Message"}}
+{"t": "2026-08-21T16:02:10.050", "kind": "finding", "question": "uid-theory", "label": "all 24 low bits set (far future if it is a clock)", "uid": 16777215, "frames": 0, "decoded": []}
+{"t": "2026-08-21T16:02:10.050", "kind": "tx", "char": "CANS-0001", "hex": "0100ffffffff01", "note": "every bit set", "decoded": {"uid": 4294967295, "action": "Add", "category": "Message"}}
+{"t": "2026-08-21T16:02:17.057", "kind": "finding", "question": "uid-theory", "label": "every bit set", "uid": 4294967295, "frames": 0, "decoded": []}
+{"t": "2026-08-21T16:02:17.057", "kind": "tx", "char": "CANS-0001", "hex": "01009eae886a01", "note": "full 32-bit unix seconds, untruncated", "decoded": {"uid": 1787342494, "action": "Add", "category": "Message"}}
+{"t": "2026-08-21T16:02:24.064", "kind": "finding", "question": "uid-theory", "label": "full 32-bit unix seconds, untruncated", "uid": 1787342494, "frames": 0, "decoded": []}
+{"t": "2026-08-21T16:02:24.064", "kind": "summary", "responded": []}

@@ -1,0 +1,6 @@
+{"t": "2026-08-21T15:58:05.585", "kind": "run", "address": "E8:DF:D5:49:4C:40", "phases": ["0", "1"], "argv": ["E8:DF:D5:49:4C:40", "--log", "cans_open.jsonl", "--phases", "0,1", "--base-uid", "9100", "--settle", "10", "--patience", "100"]}
+{"t": "2026-08-21T15:58:05.806", "kind": "rx", "char": "CCS-0002", "hex": "040000", "decoded": {"command": "ExecutePositiveAction", "note": "short: 3 bytes"}}
+{"t": "2026-08-21T15:58:05.986", "kind": "inventory", "firmware": "1.4.0", "fts_version": 5, "fts_version_raw": "05000000", "char_flags": {"CANS-0001": ["write-without-response"], "CANS-0002": ["write-without-response", "notify"], "CCS-0002": ["notify"]}, "notify_mtu": 220}
+{"t": "2026-08-21T15:58:05.986", "kind": "tx", "char": "CANS-0001", "hex": "01008c23000001", "note": "Q1/Q2: unanswered on purpose", "decoded": {"uid": 9100, "action": "Add", "category": "Message"}}
+{"t": "2026-08-21T15:59:56.004", "kind": "finding", "question": "Q1/Q2/Q3", "uid": 9100, "immediate": [], "delayed": [], "immediate_count": 0, "delayed_count": 0}
+{"t": "2026-08-21T15:59:56.004", "kind": "finding", "question": "CCS-event-channel", "frames": ["040000"], "count": 1}
