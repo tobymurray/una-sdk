@@ -1,0 +1,8 @@
+08-21 16:30:34.192 I/ReactNativeJS( 5754): 'settingsString', '{"units":"metric","watchFaceId":0,"phone":{"notifications":true},"heartRateZones":[92,110,129,147,166,184],"dailyGoals":{"activityMinutes":30,"steps":5000,"floors":5},"height":190,"weight":90,"gender":"M","dateOfBirth":"1990-01-01","version":2}'
+08-21 16:30:34.193 I/ReactNativeJS( 5754): 'newSettings to sync:', { units: 'metric',
+08-21 16:30:34.195 I/ReactNativeJS( 5754): '[BLE] Writing file:', '/settings.json'
+08-21 16:30:34.842 I/ReactNativeJS( 5754): [BLE] Writing file progress (windowed): 84%
+08-21 16:33:39.588 I/ReactNativeJS( 5754): 'settingsString', '{"units":"metric","watchFaceId":0,"phone":{"notifications":true},"heartRateZones":[92,110,129,147,166,184],"dailyGoals":{"activityMinutes":30,"steps":5000,"floors":5},"height":190,"weight":90,"gender":"M","dateOfBirth":"1990-01-01","version":2}'
+08-21 16:33:39.590 I/ReactNativeJS( 5754): 'newSettings to sync:', { units: 'metric',
+08-21 16:33:39.593 I/ReactNativeJS( 5754): '[BLE] Writing file:', '/settings.json'
+08-21 16:33:40.121 I/ReactNativeJS( 5754): [BLE] Writing file progress (windowed): 84%

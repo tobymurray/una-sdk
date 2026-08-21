@@ -7,8 +7,9 @@ figures below are extracted from those files, not retyped from the terminal.
 
 ## Headline
 
-**FTS protocol 5 is confirmed and measured. The CCS event channel is decoded and turns out to
-announce saved activities. CANS could not be exercised at all, and why remains unexplained.** Thirteen notification events across five runs — every action, every
+**FTS protocol 5 is confirmed and measured. The CCS event channel is decoded and announces saved
+activities. CANS is solved: it was switched off in a settings file on the watch, and once enabled
+the format recovered in §3c is byte-for-byte correct.** Thirteen notification events across five runs — every action, every
 category, seven UID encodings, idle and occupied screen — drew **zero** replies of any kind. No
 error, no status, no retry, nothing after 100 seconds of waiting.
 
@@ -61,66 +62,80 @@ the chunk-length clamp stays honest above MTU 220 is **moot on real hardware** �
 reachable. Maximum observed notification payload is 201 = `mtu - 19`, so the firmware does size to
 the MTU; it simply has little MTU to size to.
 
-## CANS: silent, and why
+## CANS: it was switched off
 
-Thirteen events, zero replies. What was varied, and ruled out:
+Thirteen events across five runs drew nothing. The cause was not the protocol.
 
-| Varied | Values tried | Result |
-|---|---|---|
-| UID | 9000, 9100, 9200, unix seconds, seconds truncated to 24 bits, ms truncated, `0x00FFFFFF`, `0xFFFFFFFF`, full 32-bit seconds | all silent |
-| Category | Message, Call, Other | all silent |
-| Action | Add | silent |
-| Screen | watchface idle, and notification screen open | all silent |
-| Patience | 6 s, 25 s, 100 s after a single event | no retry, no timeout frame, nothing |
+`/settings.json` on the watch carries `phone.notifications`, and it was **`false`**:
 
-The UID theory deserves recording because it was well-founded and is now **refuted**. The firmware
-carries `[UID: %u] Skip old notification at %u, now %u`, and the vendor app builds a UID as
-`(hash(appId + '-' + key) & 0xFF) << 24 | (a0 & 0xFFFFFF)` — the low 24 bits are caller-supplied,
-and `formatTimestamp` is defined immediately after it. A UID of 9100 would then be a 1970
-timestamp and rightly dropped. Seven encodings including a current truncated clock reading were all
-equally silent, so whatever `Skip old notification` guards, it is not what is stopping this.
+```json
+{"units":"metric","watchFaceId":0,"phone":{"notifications":false},
+ "heartRateZones":[92,110,129,147,166,184],
+ "dailyGoals":{"activityMinutes":30,"steps":5000,"floors":5},
+ "height":190,"weight":90,"gender":"M","dateOfBirth":"1990-01-01","version":2}
+```
 
-### Ruled out
+The watch's "Phone Notifications" toggle is not a BLE command. The vendor app reads `/settings.json`
+over FTS, flips the flag, and writes the whole file back. With the flag false, every CANS write is
+accepted and silently discarded — no error, no status, no reply — which is exactly
+`Notification dropped: no callback attached`, and exactly what was observed. The firmware string
+`phone.notifications` names this path and was in the strings dump the whole time.
 
-**The UID.** Well-founded and refuted. The firmware carries `[UID: %u] Skip old notification at
-%u, now %u`, and the vendor app builds a UID as `(hash(appId + '-' + key) & 0xFF) << 24 |
-(a0 & 0xFFFFFF)` — the low 24 bits caller-supplied, with `formatTimestamp` defined immediately
-after. A UID of 9100 would be a 1970 timestamp and rightly dropped. Seven encodings including a
-current truncated clock reading, `0x00FFFFFF` and `0xFFFFFFFF` were all equally silent. Whatever
-`Skip old notification` guards, it is not this.
+**This is the single most important thing for anyone building a companion.** A disabled flag is
+indistinguishable, on the wire, from a broken implementation. Read `/settings.json` and check the
+flag before concluding anything about a notification that never arrives.
 
-**A missing notifications glance.** Initially concluded from `/Apps/app_list.json`, which lists 20
-apps with no notifications entry, and appeared to match `Notification dropped: no callback
-attached`. **Withdrawn:** the device's owner confirms the notifications glance is firmware-provided
-and was never installed, so its absence from the installed-app list is not evidence of anything.
-Recorded because the reasoning was sound and the conclusion was wrong; anyone re-deriving it from
-`app_list.json` should stop here.
+### The exchange, once enabled
 
-**Whether the writes are malformed enough to be rejected outright.** Deliberately invalid frames —
-ActionID `0x7F`, CategoryID `0x7F`, a truncated 2-byte frame, 20 zero bytes — are all accepted by
-BlueZ exactly as a well-formed event is, which says only that the local stack queued them.
+Captured from the vendor app's own logging, with the notification visible on the watch:
 
-### Not ruled out, and not distinguishable from here
+```
+Added notification UID=769039210 to store.
+Notification sent: UID=769039210, Action=Add      (uid=0x2dd69b6a)
+Request Attributes: [{5,32},{1,255},{2,255},{7,16},{8,16},{9,16}]
+responseData: 03 6a 9b d6 2d 05 15 00 ...
+Sending response: total size=70 bytes, maxPacketSize=217
+Request Attributes: [{4,2040}]
+Sending response: total size=12 bytes
+```
 
-`CANS-0001` is `write-without-response` only: a write with response is refused with
-`Write not permitted`. So there is no ATT acknowledgement to be had, and **"the write never
-arrived" and "the write arrived and was discarded" look identical** from the central. Every
-observation this session is consistent with either.
+The response bytes confirm §3c.2 exactly: `03`, uid `6a 9b d6 2d` little-endian = `0x2DD69B6A`
+matching the logged UID, then attribute `05` with a `u16 LE` length of 21. `maxPacketSize = 217` is
+`mtu - 3` at MTU 220, as decoded.
 
-Remaining candidates, in the order worth testing:
+Confirmed independently on the air. Android's HCI snoop log captured the event frame the vendor
+app sent, a 7-byte write to handle `0x0032`:
 
-1. Something the vendor app establishes that this probe does not — a state, a handshake, or simply
-   being recognised as the phone the watch was set up with.
-2. A watch-side precondition that is real but not the glance: `Notification dropped: no callback
-   attached` still describes the symptom exactly, and the callback may attach only under conditions
-   not reproduced here.
-3. A frame detail wrong in a way that fails silently. The format is read from the app's own
-   encoder and byte-verified against a shipped, hardware-validated CCS builder, so this is the
-   least likely — but it cannot be excluded while nothing answers.
+```text
+01 00 6a 9b d6 2d 01
+│  │  └─ uid 0x2DD69B6A ─┘ └ category 1 = Message
+│  └ action 0 = Add
+└ constant
+```
 
-The decisive experiment is not another guess: it is **watching the vendor app do it**. A BLE
-sniffer capturing the phone sending one real notification would settle in a single frame what this
-session could not settle in thirteen.
+Structurally identical to the frames this probe had been sending all along
+(`01 00 8c 23 00 00 01`), differing only in the UID. The event encoding was never the problem.
+
+Three things the decompile could not have shown:
+
+**The fetch is two-phase.** The watch asks for metadata first — AppIdentifier, Title, Subtitle,
+Timestamp and both action labels — and comes back about 240 ms later for the Message body on its
+own. A companion must therefore **retain a notification's content across several requests**;
+answering once and discarding is not enough.
+
+**`maxLength` is per-attribute and varies widely**: 16 bytes for a timestamp, 255 for a title,
+**2040 for the message body**. At 217 bytes per packet a full-length Message needs about ten
+fragments, so the fragmentation path is real and reachable — this short test notification simply
+did not reach it.
+
+**AppName (6) and MessageContentSize (3) were never requested**, though both exist in the enum.
+Implement them, but do not expect them.
+
+### What this retires
+
+The two theories recorded earlier are both dead, and neither was close. The UID-as-timestamp theory
+is refuted twice over: the real UID `0x2DD69B6A` has low 24 bits of `0xD69B6A`, which is not a
+current clock reading in any unit. The missing-glance theory was already withdrawn.
 
 ## The GATT table is unchanged from 1.3.0
 
@@ -168,17 +183,28 @@ the archive: it is normal, common, and not an error condition.
 
 ## What this changes
 
-For a Gadgetbridge notification implementation: **do not start yet.** The wire format is known
-but unvalidated, and a companion built against it would be indistinguishable from a broken one,
-because the failure mode observed all session is complete silence with no error to surface. The
-windowed-read work, by contrast, could be validated the moment it was written.
+For a Gadgetbridge notification implementation, the format is now validated and the work is
+unblocked. Three things it must do that are not obvious from the format alone: check
+`phone.notifications` in `/settings.json` before sending, because a disabled flag looks exactly
+like a broken implementation; retain content until the watch stops asking, since the fetch comes in
+at least two rounds; and honour each attribute's `maxLength`.
 
 For the windowed-read work already merged: it is confirmed correct on hardware, the clamp is
 belt-and-braces rather than load-bearing at MTU 220, and 4096 is the right window.
 
+## Also observed of the vendor app
+
+**It deletes activity files after downloading them**, including `/Apps/latest_activity.txt`. A
+companion that leaves files in place — as Gadgetbridge does — will silently never see a workout the
+vendor app collected first. Running both on one watch means whichever syncs first wins.
+
+**It uses windowed reads.** `0x12` READ_PACING appears as a 12-byte write exactly as documented, and
+its progress logging steps in roughly 11 KB increments. Its file writes chunk at 217 bytes, again
+`mtu - 3`.
+
 ## Open, in priority order
 
-1. **Sniff the vendor app sending one notification.** Everything else is guessing; this is the one
-   move that converts a silent channel into a known one.
-2. Identify CCS event `0x04 0x00 0x00`. `0x01` is now understood; `0x04` is not.
-3. Q1–Q10 for CANS, all still unanswered and all blocked on (1).
+1. Identify CCS event `0x04 0x00 0x00`. `0x01` is understood; this one fires only at CCCD enable.
+2. Reach the fragmentation path with a message long enough to need it — a full 2040-byte body.
+3. `ExecutePositiveAction` / `ExecuteNegativeAction` from the watch, which nothing has yet
+   triggered.
