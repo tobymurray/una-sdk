@@ -1,0 +1,6 @@
+{"t": "2026-08-21T16:10:55.721", "kind": "rx", "char": "CCS-0002", "hex": "040000", "decoded": {"command": "ExecutePositiveAction", "note": "short: 3 bytes"}}
+{"t": "2026-08-21T16:10:55.721", "kind": "ccs_event", "elapsed": 0.1, "hex": "040000", "opcode": 4, "length": 3}
+{"t": "2026-08-21T16:13:35.517", "kind": "rx", "char": "CCS-0002", "hex": "010035608f2cb9e4d7a1", "decoded": {"command": "unrecognised(0x01)", "raw": "010035608f2cb9e4d7a1"}}
+{"t": "2026-08-21T16:13:35.517", "kind": "ccs_event", "elapsed": 159.9, "hex": "010035608f2cb9e4d7a1", "opcode": 1, "length": 10}
+{"t": "2026-08-21T16:13:57.432", "kind": "rx", "char": "CCS-0002", "hex": "0100824af0c9b7d3e5a1", "decoded": {"command": "unrecognised(0x01)", "raw": "0100824af0c9b7d3e5a1"}}
+{"t": "2026-08-21T16:13:57.433", "kind": "ccs_event", "elapsed": 181.8, "hex": "0100824af0c9b7d3e5a1", "opcode": 1, "length": 10}

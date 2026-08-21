@@ -1,0 +1,4 @@
+{"t": "2026-08-21T16:14:57.688", "kind": "rx", "char": "CCS-0002", "hex": "040000", "decoded": {"command": "ExecutePositiveAction", "note": "short: 3 bytes"}}
+{"t": "2026-08-21T16:14:57.688", "kind": "ccs_event", "elapsed": 0.1, "hex": "040000", "opcode": 4, "length": 3}
+{"t": "2026-08-21T16:17:02.069", "kind": "rx", "char": "CCS-0002", "hex": "010035608f2cb9e4d7a1", "decoded": {"command": "unrecognised(0x01)", "raw": "010035608f2cb9e4d7a1"}}
+{"t": "2026-08-21T16:17:02.070", "kind": "ccs_event", "elapsed": 124.4, "hex": "010035608f2cb9e4d7a1", "opcode": 1, "length": 10}

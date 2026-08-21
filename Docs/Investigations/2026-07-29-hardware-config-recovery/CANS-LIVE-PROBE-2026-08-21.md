@@ -7,8 +7,8 @@ figures below are extracted from those files, not retyped from the terminal.
 
 ## Headline
 
-**FTS protocol 5 is confirmed working and measured. CANS could not be exercised at all, and why
-remains unexplained.** Thirteen notification events across five runs — every action, every
+**FTS protocol 5 is confirmed and measured. The CCS event channel is decoded and turns out to
+announce saved activities. CANS could not be exercised at all, and why remains unexplained.** Thirteen notification events across five runs — every action, every
 category, seven UID encodings, idle and occupied screen — drew **zero** replies of any kind. No
 error, no status, no retry, nothing after 100 seconds of waiting.
 
@@ -122,23 +122,42 @@ The decisive experiment is not another guess: it is **watching the vendor app do
 sniffer capturing the phone sending one real notification would settle in a single frame what this
 session could not settle in thirteen.
 
+## The GATT table is unchanged from 1.3.0
+
+8 services, 19 characteristics, identical to the firmware 1.3.0 dump. **Still no Nordic UART
+Service**, which UNA's published `BLE-Services-Overview.md` lists. That discrepancy is now
+confirmed across two firmware versions rather than assumed to be a 1.3.0 quirk.
+
 ## Two findings nobody was looking for
 
-### The CCS event characteristic fires — first time observed
+### The CCS event characteristic announces saved activities — recovered
 
-CCS `-0002-` is notify-only and had never been seen carrying anything. It emitted **`04 00 00`**
-in both runs where it was subscribed, and the wearer confirmed touching nothing. In both cases it
-arrived *at subscribe time*, before any traffic was sent, which suggests a latched or queued event
-delivered on CCCD enable rather than a live one.
+CCS `-0002-` is notify-only and had never been seen carrying anything. It carries two opcodes.
 
-Three bytes, opcode `0x04`. The two candidates named in the firmware are `sendEventActivityEnded`
-and `sendEventFindPhoneAlert`. Which one `0x04` is remains unknown, and the two-zero tail is
-unexplained. This is the channel that would let the watch trigger a sync instead of the phone
-polling, so it is worth its own probe.
+**`0x01 0x00 <appId: u64 LE>` — an activity was saved.** Ten bytes. The trailing eight are an app
+ID that matches `/Apps/app_list.json` exactly:
 
-*(A cosmetic note for anyone reading the transcripts: the probe decodes CCS frames with the CANS
-decoder, so `040000` is labelled `ExecutePositiveAction`. CCS has its own opcode space; that label
-is an artifact.)*
+| frame | decoded app ID | app |
+|---|---|---|
+| `010035608f2cb9e4d7a1` | `A1D7E4B92C8F6035` | Treadmill |
+| `0100824af0c9b7d3e5a1` | `A1E5D3B7C9F04A82` | Walk |
+
+Three such events were observed across two listening windows, and the watch's filesystem then held
+exactly three new activity files, matching one-for-one in app and order. In the second window the
+wearer deliberately saved one workout and discarded another: **one file, one event**. Discarding
+leaves no trace on either the wire or the filesystem.
+
+So this is `sendEventActivityEnded`, and it means "an activity was saved in this app". The `.fit`
+is written and `/Apps/latest_activity.txt` is updated. That is precisely the signal a companion
+needs to sync on completion rather than by polling, and it names the app, so the archive path can
+be narrowed before walking anything.
+
+**`0x04 0x00 0x00` — unidentified, latched.** Emitted within 0.1 s of subscribing in all three runs
+where the channel was subscribed, with the watch untouched, and never at any other time. The
+reproducibility and the timing suggest something queued being flushed on CCCD enable rather than a
+live event. `sendEventFindPhoneAlert` is the other sender named in the firmware, but the device's
+owner reports find-phone does not appear to be implemented in the watch UI, so `0x04` is more
+likely something else. Unresolved.
 
 ### LISTDIR of a missing directory answers `50 03`
 
@@ -161,6 +180,5 @@ belt-and-braces rather than load-bearing at MTU 220, and 4096 is the right windo
 
 1. **Sniff the vendor app sending one notification.** Everything else is guessing; this is the one
    move that converts a silent channel into a known one.
-2. Identify CCS event `0x04` and its two trailing bytes — a second, unrelated channel that is
-   already talking without being asked.
+2. Identify CCS event `0x04 0x00 0x00`. `0x01` is now understood; `0x04` is not.
 3. Q1–Q10 for CANS, all still unanswered and all blocked on (1).
