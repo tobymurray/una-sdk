@@ -754,6 +754,86 @@ the fabricated 187 stretch.
 
 ---
 
+## 3c. CANS (notifications) — wire format recovered from the vendor app
+
+**CONFIRMED (static, from the vendor app's own source).** Recovered 2026-08-21 by decompiling
+`com.unawatch-2.1.16` `assets/index.android.bundle` (Hermes v96) with `hbc-decompiler`. This is the
+app's own encoder, not an inference from a capture.
+
+**Method validated before trusting it.** The same decompilation pass renders CCS `0x14` as
+`Buffer.alloc(7); [0]=0x14; [1]=0; [2..3]=year u16LE; [4]=month; [5]=day; [6]=hour`, which is
+byte-identical to the `UnaHourlyHrProtocol.buildRequest` already shipped in Gadgetbridge and
+validated against a real watch (§3.1). A pass that reproduces known-good ground is trusted on new
+ground.
+
+The vendor's own constant names settle the guesswork in §1 and §1.2:
+
+| Bundle constant | UUID | Direction |
+|---|---|---|
+| `NOTIFICATION_SERVICE_UUID` | `554e4100-28e7-4811-0000-141f8b92ee40` | — |
+| `NOTIFICATION_CHARACTERISTIC_UUID` | `…-0001-…` | phone → watch, write without response |
+| `COMMAND_CHARACTERISTIC_UUID` | `…-0002-…` | phone → watch write; watch → phone notify |
+
+**§1.2's inference was right, and its wording needs one qualification.** The attribute fetch does
+come back on `-0002-`, the only CANS channel that notifies. But "pushing a notification to the
+watch is fire-and-forget" describes the *event* frame only: notification content is never pushed.
+CANS is ANCS re-implemented over a vendor service, so the watch pulls the text.
+
+### 3c.1 Notification event — phone → watch on `-0001-`, 7 bytes
+
+```text
+[0]     0x01            constant
+[1]     action          NotificationAction
+[2..5]  uid             uint32 LE
+[6]     category        NotificationCategory
+```
+
+### 3c.2 Attribute response — phone → watch on `-0002-`
+
+```text
+[0]     0x03            ServerCommand.RequestAttributes
+[1..4]  uid             uint32 LE
+then repeated, one per attribute returned:
+[0]     attributeId     AttributeID
+[1..2]  length          uint16 LE
+[3..]   value           UTF-8 text, or uint16 LE for MessageContentSize
+```
+
+The assembled response is sliced into `maxPacketSize` fragments and each is written to `-0002-`
+without response. `maxPacketSize = mtu - 3`, falling back to 20 if the MTU read fails. **Fragments
+carry no header of their own** — they are raw slices, so the watch reassembles by concatenation and
+ordering is the only thing holding the message together. This is the reassembly layer §6 predicted
+from the constructor's multi-KB buffers and worker thread.
+
+### 3c.3 Enumerations
+
+```text
+NotificationAction    Add=0  Remove=1  Modify=2
+NotificationCategory  Other=0  Message=1  Call=2
+ServerCommand         RequestAttributes=3  ExecutePositiveAction=4  ExecuteNegativeAction=5
+AttributeID           Title=1  Subtitle=2  MessageContentSize=3  Message=4  AppIdentifier=5
+                      AppName=6  Timestamp=7  PositiveActionLabel=8  NegativeActionLabel=9
+ErrorCode             InvalidRequestFormat=128  NotificationUIDNotFound=129
+                      AttributeDataNotAvailable=130
+```
+
+`ExecutePositiveAction` / `ExecuteNegativeAction` are the watch acting on a notification, which is
+where dismiss and reply would come from.
+
+### 3c.4 Still open
+
+The **inbound** parse: the byte layout of the watch's `RequestAttributes` and `Execute*Action`
+commands as they arrive by notification on `-0002-`. Only the outbound encoders were decoded here.
+The app monitors that characteristic and has a `handleExecuteAction`, so the code to read is in the
+same bundle. Nothing end-to-end can be built until it is.
+
+Untested against hardware — everything above is read from the app, not observed on the wire.
+
+**Adjacent find, not pursued:** the same bundle carries a `[CAMS]` module (`adjustMediaVolume`,
+`addMediaStateListener`), the media-control counterpart to AMS. Recoverable by the same method.
+
+---
+
 ## 4. Authentication / pairing model — the pivotal question (still open, but a real lead)
 
 A full keyword sweep of all 6539 lines of `flash_strings.txt` for
@@ -941,12 +1021,11 @@ alternate channel, it is the *only* source of a per-minute heart rate timeline, 
 files carry discrete workouts rather than all-day monitoring.
 
 Remaining work, roughly in priority order:
-1. **CANS (notifications).** The largest remaining gap for any companion, and the one thing that
-   makes a watch a watch. Service `554e4100-28e7-4811-0000-141f8b92ee40`, characteristics
-   `-0001-` and `-0002-`. The watch is the GATT server, so it is a plain characteristic write —
-   far cheaper than the AMS/ANCS path, which would need the companion to *run* a GATT server.
-   Expect a fragmentation/reassembly layer (multi-KB buffers and a worker thread in the
-   constructor; strings `parseBuffer`, `BLE.ParserCANS`, `androidFetchAttr`, `notifHandler`).
+1. **CANS (notifications).** Still the largest remaining gap for any companion, but no longer a
+   blind one: the outbound wire format is recovered from the vendor app and the expected
+   fragmentation layer is confirmed (§3c). What remains is the inbound parse (§3c.4) and then an
+   implementation, which needs a request/response state machine rather than the plain
+   characteristic write this entry originally assumed.
 2. The CCS **event characteristic** `-0002-`, still completely unexercised. `sendEventActivityEnded`
    and `sendEventFindPhoneAlert` (§3) should surface here — the first would let the watch trigger
    a sync instead of the companion polling.
