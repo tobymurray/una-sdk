@@ -1,6 +1,7 @@
 # Backlight control from an app: what the SDK actually publishes
 
-Status: **Phase A complete. Phases B, C, D, E not started.**
+Status: **Phase A complete. Phase B run on hardware 2026-08-27, Suite 2 only.
+Phase D's register evidence not yet reported. Phases C and E not started.**
 No device was used. No firmware dump was used. Everything below was read out of
 `una-sdk` (`main`, 8cdb7314) and `watch-apps` (`main`), and can be re-checked by
 content without hardware.
@@ -39,12 +40,12 @@ hypothesis and give the write-up its spine.
 
 | # | Question | Phase A verdict | Confidence | Falsified by |
 |---|---|---|---|---|
-| Q1 | Kernel handles `0x02080000`, from which process kinds | Open. Nothing in the SDK gates the message by process kind; the "GUI only" comment governs the `0x0206`/`0x0207` block above it, not the `0x0208` block | n/a | Phase B |
+| Q1 | Kernel handles `0x02080000`, from which process kinds | **Yes, and from both.** The light responds to requests from a Service and from a GUI process alike, so the "GUI only" comment on the block above does not reach this one | **CONFIRMED** (device, 2026-08-27) | A GUI-sent request behaving differently from a service-sent one. It did not |
 | Q2 | Where `brightness` dies | **At the interface boundary.** `IBacklight` has no level parameter, so nothing downstream of the message handler can carry one | **LIKELY** (repo, structural) | A kernel `IBacklight` with a wider vtable than this header declares; a handler that writes a duty cycle without going through `IBacklight`. Phase C settles it |
-| Q3 | `autoOffTimeoutMs = 0` semantics | Open on device. **The simulator is wrong**: it blanks after about 50 ms where both headers say 0 disables auto-off | CONFIRMED (simulator) | Phase B on device |
-| Q4 | `brightness = 0` off, and timer interaction | Open on device. Simulator maps `brightness > 0` to `on()` and everything else to `off()`, and `on()` cancels a pending timer while `off()` does not | CONFIRMED (simulator) | Phase B |
+| Q3 | `autoOffTimeoutMs = 0` semantics | **The header is right and the simulator is wrong.** 0 disables auto-off on device: the light held for the full 30 s observation window. The mock blanks within about 50 ms of the same request | **CONFIRMED** (device, 2026-08-27) | The light going out inside the window. It did not, at 0 or at `0xFFFFFFFF` |
+| Q4 | `brightness = 0` off, and timer interaction | **Both as documented.** `brightness = 0` turns the light off immediately, beating a 60 s timer already armed; and a second request replaces a running timer rather than racing it (a 1 s timer re-armed to 60 s produced no dim at the 1 s mark) | **CONFIRMED** (device, 2026-08-27) | A dim at ~1 s in the cancel test, or the light surviving `brightness = 0` |
 | Q5 | State readable back | **No SDK route.** No response field on `RequestBacklightSet`, no backlight event type, no `IBacklight` reachable from an app | CONFIRMED (repo) | An undocumented event type or IID. Phases B/C |
-| Q6 | Kernel policy overriding an app | Open. `Docs/Simulator.md` says a wrist-raise activates the backlight for 5 s, which is the simulator's own model, not measured device policy | n/a | Phase B |
+| Q6 | Kernel policy overriding an app | **No clamp up to 60 s**, and none at all on an indefinite hold: `t = 60000` fired at 60 s within about 400 ms, and `t = 0` was still lit at 30 s. The wrist-raise and idle-blanking halves are still untested | **PARTIAL** (device, 2026-08-27) | A maximum on-time clamp shorter than 60 s. There is none |
 | Q7 | Unallocated IIDs return a live `IBacklight` | Open. Confirmed there is no `IID_BACKLIGHT`, `IID_BUZZER` or `IID_VIBRO` anywhere in the repo, and that the three interfaces are referenced **only** by simulator code | CONFIRMED (repo) | Phase B probe, Phase C `queryInterface` switch |
 | Q8 | Undocumented adjacent message types | Open. The type encoding leaves all 16 low bits free on every system type, so subcodes are structurally possible; nothing in the SDK uses them | n/a | Phase C dispatcher table |
 | Q9 | What physically drives the light | Open. The only in-repo claim is `mpBacklight = new Backlight(gpio)` in `architecture-deep-dive.md`, from a document with a confirmed-wrong part number in it | UNVERIFIED | Phase D |
@@ -234,6 +235,52 @@ RM0456 checks above can run.
 
 ---
 
+---
+
+## Phase B on hardware, 2026-08-27
+
+One run of `BacklightProbe` on the watch, Suite 2 read off video against the
+on-screen counter. The probe app and the full timing table live in
+`watch-apps@feat/backlight-probe`, `BacklightProbe/README.md`.
+
+**Every finite timeout fired within a few hundred milliseconds of what was
+requested.** 100 ms, 1 s, 5 s and 60 s all landed. There is no scaling bug in the
+timeout path and no kernel clamp below a minute.
+
+**The one substantive finding is `t = 0`, and it settles a live contradiction.**
+`IBacklight`'s header and `RequestBacklightSet`'s comment both say 0 disables
+auto-off. The SDK simulator's mock starts a zero-length timer and blanks within
+about 50 ms, the exact opposite. On hardware the light held for the entire 30
+second window. The header is right; the mock is wrong; and anyone validating this
+path against the simulator alone would conclude the reverse of what the device
+does. That promotes SDK defect 2 from "contradicts its own header" to "contradicts
+the device", and it decides which side of the contradiction gets fixed: **fix the
+mock, not the header.**
+
+Q1, Q4 and half of Q6 came back as documented, which is worth saying plainly
+because it is the first time any of them has been more than folklore.
+
+### A measurement note worth reusing
+
+The operator read the blank off the screen's **colour** rather than its
+brightness: the front-lit panel reads distinctly bluer than the same panel lit by
+ambient once the light is off. That is a cleaner single-frame signal than raw
+luminance, and it is the kind of thing that only turns up by doing it. Anyone
+repeating this should start there.
+
+### What this run did not answer
+
+Suite 1's register sweeps are the pivotal Q9/Q11 pair and **their results have not
+been reported**. Neither has the `SET` result-code column from
+`backlight_probe.txt`, which is the direct evidence for whether the kernel signals
+completion on this message at all.
+
+Until the dark-versus-lit diff exists, the investigation's central question is
+exactly where Phase A left it: `brightness` is inert, and whether that is a kernel
+that discards it or hardware that could never have honoured it is unsettled. The
+Suite 2 findings above are real and worth having, but not one of them bears on it.
+
+
 ## SDK defects established so far
 
 All four are independent of what the hardware turns out to do, and each is its own
@@ -244,10 +291,12 @@ branch and its own PR.
    40 byte slot the kernel parses, so it cannot be removed. The fix is the
    parenthetical the buzzer already has, plus any app-facing wrapper not offering
    it. Wait for Phase B's measured matrix before writing the exact wording.
-2. **A simulator mock that contradicts its own header.** `Mock::Backlight::on(0)`
+2. **A simulator mock that contradicts the device.** `Mock::Backlight::on(0)`
    blanks after about 50 ms; `IBacklight` and `RequestBacklightSet` both say 0
-   disables auto-off. Fix the mock to match the headers, or the headers to match
-   the device once Phase B settles Q3. Do not fix this one before Q3.
+   disables auto-off, and the 2026-08-27 run confirms the device holds the light
+   indefinitely. Q3 is settled, so the direction is settled with it: **fix the
+   mock**, by not starting a timer at all when the timeout is 0. This one is ready
+   to go now.
 3. **`Docs/` asserts the inert behaviour works.** `sdk-overview.md` and
    `development-workflow.md` both describe `REQUEST_BACKLIGHT_SET` as setting
    screen brightness; `Simulator.md` presents mock behaviour as platform
@@ -321,14 +370,15 @@ plus direct reads of `IBacklight.hpp`, `IBuzzer.hpp`, `IVibro.hpp`, `IKIP.hpp`,
 
 ## Next
 
-1. **Phase D, coarse form, with the sweep that already exists.** Extend `FwDump`
-   into `BacklightProbe`: keep the sweep, add the `RequestBacklightSet` matrix, add
-   a button-triggered re-sweep. Dark, then lit at 100, then lit at 25, then lit
-   at 1, then once per value of the watch's own brightness setting if it has one.
-   Diff. `ODR` and `MODER`/`AFR` on whichever port moved answer the coarse Q9 and
-   Q11 between them.
-2. **Phase B rides along in the same binary**, since it has to. Measure the
-   brightness curve with a fixed camera or a light meter rather than by eye,
-   including the flat curve if that is what it is.
-3. **Ask for the dump and the two manuals** before planning Phase C.
-4. Defect 4 (`IID_COUNT`) is independent of all of the above and can go now.
+1. **Report Suite 1.** The sweeps decide the investigation and nothing else in it
+   does. `diff sweep_dark.txt sweep_lit_b100.txt` names the pin and its mode;
+   `diff sweep_lit_b100.txt sweep_lit_b001.txt` says whether anything scales with
+   the request; `diff sweep_dark.txt sweep_dark_after.txt` should be empty and
+   invalidates the rest if it is not.
+2. **Report the `SET` result codes** from `backlight_probe.txt`. `PENDING` against
+   a non-zero `send_timeout_ms` would mean nothing signalled completion, which is
+   a different and stronger statement than anything the video can show.
+3. **SDK defect 2 is unblocked** and can go on its own branch now: the mock should
+   not start a timer when the timeout is 0.
+4. **Defect 4 (`IID_COUNT`)** remains independent of everything.
+5. **Ask for the dump and the two manuals** before planning Phase C.
