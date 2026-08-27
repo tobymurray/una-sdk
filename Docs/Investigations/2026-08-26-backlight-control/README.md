@@ -1,13 +1,25 @@
 # Backlight control from an app: what the SDK actually publishes
 
-Status: **ANSWERED. Outcome 3: the backlight is a binary enable and this
-hardware cannot dim.** Phases A, B and D complete on hardware 2026-08-27. Phase C
-is no longer needed to settle the question. Phase E is moot and must not be run.
+Status: **ANSWERED. Outcome 2: the kernel will not dim the light, but the
+hardware will.** Phases A, B and D complete on hardware 2026-08-27, and the
+circuit confirmed against the published schematics. Phase C is not needed. Phase E
+is viable and is now the open work.
+
+> **Correction, same day.** An earlier revision of this file concluded Outcome 3,
+> "this hardware cannot dim". That was wrong, and wrong in the direction that
+> tells the next person to stop looking. The register evidence proves the kernel
+> holds the pin static; it does not prove the pin cannot be modulated, and
+> `UNAWatch/una-hardware` shows the circuit behind it is an ordinary
+> PWM-dimmable LED switch. The error was reading a firmware configuration as a
+> physical constraint.
+
 No firmware dump was used and none is needed. The SDK-side findings were read
 out of `una-sdk` and `watch-apps` and can be re-checked by content; the
 hardware-side findings come from one run of `BacklightProbe` on the watch, whose
 raw output is committed alongside the app in
-`watch-apps@feat/backlight-probe`, `BacklightProbe/Output/`.
+`watch-apps@feat/backlight-probe`, `BacklightProbe/Output/`; and the circuit
+comes from `UNAWatch/una-hardware`, which publishes the schematics for all six
+boards under CC BY 4.0.
 
 The objective, the question list and the phase plan live in
 `BACKLIGHT_INVESTIGATION_PROMPT.md`.
@@ -16,59 +28,85 @@ The objective, the question list and the phase plan live in
 
 ## The answer
 
-**The front-light is a plain GPIO enable. It cannot be dimmed, by an app or by
-the kernel, because there is no duty cycle anywhere to set.**
+**The kernel drives the front-light as a plain on/off enable, so `brightness` is
+inert. The hardware itself dims perfectly well. The gap is firmware, not
+silicon.**
 
-The actuator is **PF3**, and the evidence is a clean register diff taken on the
-watch:
+### What the kernel does
+
+The actuator is **PF3**, and the register diff is unambiguous:
 
 | Register | Dark | Lit (every level, 100 down to 1) | Meaning |
 | --- | --- | --- | --- |
 | `GPIOF ODR` bit 3 | `1` | `0` | The light. Active low. |
-| `GPIOF MODER` bits [7:6] | `01` | `01` | **General purpose output.** Not an alternate function. |
-| `GPIOF OTYPER` bit 3 | `1` | `1` | Open drain. |
-| `GPIOF AFRL` | `0x00000000` | `0x00000000` | No alternate function on any GPIOF pin. |
-| `RCC` (all 64 words) | identical | identical | No clock was enabled or disabled. |
+| `GPIOF MODER` bits [7:6] | `01` | `01` | General purpose output, as configured |
+| `GPIOF OTYPER` bit 3 | `1` | `1` | Open drain |
+| `GPIOF AFRL` | `0x00000000` | `0x00000000` | No alternate function selected |
+| `RCC` (all 64 words) | identical | identical | No clock enabled or disabled |
 
-A pin in general-purpose-output mode is a pin no timer channel can reach. There
-is no `CCRx` to write because nothing is connected to write it. That is Outcome 3
-from the brief, and it means there is no workaround to find: **no app-side trick
-produces 70 percent from a switch.**
+`ODR` bit 3 is byte-identical at 100, 75, 50, 25, 10 and 1. The kernel reads
+`brightness`, tests it against zero, and throws the value away.
 
-`brightness` is therefore not a field the kernel discards on the way to a driver
-that could have honoured it. It is a field describing a capability the hardware
-does not have.
-
-### Why this also rules out software PWM
-
-A plain GPIO can still be dimmed by bit-banging it, so "no timer" is not by itself
-"no dimming". The ladder rules that out too, and does it with a number.
-
-If the kernel were toggling PF3 in software to make brightness 1 look like 1
-percent, then a sweep taken at an arbitrary moment would find the pin low about 1
-percent of the time. Six lit sweeps were taken, at 100, 75, 50, 25, 10 and 1, and
-**every one of them read the pin low**. For the brightness-1 sweep alone that is a
-1-in-100 coincidence; across the ladder it is not a coincidence at all.
+Software PWM is excluded too, and the ladder is what excludes it. If the kernel
+were toggling PF3 to make brightness 1 look like 1 percent, a sweep taken at an
+arbitrary moment would find the pin low about 1 percent of the time. Six lit
+sweeps were taken, and **every one read the pin low**. For the brightness-1 sweep
+alone that is a 1-in-100 coincidence.
 
 The pin is held, not modulated.
 
-### What the control sweeps say
+### What the hardware could do
 
-`sweep_dark.txt` and `sweep_dark_after.txt` are byte-identical apart from their
-header line. Nothing drifted across the four-minute run, so every diff taken
-between them is trustworthy rather than merely suggestive.
+`UNAWatch/una-hardware`, `UNAview_LS012 Rev1.3 Schematic.pdf`, sheet 2, block
+"Backlight Switch and FPC":
 
-Across the whole ladder only three blocks ever differ: `GPIOB`, `GPIOD` and
-`GPIOF`. `RCC`, `SCB`, `NVIC`, all six `I2C` blocks, both `SPI` blocks and both
-UARTs are identical in all eight sweeps. So the light is not an off-chip part
-being reconfigured over a bus either, which was the other live possibility.
+```
+        3V3
+         |
+        R1 10K            gate pull-up: off by default
+         |
+BACKLIGHT_ON --- gate ---[ Q1  NTK3139PT1G ]--- source --- 3V3
+                          drain
+                            |
+                          R2 82R
+                            |
+                       BACKLIGHT_A ---> J3 (FPC) ---> LED ---> BACKLIGHT_K ---> GND
+```
 
-The `GPIOB` and `GPIOD` differences are **not** the backlight, and it is worth
-saying why rather than leaving them looking like loose ends. Both are in `IDR`,
-the input register, which the kernel does not drive. Neither tracks brightness:
-`GPIOD IDR` bit 14 reads the same at brightness 25 and 1 as it does in the dark,
-and `GPIOB IDR` bit 2 alternates with no pattern at all. They are other signals on
-the board doing other things during a four-minute run.
+A **P-channel MOSFET high-side switch with an 82 ohm series resistor, straight off
+the fixed 3V3 rail.** That is the whole circuit.
+
+Note how completely it corroborates the register measurement: a P-channel gate
+turns on when pulled *low*, which is why lit reads `ODR = 0`; the 10K pull-up to
+3V3 is why the pin can be open drain and why `PUPDR` needs no internal pull.
+Every electrical detail lines up with what the sweep saw.
+
+And it is the textbook dimmable arrangement. There is **no LED driver IC, no boost
+converter, no charge pump and no inductor** anywhere in it. Nothing here has a
+soft-start to violate, an inrush to manage, or a magnetic component to make
+audible noise. A resistor-limited LED behind a FET is what every PWM dimmer in
+existence drives. Chopping `BACKLIGHT_ON` at a few hundred Hz dims it, linearly in
+duty cycle, with no ill effects.
+
+The gate RC is not a constraint either: 10K against the gate capacitance of a
+SOT-923 part is well under a microsecond, which is negligible at any sane PWM
+frequency.
+
+### So the gap is firmware
+
+`brightness` describes something the board can do and the firmware does not. That
+is a much better position than the one this investigation expected to find, and it
+is what makes Phase E worth running rather than moot.
+
+One question remains genuinely open, and it decides how *cheap* the fix is rather
+than whether it is possible: **does PF3 have a timer alternate function?** That is
+a DS13543 pin-table fact, not a register that can be read, and the datasheet is not
+on this machine. Either answer leaves dimming available:
+
+- **If yes**, reconfigure `MODER` to `10` with the right `AFRL` nibble and the
+  timer generates the waveform in hardware. Free at runtime.
+- **If no**, software PWM on an ordinary GPIO still dims it, at the cost of a
+  timer interrupt.
 
 ---
 
@@ -77,16 +115,16 @@ the board doing other things during a four-minute run.
 | # | Question | Phase A verdict | Confidence | Falsified by |
 |---|---|---|---|---|
 | Q1 | Kernel handles `0x02080000`, from which process kinds | **Yes, and from both.** Every one of the 20 requests came back `SUCCESS`, `completed=Y`, in 0 to 1 ms, from a Service and from the GUI alike. The "GUI only" comment on the block above does not reach this one | **CONFIRMED** (device, 2026-08-27) | `PENDING` or `TIMEOUT` against a non-zero send timeout, or a GUI-sent request differing from a service-sent one |
-| Q2 | Where `brightness` dies | **In the kernel handler, and it could not have done otherwise.** `GPIOF ODR` bit 3 is byte-identical at 100, 75, 50, 25, 10 and 1. There is no duty cycle downstream for the field to reach | **CONFIRMED** (device, 2026-08-27) | Any register differing between two non-zero brightnesses. Across 22 blocks and six levels, none does |
+| Q2 | Where `brightness` dies | **In the kernel handler.** `GPIOF ODR` bit 3 is byte-identical at 100, 75, 50, 25, 10 and 1: the handler tests the field against zero and discards the value. Note this is a choice, not a necessity; the circuit downstream would have honoured it | **CONFIRMED** (device, 2026-08-27) | Any register differing between two non-zero brightnesses. Across 22 blocks and six levels, none does |
 | Q3 | `autoOffTimeoutMs = 0` semantics | **The header is right and the simulator is wrong.** 0 disables auto-off on device: the light held for the full 30 s observation window. The mock blanks within about 50 ms of the same request | **CONFIRMED** (device, 2026-08-27) | The light going out inside the window. It did not, at 0 or at `0xFFFFFFFF` |
 | Q4 | `brightness = 0` off, and timer interaction | **Both as documented.** `brightness = 0` turns the light off immediately, beating a 60 s timer already armed; and a second request replaces a running timer rather than racing it (a 1 s timer re-armed to 60 s produced no dim at the 1 s mark) | **CONFIRMED** (device, 2026-08-27) | A dim at ~1 s in the cancel test, or the light surviving `brightness = 0` |
 | Q5 | State readable back | **No SDK route.** No response field on `RequestBacklightSet`, no backlight event type, no `IBacklight` reachable from an app | CONFIRMED (repo) | An undocumented event type or IID. Phases B/C |
 | Q6 | Kernel policy overriding an app | **No clamp up to 60 s**, and none at all on an indefinite hold: `t = 60000` fired at 60 s within about 400 ms, and `t = 0` was still lit at 30 s. The wrist-raise and idle-blanking halves are still untested | **PARTIAL** (device, 2026-08-27) | A maximum on-time clamp shorter than 60 s. There is none |
 | Q7 | Unallocated IIDs return a live `IBacklight` | **No. All six return null on device.** `0x00050000` through `0x000A0000` each answered `null`. Closed | **CONFIRMED** (device, 2026-08-27) | Any non-null pointer. There were none |
 | Q8 | Undocumented adjacent message types | Open. The type encoding leaves all 16 low bits free on every system type, so subcodes are structurally possible; nothing in the SDK uses them | n/a | Phase C dispatcher table |
-| Q9 | What physically drives the light | **`GPIOF` pin 3**, a general-purpose open-drain output, active low: `ODR` bit 3 is 1 when dark and 0 when lit. No PMIC or I2C part is involved; every I2C and SPI block is identical in all eight sweeps | **CONFIRMED** (device, 2026-08-27) | The pin not tracking the light, or an I2C block moving with it |
-| Q10 | Smallest direct-drive workaround | **Moot, and that is the finding.** Q11 says there is no duty cycle to drive. Writing `ODR` bit 3 directly would reproduce exactly the on/off the message already provides, at the cost of fighting the kernel for a pin it owns | **CONFIRMED** by Q11 | Q11 turning out differently |
-| Q11 | Can the hardware dim at all | **No.** `MODER[7:6] = 01` (general-purpose output, not alternate function) and `GPIOF AFRL = 0`, so no timer channel can reach the pin. `RCC` is identical across every sweep. Software PWM is excluded too: six lit sweeps including brightness 1 all read the pin low | **CONFIRMED** (device, 2026-08-27) | `MODER` reading `10`, a non-zero `AFRL` nibble for pin 3, or any lit sweep reading the pin high |
+| Q9 | What physically drives the light | **`GPIOF` pin 3**, open drain, active low, into the gate of `Q1` (`NTK3139PT1G`, P-channel) on the `UNAview_LS012` board, then `R2` 82R and the LED over FPC `J3`. `R1` 10K holds the gate up when the pin floats. No PMIC or I2C part anywhere in it | **CONFIRMED** (device + schematic) | The pin not tracking the light, or a driver IC in the path |
+| Q10 | Smallest direct-drive workaround | **Modulate PF3.** Software PWM on `ODR` bit 3 works on any GPIO; hardware PWM is available too if PF3 carries a timer alternate function, which needs DS13543 to answer. Cost: the app takes a pin the kernel also writes, and must hand it back. Not yet measured | **OPEN**, Phase E | The kernel reasserting the pin faster than an app can hold it |
+| Q11 | Can the hardware dim at all | **Yes.** The circuit is a P-channel FET high-side switch with an 82R series resistor off a fixed 3V3 rail: no driver IC, no boost, no inductor, nothing that objects to being chopped. What the kernel does is hold the gate static, which is a configuration and not a limit | **CONFIRMED** (schematic + device) | A boost converter, charge pump or LED driver IC in the path. There is none |
 | Q12 | Kernel dims to its own setting, reachable from an app | **No such setting can exist.** The SDK carries no display or brightness field in `ISettings`, `RequestSystemSettings` or `RequestDisplayConfig`, and Q11 shows there is no duty cycle for one to control | **CONFIRMED** (repo + device) | A watch settings item that changed `ODR` behaviour. There is no duty cycle for one to change |
 
 ---
@@ -364,24 +402,31 @@ produce the same pin state, the same port configuration, and the same clock tree
 
 ### The three things this rules out, and how
 
-| Possibility | Ruled out by |
+These rule out every mechanism by which the *running firmware* could be varying
+the light. They say nothing about what the pin is capable of, which is a separate
+question the schematic answers.
+
+| Mechanism | Ruled out by |
 | --- | --- |
-| Hardware PWM on this pin | `MODER[7:6] = 01` and `AFRL = 0`. A general-purpose output has no timer connected to it |
-| A timer running elsewhere driving it | Same. Whatever any timer is doing, it is not reaching PF3 |
+| Hardware PWM, as configured | `MODER[7:6] = 01` and `AFRL = 0`. The pin is presently a plain output, whatever alternate functions it may have |
 | Software PWM (bit-banged `ODR`) | Six lit sweeps, including brightness 1, all read the pin low. At a 1 percent duty that single sample is a 1-in-100 coincidence |
 | An off-chip dimmer over a bus | All six `I2C` blocks and both `SPI` blocks are identical in all eight sweeps |
 | A clock being enabled for the light | `RCC`, all 64 words, identical in all eight sweeps |
 
-### The timer blocks were never swept, and did not need to be
+### The timer blocks were never swept, and still do not need to be
 
 The run used the confirmed 22-block set; `sweep_timers.enable` was not present, so
-the unconfirmed timer bases were not read. That turned out not to matter, and the
-reason is worth recording: the question was never "is any timer running" but "can a
-timer reach the pin that drives the light". `MODER` and `AFRL` answer that at the
-pin, which is the safer place to ask and needs no address that has not already been
-read successfully on this unit.
+the unconfirmed timer bases were not read.
 
-Nobody needs to enable those bases to reproduce this result.
+That remains the right call, but for a narrower reason than the earlier revision
+of this file claimed. Reading every timer would establish which ones are running.
+It would not establish whether any of them *can be routed to PF3*, because that is
+a pin-multiplexing fact from DS13543 rather than a register value. So the timer
+sweep answers a question nobody needs answered, and the question that matters is
+answered by a datasheet table instead.
+
+Nobody needs to enable those bases, and nobody should enable them expecting this
+to settle Q10.
 
 
 ## SDK defects established so far
@@ -413,53 +458,64 @@ branch and its own PR.
 
 ---
 
-## Outcome 3, and what follows from it
+## Outcome 2, and what follows from it
 
-The brief set out three outcomes and asked for the deliverable each one implies.
-This is the third: **not possible on this hardware.**
+The brief set out three outcomes. This is the second: **the kernel will not do it,
+but the hardware will.**
 
-### The residual, handed off as the hardware question it is
+That is a materially better position than the one the brief expected, and it is
+worth being explicit about what changed. The register evidence alone looks exactly
+like Outcome 3, and an earlier revision of this file called it that. The
+difference between "the pin is not being modulated" and "the pin cannot be
+modulated" is not visible in any register, and reading the first as the second is
+the mistake to avoid here.
 
-What has been settled is that **the MCU has no way to dim this light**: the pin is
-a plain output, nothing modulates it, and no bus carries a level to anything else.
+### What the vendor would need to change, and it is cheaper than it looked
 
-What has *not* been settled, and cannot be from firmware, is whether the
-front-light module or its boost stage has a dimming input at all: an analog or PWM
-dim pin, or a current-set resistor, sitting unused on the board. The recovered
-hardware inventory names no LED driver IC, which is consistent with the enable
-being wired straight to a switch, but absence from a `strings` pass is not a
-schematic.
+No board change. No ABI change. The message already carries a 0-100 field, the
+kernel already parses it, and the circuit already tolerates a duty cycle. What is
+missing is a handler that maps the field onto one.
 
-Answering that needs a board inspection or the part number of whatever PF3 drives.
-It is a hardware question and it should be asked as one. Nothing in firmware will
-answer it, and no further register sweep will either.
+If PF3 carries a timer alternate function, that is a pin reconfiguration and a
+`CCRx` write. If it does not, it is a software PWM in the kernel's own timer tick.
+Either way the fix lives entirely inside firmware the vendor already ships.
 
-### What the vendor would need to change
+So the ask is one thing, not two:
 
-Worth stating precisely, because it is the thing a request would be built from,
-and because it is smaller than it looks. The SDK change is not the problem: the
-message already carries a 0-100 field and the kernel already parses it. What is
-missing is underneath, and it is a **board change, not a firmware one** unless the
-front-light already has an unused dim input.
+1. **Honour the field**, at whatever granularity is convenient. The buzzer's
+   precedent is instructive: it publishes 0-100 and implements four levels, and
+   says so in the comment. Four backlight levels would be a complete answer to
+   this investigation.
 
-So the honest ask is in two parts, and the first part costs nothing:
+And in the meantime, one thing that costs nothing:
 
-1. **Say so.** Document `brightness` as on/off, and the panel's front-light as a
-   binary enable. Today the field invites every app author to attempt something
-   the hardware cannot do, and two of the vendor's own docs assert it works.
-2. **On a future revision**, route the front-light enable to a timer-capable pin
-   and drive it as a PWM channel, or fit a driver with a dim input. Either makes
-   `brightness` mean what it already says it means, with no ABI change at all,
-   because the field is already there and already parsed.
+2. **Say what is true today.** `brightness` is on/off, and two of the SDK's own
+   documents currently assert otherwise.
 
-### Phase E must not be run
+### Phase E is viable, and is the open work
 
 The brief gated direct hardware drive on Q11 saying dimming is physically
-possible. It says the opposite. There is nothing to drive: writing `ODR` bit 3 by
-hand reproduces exactly the on/off that `REQUEST_BACKLIGHT_SET` already delivers,
-while taking a pin the kernel owns and fighting its auto-off timer for it.
+possible. It does. An app runs privileged with no MPU, so it can write `GPIOF
+ODR` directly and modulate the gate itself.
 
-Skipping Phase E is the correct outcome here, not a shortfall.
+Before anyone runs it, the guardrails from the brief still apply and one of them
+now has real numbers behind it. The LED is limited by `R2`, 82 ohms off a 3V3 rail
+through a P-channel FET, so a stuck-on direct drive is no worse electrically than
+the on-state the kernel already uses. That removes the "unknown LED string held at
+100 percent duty" worry the brief raised. What remains is the ownership problem:
+
+- The kernel writes this pin too, on its own wrist-raise, idle and auto-off logic.
+  An app PWM will be fighting it, and **which mechanism wins, and how fast, is the
+  actual finding** Phase E should produce.
+- An app that has to own a pin the kernel also owns is not an app that can ship,
+  however well it demos. Say so in the write-up.
+- Bound it in time, restore `MODER`, `OTYPER` and `ODR` on exit, on fault, and on
+  app stop, which USB insertion triggers without warning.
+
+The cheap preliminary, before any of that: **look up PF3 in DS13543's
+alternate-function table.** If a timer channel is available the experiment is a
+pin reconfiguration rather than an interrupt-driven bit-bang, and it is a five
+minute lookup in a public datasheet.
 
 
 ## Ledger
@@ -478,9 +534,12 @@ Skipping Phase E is the correct outcome here, not a shortfall.
 | No display or brightness field in `ISettings`, `RequestSystemSettings` or `RequestDisplayConfig` | CONFIRMED | The three declarations |
 | `IID_COUNT` evaluates to `0x000B0001` | CONFIRMED | `IKIP.hpp`, C++ enum rules |
 | `architecture-deep-dive.md` names the PMIC STPMIC1; the ledger confirmed PCA9420 | CONFIRMED | The doc, and the 2026-07-29 hardware inventory |
-| The backlight is a discrete front-light with no LED driver IC | LIKELY, strengthened | 2026-07-29 ledger by elimination, plus every I2C and SPI block reading identical across all eight sweeps: nothing on a bus is being told anything when the light changes |
-| The real `Backlight` driver is constructed from a GPIO | CONFIRMED (device) | `mpBacklight = new Backlight(gpio)` in `architecture-deep-dive.md` turned out to be right, and PF3 is the GPIO. Note the same document's neighbouring "Real PWM Control" label is now confirmed **wrong**: right about the constructor, wrong about the mechanism |
+| The backlight is a discrete front-light with no LED driver IC | **CONFIRMED, primary source** | `UNAview_LS012 Rev1.3 Schematic.pdf`: the entire circuit is `R1` 10K, `Q1` NTK3139PT1G, `R2` 82R and an LED over FPC `J3`. The 2026-07-29 ledger's inference by elimination was right |
+| The real `Backlight` driver is constructed from a GPIO | CONFIRMED (device) | `mpBacklight = new Backlight(gpio)` in `architecture-deep-dive.md` turned out to be right, and PF3 is the GPIO. The same document's neighbouring "Real PWM Control" label is wrong as a description of the firmware, though the board would support it |
 | `RCC` words 0-63 span the peripheral clock-enable registers | UNVERIFIED, and no longer load-bearing | Recalled STM32U5 layout; RM0456 is still not on this machine. Q11 rests on `MODER` and `AFRL` at the pin, not on the RCC decode |
+| The circuit behind PF3 tolerates PWM | **CONFIRMED, primary source** | `UNAview_LS012 Rev1.3 Schematic.pdf`, sheet 2: P-channel high-side FET, 82R series resistor, fixed 3V3 rail. No driver IC, no boost, no charge pump, no inductor, so nothing in the path objects to being chopped |
+| PF3 is open drain because the gate has an external pull-up | CONFIRMED (schematic + device) | `R1` 10K to 3V3 on the gate, and `GPIOF PUPDR` bits [7:6] read `00`. The board supplies the pull the pin does not |
+| PF3 has a timer alternate function | **UNVERIFIED, and it is the one thing left** | Needs the DS13543 pin table; not readable from any register. Decides whether Phase E is a pin reconfiguration or a software PWM, not whether it is possible |
 
 ### Negatives worth recording
 
@@ -500,7 +559,14 @@ grep -rni "backlight\|brightness" Docs --include="*.md"
 grep -n "constexpr Type" Libs/Header/SDK/Messages/MessageTypes.hpp
 ```
 
-plus direct reads of `IBacklight.hpp`, `IBuzzer.hpp`, `IVibro.hpp`, `IKIP.hpp`,
+plus the two schematics that settled the circuit,
+
+```
+UNAWatch/una-hardware  una-watch/electronics/UNAview_LS012/UNAview_LS012 Rev1.3 Schematic.pdf
+UNAWatch/una-hardware  una-watch/electronics/UNAcore/UNAcore Rev3.2 Schematic.pdf
+```
+
+and direct reads of `IBacklight.hpp`, `IBuzzer.hpp`, `IVibro.hpp`, `IKIP.hpp`,
 `IKernel.hpp`, `ISettings.hpp`, `IAppComm.hpp`, `MessageBase.hpp`,
 `MessageGuard.hpp`, `CommandMessages.hpp`, `KernelMessageDispatcher.cpp`,
 `Mock/Backlight.{hpp,cpp}`, `OS/OneShotTimer.cpp`, `FwDump`'s
@@ -509,10 +575,13 @@ plus direct reads of `IBacklight.hpp`, `IBuzzer.hpp`, `IVibro.hpp`, `IKIP.hpp`,
 
 ### What was not run
 
-- Nothing on the device. No sweep, no probe, no measurement.
-- No disassembly, and no `strings` pass: the dump is not on this machine.
-- No RM0456 or DS13543 check, for the same reason. The `RCC` coverage claim above
-  is the one load-bearing thing that depends on it.
+- No disassembly, and no `strings` pass: the dump is not on this machine, and
+  after Phase D it is not needed to answer the question.
+- **No DS13543 check.** This is now the one open item: whether PF3 carries a timer
+  alternate function. It is a public datasheet and a five minute lookup, and it
+  decides the shape of Phase E rather than whether Phase E is possible.
+- No RM0456 check. The `RCC` coverage claim in the ledger depends on it, but
+  nothing load-bearing does any more.
 - The `0x00050000` to `0x000A0000` IIDs were not probed. Note for whoever does:
   there are at least eight kernel-service-shaped interfaces in the SDK without an
   ID (`IBacklight`, `IBuzzer`, `IVibro`, `ISettings`, `ITime`, `IMutex`,
@@ -524,24 +593,20 @@ plus direct reads of `IBacklight.hpp`, `IBuzzer.hpp`, `IVibro.hpp`, `IKIP.hpp`,
 
 ## Next
 
-The question this investigation existed to answer is answered. What remains is
-tidying up after it, and none of it is blocked on anything.
+1. **Look up PF3 in DS13543's alternate-function table.** Five minutes, public
+   datasheet, and it decides the shape of everything below. A timer channel makes
+   dimming a pin reconfiguration; no timer channel makes it a software PWM.
+2. **Phase E.** Modulate PF3 from an app and find out what the kernel does about
+   it. The electrical guardrail is now known (82R off 3V3, so no worse than the
+   on-state already in use); the open risk is ownership, not current. Approval
+   required before any register write, per the brief.
+3. **SDK defect 2, the simulator mock.** Settled and unblocked by the `t = 0`
+   result. Its own branch.
+4. **SDK defect 1, the field's documentation.** Now writable, and it must say
+   "not implemented" rather than "not possible".
+5. **SDK defect 3, the docs that assert the field works**, plus
+   `architecture-deep-dive.md`'s unreliable hardware claims.
+6. **SDK defect 4, `IID_COUNT`.** Independent one-liner.
 
-1. **SDK defect 2, the simulator mock.** Settled and unblocked: the device holds
-   the light indefinitely at `timeout = 0`, so the mock should not start a timer
-   at all in that case. Its own branch.
-2. **SDK defect 1, the documentation.** Now writable with register evidence behind
-   it. Its own branch.
-3. **SDK defect 3, the two docs that assert the field works.** `sdk-overview.md`
-   and `development-workflow.md` both describe `REQUEST_BACKLIGHT_SET` as setting
-   screen brightness. `architecture-deep-dive.md` additionally claims "Real PWM
-   Control" and names the wrong PMIC; its hardware claims should be marked
-   unreliable rather than quietly corrected, since the same document is cited
-   elsewhere.
-4. **SDK defect 4, `IID_COUNT`.** Independent one-liner.
-5. **The hardware question**, handed to whoever can look at the board.
-
-Phase C is not needed. It would corroborate the handler and enumerate the message
-table, which is interesting but changes nothing: the pin cannot dim regardless of
-what the handler does with the field. If the dump turns up for another reason, Q8
-is the only question left that it would answer.
+Phase C is still not needed. It would corroborate the handler and enumerate the
+message table; Q8 is the only question it would answer that is still open.
