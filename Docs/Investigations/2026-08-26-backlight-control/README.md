@@ -1,9 +1,9 @@
 # Backlight control from an app: what the SDK actually publishes
 
-Status: **ANSWERED. Outcome 2: the kernel will not dim the light, but the
-hardware will.** Phases A, B and D complete on hardware 2026-08-27, and the
-circuit confirmed against the published schematics. Phase C is not needed. Phase E
-is viable and is now the open work.
+Status: **ANSWERED AND DEMONSTRATED. Outcome 2: the kernel will not dim the
+light, and an app can.** Phases A, B, D and E complete on hardware, the circuit
+confirmed against the published schematics, and a six-level brightness ladder
+driven from an ordinary `.uapp` and filmed. Phase C is not needed.
 
 > **Correction, same day.** An earlier revision of this file concluded Outcome 3,
 > "this hardware cannot dim". That was wrong, and wrong in the direction that
@@ -157,7 +157,7 @@ message.
 | Q7 | Unallocated IIDs return a live `IBacklight` | **No. All six return null on device.** `0x00050000` through `0x000A0000` each answered `null`. Closed | **CONFIRMED** (device, 2026-08-27) | Any non-null pointer. There were none |
 | Q8 | Undocumented adjacent message types | Open. The type encoding leaves all 16 low bits free on every system type, so subcodes are structurally possible; nothing in the SDK uses them | n/a | Phase C dispatcher table |
 | Q9 | What physically drives the light | **PF3, ball D3**, open drain, active low, into the gate of `Q1` (`NTK3139PT1G`, P-channel) on the `UNAview_LS012` board, then `R2` 82R and the LED over FPC `J3`. `R1` 10K holds the gate up when the pin floats. Confirmed twice: `ODR` bit 3 is the bit that moves, and the schematic names `BACKLIGHT_ON` on PF3/D3 | **CONFIRMED** (device + schematic) | The pin not tracking the light, or a driver IC in the path |
-| Q10 | Smallest direct-drive workaround | **Modulate PF3, but not with a timer output: it has none.** Either a software PWM toggling `ODR`/`BSRR`, or a timer-triggered DMA writing `GPIOF->BSRR`, which is hardware-timed and needs no AF. Cost: the app takes a pin the kernel also writes and must hand it back. Not yet measured | **OPEN**, Phase E | The kernel reasserting the pin faster than an app can hold it |
+| Q10 | Smallest direct-drive workaround | **A software PWM writing `GPIOF BSRR`, and it works.** Six duty cycles delivered within a few points of request; the app wins the pin outright, including while the kernel has been told the backlight should be off. The cost is a full CPU thread per modulated rung, which starves the GUI and reboots the watch unless the rungs are kept short and separated | **CONFIRMED** (device, 2026-08-28) | The kernel reasserting the pin faster than the app can hold it. It never did |
 | Q11 | Can the hardware dim at all | **Yes, though not with a timer output on that pin.** The LED circuit is a P-channel FET high-side switch with an 82R resistor off a fixed 3V3 rail: no driver IC, no boost, no inductor, nothing that objects to being chopped. PF3 carries no `TIMx_CHy`, so PWM must come from software or from timer-driven DMA into `BSRR` rather than from a `CCRx` | **CONFIRMED** (schematic + device + ST pin table) | A boost or driver IC in the LED path, or a timer output on PF3. Neither exists |
 | Q12 | Kernel dims to its own setting, reachable from an app | **No such setting can exist.** The SDK carries no display or brightness field in `ISettings`, `RequestSystemSettings` or `RequestDisplayConfig`, and Q11 shows there is no duty cycle for one to control | **CONFIRMED** (repo + device) | A watch settings item that changed `ODR` behaviour. There is no duty cycle for one to change |
 
@@ -463,6 +463,107 @@ Nobody needs to enable those bases, and nobody should enable them expecting this
 to settle Q10.
 
 
+---
+
+## Phase E on hardware, 2026-08-28
+
+An ordinary `.uapp`, `watch-apps@feat/backlight-pwm`, writing one register:
+`GPIOF BSRR` bit 3, plus two debug registers to start the cycle counter. No
+`MODER`, no `AFRL`, no `RCC`, nothing near the option bytes. PF3 is already an
+open-drain output, so there is no configuration to change and none to restore.
+
+### The ladder, filmed and measured
+
+Luminance is the mean of a blank patch of the screen, read frame by frame off a
+30 fps video. Achieved duty is the app's own arithmetic, on-time against the
+rung's wall clock.
+
+| Rung | Requested | Achieved | Luminance | Share of range |
+| --- | --- | --- | --- | --- |
+| off | 0 | 0 | 42.2 % | 0 % |
+| d100 | 100 | 100 | 75.8 % | 100 % |
+| d75 | 75 | 79 | 73.6 % | 94 % |
+| d50 | 50 | 52 | 69.2 % | 81 % |
+| d25 | 25 | 26 | 59.2 % | 51 % |
+| d10 | 10 | 10 | 50.6 % | 25 % |
+| d1 | 1 | 1 | 43.2 % | 3 % |
+| d100_again | 100 | 100 | 75.7 % | 100 % |
+
+Six separated levels over a 33.6 point range, monotonic, and `d100_again` lands
+within 0.1 points of `d100`, so nothing drifted across the run. Even one percent
+duty is distinguishable from off.
+
+**Set beside `BacklightProbe`'s Suite 1, this is the whole finding.** The same six
+numbers sent to the kernel produced one brightness and byte-identical registers.
+Sent to the pin, they produce six.
+
+### The contest: the app wins the pin
+
+Two rungs at the end provoke the kernel deliberately.
+
+`contest_autooff` asks the kernel for full brightness with a two second auto-off
+and keeps modulating at 50 percent for six. `contest_off` tells the kernel the
+backlight should be **off** while the app carries on driving it.
+
+Both measured **81 percent of range, identical to `d50`**. The app held its
+commanded duty throughout, including against the kernel's stated intent that the
+light be off.
+
+The app's own detector reported `kernel_writes = 0` across every rung and every
+sample, but that is the weaker evidence and the log says so: the sample is taken
+immediately after the app's own write, so a kernel write landing between two of
+ours is overwritten within a millisecond and never seen. Zero means the app's
+writes dominate. **The light staying lit is the answer that counts.**
+
+### What it costs, which is the real limit
+
+A modulated rung spins a full CPU thread, and that is not a choice:
+
+- `ISystem::delay` is roughly millisecond-granular, a quarter of the 4 ms period,
+  and measurably inconsistent between one and two milliseconds. It cannot place
+  edges.
+- `DWT_CYCCNT` stops while the core sleeps, so a spin after a sleep cannot tell
+  how much of the period is left.
+
+Spinning starves the GUI thread. Thirty consecutive seconds of it froze the
+screen and rebooted the watch; `ISystem::yield()` did not help, because it gives
+up the rest of a slice and is scheduled straight back. What works is keeping each
+modulated rung short and putting a dark idle gap after every one, where the
+service holds the pin and blocks on the message queue.
+
+So an app **can** dim this light, and cannot do it politely. That is the honest
+shape of the workaround, and it is the argument for the timer-driven DMA
+alternative rather than against dimming.
+
+### Incidental: the core clock
+
+Measured at runtime because the app needs it to place edges: **about 160 MHz**,
+with individual runs reading 151, 160 and 162. The spread is the calibration's
+own error, roughly four percent from a 25 ms window against a 1 ms tick, so the
+right claim is "about 160 MHz" and not any one of those figures. The part's
+maximum is 160 MHz, which the readings straddle.
+
+That is worth recording beyond this app: the 2026-07-29 investigation captured
+`RCC` three times and left the clock tree undecoded because the bit diagrams in
+the extracted PDF were unreadable. This is an empirical answer to it, to a few
+percent.
+
+### Three failures worth keeping
+
+Every one of them produced a plausible-looking run, which is why they are here.
+
+| Attempt | Symptom | Cause |
+| --- | --- | --- |
+| No yielding at all | Watch rebooted after 44 s | Service never handed back the CPU; `getMessage(msg, 0)` is non-blocking |
+| Calibrating across `delay()` | Ladder collapsed to three levels; `1 MHz` on screen | `DWT_CYCCNT` stops when the core sleeps, so the measurement counted only waking cycles |
+| Sleeping between bursts | Light flashed at 100 Hz; duty scaled to 0.72 | An 8 ms burst then 2 ms dark is a full-depth envelope on the carrier |
+| Publishing status at 5 Hz | Light flashed at 5 Hz | Each publish wakes the GUI, which preempts the service mid-pulse and holds the pin on |
+
+The last one is worth dwelling on: it is exactly the confound this investigation
+warned about in `BacklightProbe`, that a screen repainting during a measurement is
+part of the measurement, and it was then built into the app that measures.
+
+
 ## SDK defects established so far
 
 All four are independent of what the hardware turns out to do, and each is its own
@@ -527,30 +628,17 @@ And in the meantime, one thing that costs nothing:
 2. **Say what is true today.** `brightness` is on/off, and two of the SDK's own
    documents currently assert otherwise.
 
-### Phase E is viable, and is the open work
+### Phase E, run and answered
 
-The brief gated direct hardware drive on Q11 saying dimming is physically
-possible. It does. An app runs privileged with no MPU, so it can write `GPIOF
-ODR` directly and modulate the gate itself.
+It was run on 2026-08-28 and it worked. See the Phase E section above for the
+ladder, the contest and the cost. In summary: an app can dim this light, it wins
+the pin outright against the kernel, and it cannot do it politely because a
+software PWM on this part has to spin.
 
-Before anyone runs it, the guardrails from the brief still apply and one of them
-now has real numbers behind it. The LED is limited by `R2`, 82 ohms off a 3V3 rail
-through a P-channel FET, so a stuck-on direct drive is no worse electrically than
-the on-state the kernel already uses. That removes the "unknown LED string held at
-100 percent duty" worry the brief raised. What remains is the ownership problem:
-
-- The kernel writes this pin too, on its own wrist-raise, idle and auto-off logic.
-  An app PWM will be fighting it, and **which mechanism wins, and how fast, is the
-  actual finding** Phase E should produce.
-- An app that has to own a pin the kernel also owns is not an app that can ship,
-  however well it demos. Say so in the write-up.
-- Bound it in time, restore `MODER`, `OTYPER` and `ODR` on exit, on fault, and on
-  app stop, which USB insertion triggers without warning.
-
-The preliminary is done: PF3 has no timer output, so the experiment is a software
-PWM or a DMA-to-`BSRR`, not a pin reconfiguration. Start with the software PWM at
-a few hundred Hz, which is the least machinery for the first answer, and reach for
-DMA only if interrupt jitter turns out to be visible.
+The electrical guardrail the brief worried about turned out to be moot: 82 ohms
+off a fixed 3V3 rail through a P-channel FET means a stuck-on drive is
+electrically identical to the on state the kernel already uses. The risk that
+mattered was the one nobody had listed, which was starving the GUI thread.
 
 
 ## Ledger
@@ -575,6 +663,10 @@ DMA only if interrupt jitter turns out to be visible.
 | The circuit behind PF3 tolerates PWM | **CONFIRMED, primary source** | `UNAview_LS012 Rev1.3 Schematic.pdf`, sheet 2: P-channel high-side FET, 82R series resistor, fixed 3V3 rail. No driver IC, no boost, no charge pump, no inductor, so nothing in the path objects to being chopped |
 | PF3 is open drain because the gate has an external pull-up | CONFIRMED (schematic + device) | `R1` 10K to 3V3 on the gate, and `GPIOF PUPDR` bits [7:6] read `00`. The board supplies the pull the pin does not |
 | PF3 has a timer output alternate function | **CONFIRMED NEGATIVE** | ST's pin database for `STM32U5A5QJI` UFBGA132, via Zephyr's autogenerated `stm32u5a5qjixq-pinctrl.dtsi`. PF3 offers AF2 `LPTIM3_IN1` (an input), AF5, AF6, AF7 `USART6_CTS`, AF8 `UART5_TX`, AF12 and ANALOG. No `TIMx_CHy`, no `LPTIMx_OUT` |
+| An app can dim the light through PF3 | **CONFIRMED, demonstrated** | 2026-08-28 run: six duty cycles delivered within a few points of request, filmed and measured frame by frame at 42.2 % off to 75.8 % full. Raw record in `pwm-run/backlight_pwm.txt` |
+| The app wins the pin against the kernel | **CONFIRMED** | Both contest rungs measured identical to `d50` while the kernel had been asked for a 2 s auto-off and then told the backlight should be off |
+| The core clock is about 160 MHz | CONFIRMED to a few percent | Runtime calibration over a 25 ms window; runs read 151, 160 and 162, and the part's maximum is 160. Answers an item the 2026-07-29 ledger left open |
+| A software PWM can be made polite on this part | **REFUTED** | `delay()` is a quarter of a period coarse and inconsistent; `DWT_CYCCNT` stops while the core sleeps. Spinning is the only accurate option, and it starves the GUI |
 | PF3 is ball D3 and carries `BACKLIGHT_ON` | **CONFIRMED, two independent methods** | `GPIOF ODR` bit 3 tracks the light across eight sweeps; and the rendered `UNAcore Rev3.2` pin table shows `BACKLIGHT_ON` on PF3/D3, with PF2 on `HAPTIC_RST_N` |
 | A `pdftotext -layout` reading of a dense schematic pin table | **REFUTED as a method** | Its row grouping put `BACKLIGHT_ON` one row high, on PF2, which would have implied a timer output was available (PF2 has `LPTIM3_CH2`). Rendering the page and reading the wire alignment settled it. Text extraction from schematic PDFs needs corroboration, in the same way a `strings` hit does |
 
@@ -633,31 +725,29 @@ and direct reads of `IBacklight.hpp`, `IBuzzer.hpp`, `IVibro.hpp`, `IKIP.hpp`,
 
 ## Next
 
-The question is answered and the datasheet lookup that shaped Phase E is done.
-What is left is one experiment and four fixes, none of them blocked.
+The question is answered and demonstrated. Everything left is tidying, and none
+of it is blocked.
 
-1. **Phase E.** Software PWM on PF3 from an app, at a few hundred Hz, bounded in
-   time, restoring `MODER`/`OTYPER`/`ODR` on exit, fault and app stop. The
-   electrical risk is settled: 82R off 3V3 through a P-channel FET means a
-   stuck-on drive is no worse than the on-state the kernel already uses. The open
-   question is ownership, and **which mechanism reasserts the pin, and how fast,
-   is the actual finding.** Approval required before any register write.
-2. **SDK defect 2, the simulator mock.** Settled and unblocked by the `t = 0`
-   result. Its own branch, ready now.
-3. **SDK defect 1, the field's documentation.** Must say "not implemented",
-   never "not possible": the board dims fine.
-4. **SDK defect 3, the docs that assert the field works**, plus
+1. **SDK defect 2, the simulator mock.** Settled since 2026-08-27: the device
+   holds the light indefinitely at `timeout = 0`, so the mock should not start a
+   timer at all in that case. Its own branch, ready.
+2. **SDK defect 1, the field's documentation.** Must say "not implemented", never
+   "not possible": an app dims this light with one register.
+3. **SDK defect 3, the docs that assert the field works**, plus
    `architecture-deep-dive.md`'s unreliable hardware claims.
-5. **SDK defect 4, `IID_COUNT`.** Independent one-liner.
+4. **SDK defect 4, `IID_COUNT`.** Independent one-liner.
+5. **The vendor request**, which is now worth making and is one sentence: honour
+   `brightness` at whatever granularity is convenient. No board change, no ABI
+   change, no new message. Four levels would close this completely, and the
+   buzzer's "currently supported only 4 levels" is the in-house precedent.
 
-Phase C is not needed. Q8 is the only open question it would answer.
+Phase C is still not needed. Q8, the undocumented adjacent message types, is the
+only question it would answer that remains open, and nothing depends on it.
 
-### If this is ever taken to the vendor
+### If anyone takes the workaround further
 
-The ask is one sentence: **honour `brightness` at whatever granularity is
-convenient.** No board change, no ABI change, no new message. The field exists,
-the kernel parses it, and the LED circuit tolerates a duty cycle; only the pin
-lacks a timer output, and a DMA-to-`BSRR` or a software PWM covers that. Four
-levels would close this investigation completely, and the buzzer's
-"currently supported only 4 levels" is the in-house precedent for shipping
-exactly that.
+`BacklightPwm` is a demonstration, not a shippable technique: it holds a pin the
+kernel owns and spins a thread to do it. The production shape is a timer driving
+DMA into `GPIOF->BSRR`, which needs no alternate function on the pin, no CPU per
+edge and no accurate sleep. That is what the vendor should build, and this app is
+the evidence it is worth building.

@@ -1,0 +1,113 @@
+# BacklightPwm results
+#
+# This app drives GPIOF PF3 directly, the pin the kernel uses as a plain
+# on/off backlight enable. The ladder below asks for duty cycles the
+# kernel's own REQUEST_BACKLIGHT_SET cannot produce.
+#
+# Compare against BacklightProbe's run at the same six values. There the
+# registers were byte-identical at every brightness; here they should not
+# be, and the light should step.
+PWM start uptime_ms=42500 driving=Y
+PWM core_clock_measured=151 MHz (cycles_per_us, from DWT_CYCCNT over a busy wait)
+PWM period_us=4000 periods_per_burst=2 rungs=19
+#
+# kernel_writes counts bursts where GPIOF ODR disagreed with what this
+# app last wrote. It is sampled just after our own write, so it catches
+# a kernel that is winning the pin, not every kernel write: one landing
+# between two of ours is overwritten within a millisecond and unseen.
+# A zero count therefore means our writes dominate. Whether the light
+# stayed lit through the contest rungs is the answer that counts.
+
+RUNG 01 begin duty=0 hold_ms=3000 kernel_ask=hold-on-10min at_ms=42799  off
+RUNG 01 end   requested=0 achieved=0 periods=0 edges=154 elapsed_ms=3017
+RUNG 01 pin   kernel_writes=0 of 154 samples first_at_ms=0
+
+RUNG 02 begin duty=100 hold_ms=4000 kernel_ask=nothing at_ms=46100  d100
+RUNG 02 end   requested=100 achieved=100 periods=0 edges=358 elapsed_ms=4001
+RUNG 02 pin   kernel_writes=0 of 204 samples first_at_ms=0
+
+RUNG 03 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=50377  gap1
+RUNG 03 end   requested=0 achieved=0 periods=0 edges=435 elapsed_ms=1504
+RUNG 03 pin   kernel_writes=0 of 77 samples first_at_ms=0
+
+RUNG 04 begin duty=75 hold_ms=4000 kernel_ask=nothing at_ms=51888  d75
+RUNG 04 end   requested=75 achieved=79 periods=1058 edges=2551 elapsed_ms=4000
+RUNG 04 pin   kernel_writes=0 of 529 samples first_at_ms=0
+
+RUNG 05 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=55900  gap2
+RUNG 05 end   requested=0 achieved=0 periods=1058 edges=2628 elapsed_ms=1501
+RUNG 05 pin   kernel_writes=0 of 77 samples first_at_ms=0
+
+RUNG 06 begin duty=50 hold_ms=4000 kernel_ask=nothing at_ms=57405  d50
+RUNG 06 end   requested=50 achieved=52 periods=2116 edges=4744 elapsed_ms=4000
+RUNG 06 pin   kernel_writes=0 of 529 samples first_at_ms=0
+
+RUNG 07 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=61416  gap3
+RUNG 07 end   requested=0 achieved=0 periods=2116 edges=4821 elapsed_ms=1503
+RUNG 07 pin   kernel_writes=0 of 77 samples first_at_ms=0
+
+RUNG 08 begin duty=25 hold_ms=4000 kernel_ask=nothing at_ms=62924  d25
+RUNG 08 end   requested=25 achieved=26 periods=3174 edges=6937 elapsed_ms=4002
+RUNG 08 pin   kernel_writes=0 of 529 samples first_at_ms=0
+
+RUNG 09 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=66938  gap4
+RUNG 09 end   requested=0 achieved=0 periods=3174 edges=7014 elapsed_ms=1501
+RUNG 09 pin   kernel_writes=0 of 77 samples first_at_ms=0
+
+RUNG 10 begin duty=10 hold_ms=4000 kernel_ask=nothing at_ms=68443  d10
+RUNG 10 end   requested=10 achieved=10 periods=4232 edges=9130 elapsed_ms=4001
+RUNG 10 pin   kernel_writes=0 of 529 samples first_at_ms=0
+
+RUNG 11 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=72456  gap5
+RUNG 11 end   requested=0 achieved=0 periods=4232 edges=9207 elapsed_ms=1506
+RUNG 11 pin   kernel_writes=0 of 77 samples first_at_ms=0
+
+RUNG 12 begin duty=1 hold_ms=4000 kernel_ask=nothing at_ms=73967  d1
+RUNG 12 end   requested=1 achieved=1 periods=5290 edges=11323 elapsed_ms=4000
+RUNG 12 pin   kernel_writes=0 of 529 samples first_at_ms=0
+
+RUNG 13 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=77979  gap6
+RUNG 13 end   requested=0 achieved=0 periods=5290 edges=11400 elapsed_ms=1509
+RUNG 13 pin   kernel_writes=0 of 77 samples first_at_ms=0
+
+RUNG 14 begin duty=100 hold_ms=3000 kernel_ask=nothing at_ms=79493  d100_again
+RUNG 14 end   requested=100 achieved=100 periods=5290 edges=11553 elapsed_ms=3000
+RUNG 14 pin   kernel_writes=0 of 153 samples first_at_ms=0
+
+RUNG 15 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=82807  gap7
+RUNG 15 end   requested=0 achieved=0 periods=5290 edges=11630 elapsed_ms=1505
+RUNG 15 pin   kernel_writes=0 of 77 samples first_at_ms=0
+
+RUNG 16 begin duty=50 hold_ms=6000 kernel_ask=on-autooff-2s at_ms=84321  contest_autooff
+RUNG 16 end   requested=50 achieved=52 periods=6878 edges=14806 elapsed_ms=6006
+RUNG 16 pin   kernel_writes=0 of 794 samples first_at_ms=0
+RUNG 16 NOTE  no disagreement seen, so this app's writes dominate the pin.
+RUNG 16 NOTE  Not proof the kernel stayed off it: the sample is taken just
+RUNG 16 NOTE  after our own write, so a kernel write in between is missed.
+RUNG 16 NOTE  Whether the light stayed lit is the answer that counts.
+
+RUNG 17 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=90343  gap8
+RUNG 17 end   requested=0 achieved=0 periods=6878 edges=14883 elapsed_ms=1505
+RUNG 17 pin   kernel_writes=0 of 77 samples first_at_ms=0
+
+RUNG 18 begin duty=50 hold_ms=6000 kernel_ask=turn-off at_ms=91852  contest_off
+RUNG 18 end   requested=50 achieved=52 periods=8466 edges=18059 elapsed_ms=6004
+RUNG 18 pin   kernel_writes=0 of 794 samples first_at_ms=0
+RUNG 18 NOTE  no disagreement seen, so this app's writes dominate the pin.
+RUNG 18 NOTE  Not proof the kernel stayed off it: the sample is taken just
+RUNG 18 NOTE  after our own write, so a kernel write in between is missed.
+RUNG 18 NOTE  Whether the light stayed lit is the answer that counts.
+
+RUNG 19 begin duty=0 hold_ms=2000 kernel_ask=turn-off at_ms=97873  off_end
+RUNG 19 end   requested=0 achieved=0 periods=8466 edges=18162 elapsed_ms=2009
+RUNG 19 pin   kernel_writes=0 of 103 samples first_at_ms=0
+RUNG 19 NOTE  no disagreement seen, so this app's writes dominate the pin.
+RUNG 19 NOTE  Not proof the kernel stayed off it: the sample is taken just
+RUNG 19 NOTE  after our own write, so a kernel write in between is missed.
+RUNG 19 NOTE  Whether the light stayed lit is the answer that counts.
+
+PWM done uptime_ms=99895 periods=8466 edges=18163 kernel_writes=0
+PWM intact=Y
+PWM The brightness ladder itself is on the video, not here: no app can
+PWM read the light back. This file says what was asked for and what the
+PWM pin did about it.
