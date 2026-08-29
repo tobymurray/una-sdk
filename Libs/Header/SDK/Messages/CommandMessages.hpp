@@ -339,8 +339,27 @@ static_assert(sizeof(RequestDisplayUpdate) == 44, "RequestDisplayUpdate size mus
  * Set backlight brightness and auto-off timeout.
  */
 struct RequestBacklightSet : public MessageBase {
-    uint8_t brightness;         // 0-100%, 0 = off
-    uint32_t autoOffTimeoutMs;  // Auto-off timeout, 0 = disabled
+    // 0-100%, 0 = off.
+    //
+    // Currently only two levels are implemented: any non-zero value gives full
+    // brightness, and 0 turns the backlight off. Values in between are accepted
+    // and have no effect.
+    //
+    // This is a firmware limitation and not a hardware one. The panel's
+    // front-light is switched by a plain GPIO that the kernel drives as an
+    // on/off enable; the LED circuit behind it is an ordinary resistor-limited
+    // switch that dims perfectly well under PWM. Measured on the watch: requests
+    // of 100, 75, 50, 25, 10 and 1 produce byte-identical GPIO state and one
+    // brightness.
+    //
+    // The field is kept, and kept documented as a percentage, because it
+    // describes something the hardware can do and the firmware does not yet. See
+    // RequestBuzzerPlay::Note::volume for the same shape of caveat.
+    uint8_t brightness;
+
+    // Auto-off timeout in milliseconds. 0 disables the auto-off and the
+    // backlight stays on until something turns it off; confirmed on hardware.
+    uint32_t autoOffTimeoutMs;
 
     RequestBacklightSet()
         : MessageBase(MessageType::REQUEST_BACKLIGHT_SET)
