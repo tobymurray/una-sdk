@@ -47,7 +47,16 @@ public:
 
         IID_FILESYSTEM  = 0x000B0000,   // SDK::Interface::IFileSystem
 
-        IID_COUNT                       // Number of entries
+        // NOT a count, despite the name. These identifiers are sparse ABI
+        // values rather than indices: 0x00050000 to 0x000A0000 are unallocated,
+        // and an uninitialised enumerator takes the previous value plus one, so
+        // this is 0x000B0001 rather than 6.
+        //
+        // Nothing in the SDK uses it and nothing should. `iid < IID_COUNT` as a
+        // bounds check would admit every unallocated identifier, and sizing an
+        // array by it would ask for 720,897 entries. Renaming it would be the
+        // fuller fix but would break any application that references it.
+        IID_COUNT
     };
 
     /**
