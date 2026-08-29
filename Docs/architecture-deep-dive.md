@@ -3,6 +3,18 @@
 
 This document explains the technical magic that enables the UNA Watch platform.
 
+```{note}
+The hardware details in this document are a mixture of accurate and inaccurate,
+and are best cross-checked against the schematics and bills of materials
+published at [UNAWatch/una-hardware](https://github.com/UNAWatch/una-hardware).
+
+Two examples that were corrected here: the PMIC was named as an `STPMIC1` where
+the board carries a `PCA9420UKZ`, and the panel's front-light was described as
+PWM controlled where the firmware drives it as a plain GPIO on/off enable. Both
+appeared only as labels inside diagrams, which is worth knowing before relying on
+any other label in one.
+```
+
 ## Core Concepts
 
 ### Pure Machine Code Execution
@@ -476,21 +488,21 @@ flowchart TD
 graph TD
     subgraph "Hardware Abstraction Layer"
         ILCD[ILcd Interface<br/>Display Control]
-        IBACKLIGHT[IBacklight Interface<br/>Screen Brightness]
+        IBACKLIGHT[IBacklight Interface<br/>Screen Backlight]
         IBLE[IBle Interface<br/>Wireless Communication]
         IGPS[IGps Interface<br/>Location Services]
     end
 
     subgraph "Concrete Implementations"
         LCD_REAL[LS012B7DD06A<br/>Real LCD Driver]
-        BACKLIGHT_REAL[Backlight<br/>Real PWM Control]
+        BACKLIGHT_REAL[Backlight<br/>GPIO On/Off]
         BLE_REAL[BlueNRG Peripheral<br/>Real BLE Stack]
         GPS_REAL[Airoha GPS<br/>Real GPS Module]
     end
 
     subgraph "Stub Implementations"
         LCD_STUB[Stub::Lcd<br/>No-Op LCD Driver]
-        BACKLIGHT_STUB[Stub::Backlight<br/>No-Op Brightness]
+        BACKLIGHT_STUB[Stub::Backlight<br/>No-Op]
         BLE_STUB[Stub::BleServer<br/>No-Op BLE Stack]
         GPS_STUB[Stub::Gps<br/>No-Op GPS Module]
     end
@@ -1712,7 +1724,7 @@ graph TD
     subgraph "Power Sources"
         BATTERY[Battery<br/>3.7V LiPo<br/>400mAh]
         USB[USB Power<br/>5V<br/>500mA Max]
-        PMIC[PMIC<br/>STPMIC1<br/>Power Controller]
+        PMIC[PMIC<br/>PCA9420UKZ<br/>Power Controller]
     end
 
     subgraph "Power States During Init"
@@ -1723,7 +1735,7 @@ graph TD
     end
 
     subgraph "Power-Conscious Components"
-        LCD_BACKLIGHT[LCD Backlight<br/>PWM Controlled<br/>20-50mA]
+        LCD_BACKLIGHT[Front-light LED<br/>GPIO switched]
         BLE_RADIO[BLE Radio<br/>TX/RX States<br/>10-20mA]
         FLASH_STORAGE[Flash Storage<br/>Read/Write<br/>15-30mA]
         SENSORS[Sensors<br/>Periodic Sampling<br/>5-15mA]

@@ -69,6 +69,12 @@ Note: If you move the application to another location, you need to update the re
 2. There are two types of log messages:
    - turning the backlight on with a timeout in milliseconds
    - turning the backlight off
+
+> The simulator's backlight is a stub and does not model brightness. It logs
+> whatever `RequestBacklightSet` carried, so a request for 30% and a request for
+> 100% log differently and behave identically. That happens to match the watch,
+> where the field is not implemented either, but it is a coincidence rather than
+> a model: do not read simulator backlight behaviour as device behaviour.
 #### Vibro
 1. Vibro actions are printed in the terminal as log messages.
    ```cpp
@@ -150,7 +156,8 @@ Options:
 ##### IMU Wrist Detection
 Simulates **wrist detection**.
 
-A wrist detection event activates the **backlight for 5 seconds**.
+A wrist detection event activates the **backlight for 5 seconds**. That figure is
+the simulator's own, not a measurement of the watch.
 
 Options:
    - enable/disable sensor

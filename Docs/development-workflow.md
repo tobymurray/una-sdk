@@ -399,7 +399,7 @@ stateDiagram-v2
 REQUEST_BATTERY_STATUS       // Get battery level
 REQUEST_SYSTEM_SETTINGS      // Get watch settings
 REQUEST_DISPLAY_CONFIG       // Get screen dimensions (GUI only)
-REQUEST_BACKLIGHT_SET        // Set screen brightness
+REQUEST_BACKLIGHT_SET        // Turn the backlight on or off
 REQUEST_SENSOR_LAYER_CONNECT // Start sensor sampling
 ```
 

@@ -272,7 +272,7 @@ REQUEST_SYSTEM_INFO          // Get firmware version, device name
 
 // Hardware Control
 REQUEST_DISPLAY_CONFIG       // Get screen dimensions
-REQUEST_BACKLIGHT_SET        // Set screen brightness
+REQUEST_BACKLIGHT_SET        // Turn the backlight on or off
 REQUEST_VIBRO_PLAY           // Trigger vibration
 REQUEST_BUZZER_PLAY          // Trigger sound
 
