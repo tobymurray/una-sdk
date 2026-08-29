@@ -22,9 +22,24 @@ namespace SDK::Simulator::Mock {
     {
         LOG_INFO("on backlight, timeout = %u\n", timeout);
         m_isOn = true;
+
+        // A pending auto-off from an earlier call is always cancelled, whatever
+        // this call asks for.
         if (mTimer.isActive(mTimerId)) {
             mTimer.stop(mTimerId);
         }
+
+        // Zero means no automatic turn-off, as IBacklight::on and
+        // RequestBacklightSet::autoOffTimeoutMs both document it. Starting a
+        // zero-length timer instead fires on the next poll and blanks the
+        // backlight roughly 50 ms later, which is the opposite of what was asked.
+        //
+        // Confirmed on hardware 2026-08-27: with autoOffTimeoutMs = 0 the watch
+        // holds the backlight on indefinitely.
+        if (timeout == 0) {
+            return true;
+        }
+
         mTimerId = mTimer.start(timeout, std::bind(&Backlight::timerCallback, this));
         return true;
     }
