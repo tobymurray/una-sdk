@@ -158,6 +158,8 @@ message.
 | Q8 | Undocumented adjacent message types | Open. The type encoding leaves all 16 low bits free on every system type, so subcodes are structurally possible; nothing in the SDK uses them | n/a | Phase C dispatcher table |
 | Q9 | What physically drives the light | **PF3, ball D3**, open drain, active low, into the gate of `Q1` (`NTK3139PT1G`, P-channel) on the `UNAview_LS012` board, then `R2` 82R and the LED over FPC `J3`. `R1` 10K holds the gate up when the pin floats. Confirmed twice: `ODR` bit 3 is the bit that moves, and the schematic names `BACKLIGHT_ON` on PF3/D3 | **CONFIRMED** (device + schematic) | The pin not tracking the light, or a driver IC in the path |
 | Q10 | Smallest direct-drive workaround | **A software PWM writing `GPIOF BSRR`, and it works.** Six duty cycles delivered within a few points of request; the app wins the pin outright, including while the kernel has been told the backlight should be off. The cost is a full CPU thread per modulated rung, which starves the GUI and reboots the watch unless the rungs are kept short and separated | **CONFIRMED** (device, 2026-08-28) | The kernel reasserting the pin faster than the app can hold it. It never did |
+| Q13 | Whether the DMA route removes that cost | **Yes.** TIM7 update drives GPDMA1 ch15 from a RAM buffer into `GPIOF BSRR` at 247 Hz with no CPU per edge. The ladder is monotonic and steady: variation within a rung is at the measurement noise floor, against the full off-to-on distance when the waveform is gated | **CONFIRMED** (device, 2026-08-29) | Flicker at any rung, or a rate that tracked the driving thread's behaviour in every mode |
+| Q14 | What gates the hardware waveform | **A long blocking wait, and only that.** Counted buffer passes give 247 Hz spinning, 247 yielding, 247 across a run of one-millisecond sleeps, and **7 Hz** across a single long sleep. The kernel stops the clocks TIM7 and GPDMA1 need when it idles deeply | **CONFIRMED** (device, 2026-08-29) | Any mode other than the long sleep falling short, which would have meant the waveform could not outlive the core going idle at all |
 | Q11 | Can the hardware dim at all | **Yes, though not with a timer output on that pin.** The LED circuit is a P-channel FET high-side switch with an 82R resistor off a fixed 3V3 rail: no driver IC, no boost, no inductor, nothing that objects to being chopped. PF3 carries no `TIMx_CHy`, so PWM must come from software or from timer-driven DMA into `BSRR` rather than from a `CCRx` | **CONFIRMED** (schematic + device + ST pin table) | A boost or driver IC in the LED path, or a timer output on PF3. Neither exists |
 | Q12 | Kernel dims to its own setting, reachable from an app | **No such setting can exist.** The SDK carries no display or brightness field in `ISettings`, `RequestSystemSettings` or `RequestDisplayConfig`, and Q11 shows there is no duty cycle for one to control | **CONFIRMED** (repo + device) | A watch settings item that changed `ODR` behaviour. There is no duty cycle for one to change |
 
@@ -368,6 +370,21 @@ mock, not the header.**
 Q1, Q4 and half of Q6 came back as documented, which is worth saying plainly
 because it is the first time any of them has been more than folklore.
 
+### Two measurement notes worth reusing
+
+**Counting the DMA's own block repeats** measures the waveform's output rate
+directly, on the watch, with no camera and nothing assumed about the clock tree.
+Three builds were shipped with the rate computed from an assumed clock and all
+three were wrong, in two different directions; the first instrument that measured
+the output instead settled it in one run. Where a peripheral counts its own work,
+read that counter.
+
+**Reading bands down the sensor's readout direction** separates a flickering light
+from a dim one on ordinary 30 fps phone footage. A light toggling faster than the
+frame rate paints stripes within a single frame; one that toggles slower makes
+whole frames uniformly bright or dark. Static banding that repeats identically
+frame to frame is the scene, not the light.
+
 ### A measurement note worth reusing
 
 The operator read the blank off the screen's **colour** rather than its
@@ -535,6 +552,12 @@ So an app **can** dim this light, and cannot do it politely. That is the honest
 shape of the workaround, and it is the argument for the timer-driven DMA
 alternative rather than against dimming.
 
+> **Superseded by Phase F, 2026-08-29.** The DMA alternative was built and it
+> works. Everything in this section is true of the software PWM and false of the
+> technique: the hardware engine costs no CPU per edge and produces a steady
+> light. Kept as written because the reasoning about `delay` granularity and
+> `DWT_CYCCNT` is still why a software PWM has to spin.
+
 ### Incidental: the core clock
 
 Measured at runtime because the app needs it to place edges: **about 160 MHz**,
@@ -563,6 +586,108 @@ The last one is worth dwelling on: it is exactly the confound this investigation
 warned about in `BacklightProbe`, that a screen repainting during a measurement is
 part of the measurement, and it was then built into the app that measures.
 
+
+## Phase F on hardware, 2026-08-29: the DMA engine, and the cost that went away
+
+Phase E's conclusion was that an app can dim this light and cannot do it politely,
+because a software PWM on this part has to spin. **That is now false.** The
+timer-triggered DMA route this file recommended in the abstract has been built and
+run, and it removes the cost entirely: the waveform is generated in hardware, the
+CPU does nothing per edge, and the light is steady.
+
+### The engine
+
+TIM7's update event drives GPDMA1 channel 15, one word per event, from a 128-word
+buffer in RAM into `GPIOF BSRR`. Each word is either bit-reset 3 or bit-set 3, so
+the buffer *is* the waveform and the duty is how many of its words are which. The
+timer never reaches a pin, which is why this works on a pin with no timer output:
+`BSRR` does not care who wrote it.
+
+Two details worth carrying to anyone reimplementing it. Block-repeat mode loops
+without a linked-list node in RAM, which is fewer registers to get wrong blind.
+And the channel is configured with `EN` clear, then every register is read back
+and compared before it is enabled, `CDAR` against `GPIOF BSRR` above all: a wrong
+destination would have the DMA writing into memory rather than into a peripheral,
+and `GPIOF` also carries the touch and haptic reset lines.
+
+Measured rate 247 Hz at `ARR` 5038, from which the timer's input clock is 160 MHz.
+
+### The only thing that stops it, which is a long blocking wait
+
+The waveform's rate was measured four ways, by counting completed passes of the
+buffer over four tenths of a second of wall clock, read from the block-repeat
+counter the DMA maintains in hardware. This is an instrument worth reusing: it
+measures the output rather than the clock, needs no camera, and cannot be fooled
+by anything upstream of it.
+
+| How the thread passes the time | Waveform rate |
+| --- | --- |
+| Spinning, never gives the core up | 247 Hz |
+| `ISystem::yield()` in a loop | 247 Hz |
+| A run of one-millisecond `delay()` calls | 247 Hz |
+| One `delay()` for the whole window | **7 Hz** |
+
+So the waveform is genuinely autonomous, and the single thing that kills it is
+blocking for a long time. The kernel evidently takes a long wait as licence to
+stop the clocks that TIM7 and GPDMA1 depend on, and takes a short one as something
+to idle through. An app that wants a dimmed backlight must therefore avoid long
+blocking waits for as long as the light is dimmed, which is a real constraint but
+a mild one next to spinning a thread.
+
+The failure mode when it *is* gated deserves recording, because it is worse than
+being slow and does not look like what it is. When the waveform stops, the pin
+holds whatever the last word wrote, so the light freezes full on or full off for
+as long as the core stays down, in stretches of about a tenth of a second. It
+advances properly for the fraction of the time the core is up. Nothing about that
+reads as a dimmer light; it reads as a hard strobe. Three consecutive builds were
+misdiagnosed as divider errors on the strength of it.
+
+### The ladder, flicker-free
+
+Filmed and measured the same way as Phase E, mean green level over the watch face,
+against the light-off baseline in the gaps between rungs.
+
+| Requested duty | Level above off | Variation within the rung |
+| --- | --- | --- |
+| 100 | 36.0 | 1.4 |
+| 75 | 29.7 | 1.6 |
+| 50 | 20.2 | 1.5 |
+| 25 | 10.3 | 1.1 |
+| 10 | 4.3 | 0.6 |
+| 1 | 0.9 | 0.2 |
+
+Monotonic, and the variation column is the finding. On every gated run the same
+column read about 30, which is the full distance between off and fully on: the
+light was not dim, it was blinking. Here it is at the noise floor of the
+measurement. The camera values are not linear in duty and should not be read as
+though they were, because of the sensor's gamma; what they establish is order and
+steadiness, not a transfer function.
+
+A separate check on the same footage: reading 24 bands down the sensor's readout
+direction, a light toggling faster than the frame rate paints stripes *within* one
+frame. The banding is there, but it is identical frame to frame, so it is the
+front-light's own spatial falloff across the face and not temporal flicker. That
+same read is what diagnosed the gated runs, where whole frames were uniformly on
+or uniformly off in blocks of three or four.
+
+### The contest, again, and the app still wins
+
+Both contest rungs held at 19.0 above baseline, against 20.2 for the same duty
+with no interference: the app keeps the pin at its dimmed level while the kernel
+has been told to run a two-second auto-off, and again while it has been told
+outright to turn the backlight off. No disagreement was ever sampled between what
+the app wrote and what the pin read back.
+
+### What this changes
+
+Phase E's cost section stands as a description of the software engine and is
+wrong as a description of the technique. The honest summary is now:
+
+- An app **can** dim this light, in hardware, at a few hundred Hz, steadily.
+- The CPU cost per edge is zero. The cost is one timer, one DMA channel, 512
+  bytes of RAM, and a constraint on how the driving thread waits.
+- Every earlier claim in this file about spinning applies to the software PWM
+  only.
 
 ## SDK defects established so far
 
@@ -616,6 +741,13 @@ PWM in the kernel's own timer tick, or a timer-triggered DMA into `GPIOF->BSRR`,
 which is hardware-timed and costs no CPU per edge. Either lives entirely inside
 firmware the vendor already ships.
 
+Phase F built the second one from an app and it works, which makes this a stronger
+ask than it was: the technique is demonstrated on this exact pin and this exact
+part, and the kernel is better placed to use it than an app is. It already owns
+the timers and the DMA channels, so it need not go looking for a free one, and it
+controls its own idle path, so the long-blocking-wait constraint that binds an app
+does not bind it.
+
 So the ask is one thing, not two:
 
 1. **Honour the field**, at whatever granularity is convenient. The buzzer's
@@ -634,6 +766,12 @@ It was run on 2026-08-28 and it worked. See the Phase E section above for the
 ladder, the contest and the cost. In summary: an app can dim this light, it wins
 the pin outright against the kernel, and it cannot do it politely because a
 software PWM on this part has to spin.
+
+Phase F, on 2026-08-29, removed that last clause. The timer-triggered DMA engine
+this file had recommended in the abstract was built and run, and it dims the light
+in hardware with no CPU per edge and no visible flicker. The one constraint left
+is that the driving thread must not block for long stretches, because the kernel
+stops the clocks TIM7 and GPDMA1 need when it does.
 
 The electrical guardrail the brief worried about turned out to be moot: 82 ohms
 off a fixed 3V3 rail through a P-channel FET means a stuck-on drive is
@@ -657,6 +795,10 @@ mattered was the one nobody had listed, which was starving the GUI thread.
 | No display or brightness field in `ISettings`, `RequestSystemSettings` or `RequestDisplayConfig` | CONFIRMED | The three declarations |
 | `IID_COUNT` evaluates to `0x000B0001` | CONFIRMED | `IKIP.hpp`, C++ enum rules |
 | `architecture-deep-dive.md` names the PMIC STPMIC1; the ledger confirmed PCA9420 | CONFIRMED | The doc, and the 2026-07-29 hardware inventory |
+| A timer-driven DMA into `BSRR` dims the light from an app with no CPU per edge | **CONFIRMED** (device, 2026-08-29) | TIM7 + GPDMA1 ch15 at 247 Hz; monotonic ladder at 100/75/50/25/10/1 with within-rung variation at the noise floor |
+| The APB1 timer clock is 160 MHz | **CONFIRMED** (device, 2026-08-29) | `ARR` 5000 over a 128-word buffer measured 250 Hz, which fixes the input clock. Independent of the `DWT_CYCCNT` core-clock figure and agreeing with it |
+| A long blocking wait stops the waveform; yielding and short sleeps do not | **CONFIRMED** (device, 2026-08-29) | 247/247/247/7 Hz across spin, yield, one-millisecond sleeps and one long sleep |
+| A gated waveform reads as a hard strobe, not as a dim light | **CONFIRMED** (device + video, 2026-08-29) | When the DMA stops the pin holds the last word, so the light freezes fully on or fully off in stretches of about a tenth of a second |
 | The backlight is a discrete front-light with no LED driver IC | **CONFIRMED, primary source** | `UNAview_LS012 Rev1.3 Schematic.pdf`: the entire circuit is `R1` 10K, `Q1` NTK3139PT1G, `R2` 82R and an LED over FPC `J3`. The 2026-07-29 ledger's inference by elimination was right |
 | The real `Backlight` driver is constructed from a GPIO | CONFIRMED (device) | `mpBacklight = new Backlight(gpio)` in `architecture-deep-dive.md` turned out to be right, and PF3 is the GPIO. The same document's neighbouring "Real PWM Control" label is wrong as a description of the firmware, though the board would support it |
 | `RCC` words 0-63 span the peripheral clock-enable registers | UNVERIFIED, and no longer load-bearing | Recalled STM32U5 layout; RM0456 is still not on this machine. Q11 rests on `MODER` and `AFRL` at the pin, not on the RCC decode |

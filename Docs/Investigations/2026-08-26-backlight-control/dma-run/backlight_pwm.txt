@@ -1,0 +1,142 @@
+# BacklightPwm results
+#
+# This app drives GPIOF PF3 directly, the pin the kernel uses as a plain
+# on/off backlight enable. The ladder below asks for duty cycles the
+# kernel's own REQUEST_BACKLIGHT_SET cannot produce.
+#
+# Compare against BacklightProbe's run at the same six values. There the
+# registers were byte-identical at every brightness; here they should not
+# be, and the light should step.
+PWM start uptime_ms=35879 driving=Y
+PWM core_clock_measured=160 MHz (cycles_per_us, from DWT_CYCCNT over a busy wait)
+PWM period_us=4000 periods_per_burst=2 rungs=19
+#
+# kernel_writes counts bursts where GPIOF ODR disagreed with what this
+# app last wrote. It is sampled just after our own write, so it catches
+# a kernel that is winning the pin, not every kernel write: one landing
+# between two of ours is overwritten within a millisecond and unseen.
+# A zero count therefore means our writes dominate. Whether the light
+# stayed lit through the contest rungs is the answer that counts.
+PWM engine=timer+DMA TIM7 GPDMA_ch15
+PWM rate first  arr=5000 spin=247 Hz
+PWM rate final  arr=5038
+PWM rate  spin        247 Hz  keeps up
+PWM rate  yield       247 Hz  keeps up
+PWM rate  1ms-naps    247 Hz  keeps up
+PWM rate  long-sleep  7 Hz
+PWM idle chosen=1ms-naps
+#
+# Those rates are counted passes of the waveform buffer over four
+# tenths of a second of wall clock, read from the block-repeat counter
+# the DMA keeps in hardware. They are measurements.
+#
+# spin never gives the core up, so it is the hardware's own rate with
+# nothing gated, and every other mode is measured against it. Wherever a
+# mode falls short, the waveform is stopped for the difference and the
+# pin sits frozen at whatever the last word wrote. That reaches the eye
+# as the light stuck full on or full off, not as a dimmer light, which
+# is why a gated waveform looks worse than a slow one rather than the
+# same. No choice of divider changes it.
+#
+# If only spin keeps up, an app can dim this light only by holding the
+# core awake, and the DMA has bought nothing over a busy-wait. That is a
+# finding about the kernel and the part, not about this app.
+#
+# On this engine 'achieved' is the duty the hardware was COMMANDED to
+# produce, not a measurement: the duty is not counted, only the rate.
+# The software engine's achieved figure is a measurement; this one is
+# not, and they should not be compared.
+
+RUNG 01 begin duty=0 hold_ms=3000 kernel_ask=hold-on-10min at_ms=38570  off
+RUNG 01 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=3000
+RUNG 01 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 02 begin duty=100 hold_ms=4000 kernel_ask=nothing at_ms=41575  d100
+RUNG 02 end   requested=100 achieved=100 periods=0 edges=0 elapsed_ms=4000
+RUNG 02 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 03 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=45839  gap1
+RUNG 03 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=1500
+RUNG 03 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 04 begin duty=75 hold_ms=4000 kernel_ask=nothing at_ms=47344  d75
+RUNG 04 end   requested=75 achieved=75 periods=0 edges=0 elapsed_ms=4000
+RUNG 04 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 05 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=51590  gap2
+RUNG 05 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=1500
+RUNG 05 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 06 begin duty=50 hold_ms=4000 kernel_ask=nothing at_ms=53095  d50
+RUNG 06 end   requested=50 achieved=50 periods=0 edges=0 elapsed_ms=4000
+RUNG 06 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 07 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=57353  gap3
+RUNG 07 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=1500
+RUNG 07 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 08 begin duty=25 hold_ms=4000 kernel_ask=nothing at_ms=58858  d25
+RUNG 08 end   requested=25 achieved=25 periods=0 edges=0 elapsed_ms=4000
+RUNG 08 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 09 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=63107  gap4
+RUNG 09 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=1500
+RUNG 09 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 10 begin duty=10 hold_ms=4000 kernel_ask=nothing at_ms=64616  d10
+RUNG 10 end   requested=10 achieved=10 periods=0 edges=0 elapsed_ms=4000
+RUNG 10 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 11 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=68867  gap5
+RUNG 11 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=1500
+RUNG 11 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 12 begin duty=1 hold_ms=4000 kernel_ask=nothing at_ms=70372  d1
+RUNG 12 end   requested=1 achieved=1 periods=0 edges=0 elapsed_ms=4000
+RUNG 12 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 13 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=74624  gap6
+RUNG 13 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=1500
+RUNG 13 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 14 begin duty=100 hold_ms=3000 kernel_ask=nothing at_ms=76128  d100_again
+RUNG 14 end   requested=100 achieved=100 periods=0 edges=0 elapsed_ms=3000
+RUNG 14 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 15 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=79380  gap7
+RUNG 15 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=1500
+RUNG 15 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 16 begin duty=50 hold_ms=6000 kernel_ask=on-autooff-2s at_ms=80885  contest_autooff
+RUNG 16 end   requested=50 achieved=50 periods=0 edges=0 elapsed_ms=6000
+RUNG 16 pin   kernel_writes=0 of 0 samples first_at_ms=0
+RUNG 16 NOTE  no disagreement seen, so this app's writes dominate the pin.
+RUNG 16 NOTE  Not proof the kernel stayed off it: the sample is taken just
+RUNG 16 NOTE  after our own write, so a kernel write in between is missed.
+RUNG 16 NOTE  Whether the light stayed lit is the answer that counts.
+
+RUNG 17 begin duty=0 hold_ms=1500 kernel_ask=nothing at_ms=87145  gap8
+RUNG 17 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=1500
+RUNG 17 pin   kernel_writes=0 of 0 samples first_at_ms=0
+
+RUNG 18 begin duty=50 hold_ms=6000 kernel_ask=turn-off at_ms=88650  contest_off
+RUNG 18 end   requested=50 achieved=50 periods=0 edges=0 elapsed_ms=6000
+RUNG 18 pin   kernel_writes=0 of 0 samples first_at_ms=0
+RUNG 18 NOTE  no disagreement seen, so this app's writes dominate the pin.
+RUNG 18 NOTE  Not proof the kernel stayed off it: the sample is taken just
+RUNG 18 NOTE  after our own write, so a kernel write in between is missed.
+RUNG 18 NOTE  Whether the light stayed lit is the answer that counts.
+
+RUNG 19 begin duty=0 hold_ms=2000 kernel_ask=turn-off at_ms=94911  off_end
+RUNG 19 end   requested=0 achieved=0 periods=0 edges=0 elapsed_ms=2000
+RUNG 19 pin   kernel_writes=0 of 0 samples first_at_ms=0
+RUNG 19 NOTE  no disagreement seen, so this app's writes dominate the pin.
+RUNG 19 NOTE  Not proof the kernel stayed off it: the sample is taken just
+RUNG 19 NOTE  after our own write, so a kernel write in between is missed.
+RUNG 19 NOTE  Whether the light stayed lit is the answer that counts.
+
+PWM done uptime_ms=96926 periods=0 edges=1 kernel_writes=0
+PWM intact=Y
+PWM The brightness ladder itself is on the video, not here: no app can
+PWM read the light back. This file says what was asked for and what the
+PWM pin did about it.
