@@ -172,8 +172,11 @@ detail here; summary only:
   spec; it's a working proof. Building it surfaced two corrections to the phone-capture-only
   analysis below: the `0x50` list command has a reserved byte after the opcode that the original
   transcription dropped, and the `0x10` file read needs **one request per chunk** (not a single
-  trigger-and-stream as the phone capture suggested) — still an open question why the phone capture
-  looked different. Also surfaced a real BlueZ implementation gotcha worth keeping in mind for any
+  trigger-and-stream as the phone capture suggested). Why the phone capture looked different is
+  no longer a mystery: the documented flow sends `READ` once and then `READ_PACING` (`0x12`) per
+  chunk, so the follow-up requests were a different opcode. Repeating `0x10` with the full path
+  works, which is how everything here was collected, but it re-sends the path every chunk. See
+  the spec's §0.2. Also surfaced a real BlueZ implementation gotcha worth keeping in mind for any
   Linux-based companion: use `AcquireNotify`'s raw socket for high-rate GATT notifications, not
   D-Bus `PropertiesChanged`, which silently coalesces/drops rapid notifications.
 
