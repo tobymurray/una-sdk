@@ -1,8 +1,25 @@
 # Companion data channel: analysis and proposal
 
-**Status:** analysis / request for comment. Not an implemented feature, and not
-official SDK documentation — this is a contributor's write-up intended to ground
-an upstream discussion.
+**Status: largely answered.** Upstream has since shipped `SDK::AppConfig`
+(`Docs/app-config-fields.md`): an app declares configuration fields in its
+`app-manifest.json`, the companion app prompts the user and writes the answers
+to a JSON file beside the `.uapp` over FTS, and the app reads them at launch.
+That is §5's proposals 1 and 3 delivered, in a better shape than proposed —
+declared fields carried in a file the existing File Transfer Service already
+writes, so it needed no new kernel channel, no envelope, and no chunking.
+
+Three things this document argued for are still not answered, and its own
+`Docs/app-config-fields.md` § 1.1 says so:
+
+- **Nothing reaches a running app.** Config is read once at launch, so this is
+  provisioning, not the data channel §5 describes.
+- **Nothing may be secret.** The values file is plaintext on a volume exposed
+  over USB and BLE, which rules out the API-token case in §1.
+- **`SettingsSerializer` is still copied into each app that wants it** (proposal 4).
+
+Read the rest as the record of how the problem looked before that landed, and
+for those three residues. Not official SDK documentation; a contributor's
+write-up.
 
 **Scope of the analysis:** the public `UNAWatch/una-sdk` repository as of commit
 `2764a3e7`. Every claim below about what does or does not exist was checked

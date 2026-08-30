@@ -70,9 +70,11 @@ Independently derived here, and matching the official document exactly:
   ERROR_PROTOCOL, `0x05` ERROR_READ_ONLY. The `50 03` and `10 03` replies seen throughout are
   ERROR_NO_FILE, exactly as guessed.
 - **The `adaf0001` Version characteristic has meaning**: `4` = classic protocol only, `≥ 5` = UNA's
-  fast-transfer extensions. The `04 00 00 00` read here (§1.2) therefore says this watch, on
-  firmware 1.3.0, is **classic-only** — the windowed reads/writes, `DIGEST` and resume described
-  in the official document are not available on it.
+  fast-transfer extensions. The `04 00 00 00` read here (§1.2) says this watch was classic-only
+  on firmware 1.3.0, so the windowed reads/writes, `DIGEST` and resume were unavailable to
+  everything recorded below. **Firmware 1.4.0 reads `5` and the extensions work**: see
+  `CANS-LIVE-PROBE-2026-08-21.md`, which measures the windowing. Read any capability statement
+  in this document as being about 1.3.0.
 - **Further commands exist** that were never exercised here: `MKDIR 0x40`, `MOVE 0x60`, and the
   version-5 extension `DIGEST 0x70`.
 
@@ -1090,10 +1092,9 @@ Remaining work, roughly in priority order:
    paths or two. The other half of that follow-up — what `dh.tmp` is — is answered: it is the
    daily-health recovery file (§2.2.3), so the `0x5f` fill is internal state and not an encoding a
    companion should reason about.
-7c. **Report the read-chunk clamp as a spec conformance gap.** Already filed as issue #272; worth
-   noting there that the published FTS document states the correct `≤ 201` ceiling at MTU 220, so
-   this is the firmware disagreeing with UNA's own specification rather than an undocumented
-   limit.
+7c. ~~**Report the read-chunk clamp as a spec conformance gap.**~~ **Done and fixed.** Filed as
+   issue #272, closed, and the fix re-measured on 1.4.0 across the whole size range rather than
+   only at the size it was reported at — see `CANS-LIVE-PROBE-2026-08-21.md`.
 8. Decode `/DailyHealth/dh.tmp`'s binary layout (§2.2.3), if the current day is ever wanted
    without CCS. Header is `<year:u16LE> <month:u8> <day:u8>`; the rest looks like a 1440-byte
    per-minute array with `0x5f` for no-reading and `0x00` for not-yet-reached. Unverified.

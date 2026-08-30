@@ -1,10 +1,14 @@
 # ST Community bug report: drawPartialBitmap Y-clipping
 
-Draft for an [ST Community](https://community.st.com) post reporting the
-TouchGFX 4.26.1 `LCD::drawPartialBitmap` vertical-clipping defect. The
-reproduction case lives on the `bug/drawpartialbitmap-y-clipping-repro`
-branch (PR #134). Confirm the exact TouchGFX version on your install before
-posting.
+**Posted.** The report went to the ST Community as
+[rawPartialBitmap draws Y-overhang rows at dirty-rect top instead of screen
+Y](https://community.st.com/stm32-mcus-touchgfx-and-gui-33/rawpartialbitmap-draws-y-overhang-rows-at-dirty-rect-top-instead-of-screeny-abgr2222-external-bitmap-touchgfx-4-26-1-166187),
+against TouchGFX 4.26.1. That thread, not this file, is where any ST reply
+will appear.
+
+What is kept here is the drafting record: the reasoning behind the wording,
+and the notes on which forum board and which framing get a framework defect
+read. The reproduction case is `bug/drawpartialbitmap-y-clipping-repro`.
 
 ## Product forum
 
@@ -94,5 +98,5 @@ edge, or otherwise clips it vertically will show this artifact.
 
 ## Posting notes
 
-- Attach the expected-vs-bug screenshots from PR #134; they make the report land instantly.
-- The post is self-contained, so do not rely on linking the PR (the repo may not be public to ST staff). If it is public, a link at the bottom as "full repro branch" is a nice-to-have, not a substitute.
+- Attach the expected-vs-bug screenshots from the repro branch; they make the report land instantly.
+- Keep the post self-contained rather than leaning on a link to the branch, which ST staff may not be able to open. A link at the bottom as "full repro branch" is a nice-to-have, not a substitute.
