@@ -1,7 +1,7 @@
 # UNA Watch BLE companion protocol — recovery spec (in progress)
 
-Goal, guardrails, and full method are defined in `BLE-COMPANION-disassembly-prompt.md` in this
-same folder — this doc is the running **output** of that plan, not a restatement of it.
+This document began as the running output of a handoff plan, which has been deleted now that
+every deliverable it briefed is met. What follows is the result, and it stands alone.
 
 **Status of the two evidence streams:**
 - **Static / disassembly:** a targeted Ghidra pass has been run, decompiling the service

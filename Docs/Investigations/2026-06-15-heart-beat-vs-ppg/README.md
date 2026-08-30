@@ -73,8 +73,8 @@ notification**, alongside the BPM the watch already extracts — but the kernel 
 before an app sees it, so the beat-to-beat data is discarded at the SDK boundary.
 
 That observation is what became **PR [#220](https://github.com/UNAWatch/una-sdk/pull/220)**
-(`feat/rr-interval-contract`, still open) — surfacing the RR array as a new frame. Its rationale
-document is [`RR_INTERVAL_PR.md`](../../../RR_INTERVAL_PR.md) on this branch. Read that next; it
+(`feat/rr-interval-contract`) — surfacing the RR array as a new frame. Its rationale
+document is the description of [PR #220](https://github.com/UNAWatch/una-sdk/pull/220) itself. Read that next; it
 is the direct descendant of this investigation.
 
 ## 4. Open threads — asked, never answered

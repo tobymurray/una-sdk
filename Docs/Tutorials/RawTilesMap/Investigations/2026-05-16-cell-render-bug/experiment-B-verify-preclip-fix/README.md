@@ -69,4 +69,4 @@ In order of expected information yield:
 
 ## Reproducing this experiment
 
-Apply [`patch.diff`](patch.diff), build, and launch with `RAWTILES_PATH` set (any non-empty pack works; the bytes aren't used for rendering). Screenshot recipe in [`Docs/Simulator-Linux.md`](../../../../../Simulator-Linux.md#capturing-a-simulator-screenshot).
+Apply [`patch.diff`](patch.diff), build, and launch with `RAWTILES_PATH` set (any non-empty pack works; the bytes aren't used for rendering). Screenshot recipe in [`RESEARCH-INDEX.md`](../../../../../../RESEARCH-INDEX.md) § 8.

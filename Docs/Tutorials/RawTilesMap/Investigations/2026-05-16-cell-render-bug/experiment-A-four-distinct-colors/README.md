@@ -109,4 +109,4 @@ RAWTILES_PATH=$PWD/Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles \
 
 The pack file is still opened (to derive `h.tileDimPx`) but its tile bytes are not used for rendering. The four fabricated buffers replace tile.data for the four visible slots; the other five slots remain `BITMAP_INVALID`.
 
-Screenshot capture: see [`Docs/Simulator-Linux.md`](../../../../../Simulator-Linux.md#capturing-a-simulator-screenshot).
+Screenshot capture: see [`RESEARCH-INDEX.md`](../../../../../../RESEARCH-INDEX.md) § 8.

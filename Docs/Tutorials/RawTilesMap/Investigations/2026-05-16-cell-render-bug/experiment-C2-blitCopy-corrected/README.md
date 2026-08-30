@@ -76,4 +76,4 @@ The bug should also be reported upstream to TouchGFX support with the minimal re
 
 Apply [`patch.diff`](patch.diff), build, launch. The result will be the four colored quadrants screenshot.
 
-Screenshot capture recipe: [`Docs/Simulator-Linux.md`](../../../../../Simulator-Linux.md#capturing-a-simulator-screenshot).
+Screenshot capture recipe: [`RESEARCH-INDEX.md`](../../../../../../RESEARCH-INDEX.md) § 8.

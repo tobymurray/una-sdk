@@ -163,7 +163,7 @@ Note `0x50`/`0x58` appear on every bus and are now suspected to be a marginal-AC
 
 ## Phase 2 — BLE GATT / FTS / CCS protocol recovery (read path proven end-to-end, phone-free)
 
-Goal, plan, and guardrails: `BLE-COMPANION-disassembly-prompt.md`. Running findings, full ledger,
+Running findings, full ledger,
 and confidence tags: **`BLE-COMPANION-protocol-spec.md`** (this folder) — do not duplicate that
 detail here; summary only:
 

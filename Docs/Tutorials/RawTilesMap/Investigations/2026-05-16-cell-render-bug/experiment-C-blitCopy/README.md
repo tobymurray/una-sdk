@@ -100,4 +100,4 @@ This doesn't fit either. Without disassembly I can't pin the exact rule. But the
 
 ## Reproducing this experiment
 
-Apply [`patch.diff`](patch.diff), build, launch. Screenshot recipe in [`Docs/Simulator-Linux.md`](../../../../../Simulator-Linux.md#capturing-a-simulator-screenshot).
+Apply [`patch.diff`](patch.diff), build, launch. Screenshot recipe in [`RESEARCH-INDEX.md`](../../../../../../RESEARCH-INDEX.md) § 8.

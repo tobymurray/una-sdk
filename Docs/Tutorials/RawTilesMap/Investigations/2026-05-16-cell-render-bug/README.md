@@ -2,7 +2,7 @@
 
 > **Status: RESOLVED** (Experiment C2). The bug is in TouchGFX's prebuilt `ThirdParty/touchgfx/lib/linux/libtouchgfx.a` — specifically `LCD8bpp_ABGR2222::drawPartialBitmap` mishandling external dynamic bitmaps with negative target X (and possibly sub-rectangle src). The workaround is to use `LCD::blitCopy` with a correctly source-relative `blitRect`. Verified working in [`experiment-C2-blitCopy-corrected/`](experiment-C2-blitCopy-corrected/) — four distinct colored quadrants render exactly where positioned. The fix has been applied to `TileCanvas::draw`; see the commit log for "fix(rawtilesmap): use blitCopy instead of drawPartialBitmap."
 >
-> **Where the bug lives:** TouchGFX, not the UNA SDK. The Linux prebuilt `libtouchgfx.a` is community-maintained (per [`Docs/Simulator-Linux.md`](../../../Simulator-Linux.md)). It is unknown whether the same bug affects the Windows MinGW build or the on-device ARM Cortex-M33 builds — those are separate library files we did not exercise in this investigation.
+> **Where the bug lives:** TouchGFX, not the UNA SDK. The Linux prebuilt `libtouchgfx.a` is community-maintained (per [`RESEARCH-INDEX.md`](../../../../../RESEARCH-INDEX.md) § 8). It is unknown whether the same bug affects the Windows MinGW build or the on-device ARM Cortex-M33 builds — those are separate library files we did not exercise in this investigation.
 >
 > The narrative below is left in place because it documents the dead-ends; jump to [Experiment A](experiment-A-four-distinct-colors/), [Experiment C](experiment-C-blitCopy/) (flawed test) and [Experiment C2](experiment-C2-blitCopy-corrected/) (working fix) for the resolution path.
 
@@ -37,7 +37,7 @@ DISPLAY=:0.0 ./Docs/Tutorials/RawTilesMap/Software/Apps/TouchGFX-GUI/build/bin/s
 
 To reproduce the substitution, re-apply the single-slot diag from commit `1c94d8b` (or its successors). The bug appears immediately on first paint.
 
-Screenshot capture recipe is in [`Docs/Simulator-Linux.md`](../../../../Simulator-Linux.md#capturing-a-simulator-screenshot) (added in `0df6ec1`).
+Screenshot capture recipe is in [`RESEARCH-INDEX.md`](../../../../../RESEARCH-INDEX.md) § 8 (added in `0df6ec1`).
 
 ## Confirmed end-to-end via diagnostics
 
@@ -77,16 +77,22 @@ Each row below documents a hypothesis tested and rejected, with the diff that wa
 | Uniform-byte (all 0xc3) bitmaps hit a transparency early-out | Replace solid red with the multi-color synthetic pattern from commit `44ab360` (gray bg + edge stripes + corner dots) | No pattern visible at all, identical screen to single-cell red case | [screenshots/07](screenshots/07-multi-color-pattern-STILL-NO-PATTERN.png), [logs/08](logs/08-multi-color-pattern.log) |
 | The widget's dirty rect excludes cell (1,1)'s visible region | Log every `draw(area)` call (cap 40); confirm the full widget gets covered | 11 dirty rects cover the entire 240×240 widget; `drawPartialBitmap` is invoked for cell (1,1) in every call | [logs/06](logs/06-dirty-rect-cascade-11-calls.log) |
 
-## Hypotheses still open
+## Hypotheses that were still open when this was written, and were all wrong
 
-In rough order of perceived likelihood:
+None survived Experiment C2. They are kept because three of the four are built on the
+shared-pixel-pointer count, which was the red herring, and seeing how far a plausible wrong
+model can be carried is the point of keeping this record. The real rule is the target X sign.
+Ordered as they were, by perceived likelihood at the time:
 
 1. **SDL2 LCD backend caches an `SDL_Surface` keyed by pixel-pointer-value**, and the cache entry is only promoted to "renderable" when reference count ≥ 2. Would explain N=1 invisible, N=4 visible cleanly. The N=2 partial result would need a secondary explanation (drawing order?).
 2. **`LCD8bpp_ABGR2222::drawPartialBitmap` has a bug with mixed-source dynamic bitmaps in the same frame** — it might pick up a cached row stride or src address from a previous draw and apply it to the current one. The fact that cells (2,2)/(2,1)/(1,2) render their *tile* content correctly while (1,1)'s red gets lost suggests something about the order or the data shape.
 3. **`setDisplayOrientation(ORIENTATION_LANDSCAPE)` on a square 240×240 display applies a transform** that the static `BitmapDatabase` is rotated to match (per the orientation-end-to-end commit `703d25c`) but external dynamic bitmaps are not. Would explain why the synthetic pattern visibly *rotated* in earlier commits (e.g. `bc431d9`) but vanishes entirely when only one cell carries it.
 4. **The dynamic bitmap cache pool gets corrupted at a specific size or fill ratio.** `setCache(pool, 4096 bytes, validCount=4)` is what we use; the doc says ~16 bytes/slot metadata, so we're well under capacity, but if the pool layout interacts with pixel pointers in unintended ways we wouldn't see it from the public API.
 
-## Suggested next investigation steps
+## The next steps that were queued, and were not needed
+
+Recorded because two of them are still the right instinct for a *different* prebuilt-library
+defect. None were run: Experiment C2 found the cause and the fix first.
 
 1. **Disassemble `Bitmap::dynamicBitmapCreateExternal` and `LCD8bpp_ABGR2222::drawPartialBitmap` from `ThirdParty/touchgfx/lib/linux/libtouchgfx.a`** (`objdump -d` filtered by `_ZN8touchgfx6Bitmap27dynamicBitmapCreateExternal...` and the LCD8 ABGR2222 mangled name). The internal lookup path from `BitmapId` → pixel pointer is the missing piece; this is the only ground-truth source.
 2. **Strace the simulator** with `strace -f -e mmap,read,write` and grep for accesses to the `sDebugPattern` address. If the framework never reads from the address at draw time, we have direct evidence the rendering path bypasses `dynamicBitmapGetAddress`.
