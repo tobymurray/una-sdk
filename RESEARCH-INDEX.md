@@ -232,8 +232,9 @@ files and the GpsLab README, stays with the branch it documents.
 This branch is not the whole record and should stop pretending to be. Three sibling
 repositories carry hardware findings about this watch that no checkout of the SDK could give
 you, and several of them already cite this branch's ledger convention while nothing here
-pointed back. Named rather than copied: they are maintained where they are, and a second copy
-would drift the way everything else in this file's history did.
+pointed back. All three are readable on GitHub under the same owner. Named rather than copied:
+they are maintained where they are, and a second copy would drift the way everything else in
+this file's history did.
 
 ### `tobymurray/watch-apps`
 
@@ -250,25 +251,38 @@ what is worth knowing from here is which question each one answers.
 | `MapLab/Docs/Investigations/2026-08-19-*`, `MapLab/Docs/GATES.md` | Vector map rendering measured on the glass: 24.0 ms rural, 70.2 ms suburban, 160.5 ms city centre against a 100 ms budget, two independent passes agreeing to 0.3%. And the finding that kills a tempting line of work: decode and transform are 3.4% of a render, the rest is rasterising, so a better wire format cannot touch the budget that fails. |
 | `BacklightProbe/Output/`, `BacklightPwm/DMA-NOTES.md` | The raw register sweeps behind § 2, and the DMA route notes. |
 
-### `slippypack` (Gitea, `nas:3000/toby/slippypack`, not GitHub)
+### `slippypack`
 
-`Docs/Investigations/2026-08-07-watch-cartography/README.md` on `map-delivery-workflow`. **The
-prior-art review in § 4 above declares the hardware facts and this project's empirical findings
-out of scope and does not say where they are. They are here.** The panel is a Sharp
-LS012B7DD06A and its datasheet settles what was guesswork: the display is reflective memory
-LCD, so ABGR2222 is the panel's **native** format rather than a software compromise and
-quantising to 64 colours is exact; the four levels per channel are spatial area modulation, so
-output is linear in reflectance and **not** sRGB gamma; contrast is about 25:1, so there is no
-deep black; and panel white reflects 8.4% against paper's 90%, with an NTSC ratio of 18%, so
-saturated colours land as pastels. Two of the author's own hypotheses were falsified and both
-are kept. `MAP_COMPLIANCE_APPENDIX.md` beside it carries the tile-source licence evaluation.
+[github.com/tobymurray/slippypack](https://github.com/tobymurray/slippypack). Authored on a
+Gitea at `nas:3000/toby/slippypack`, which is where pushes go; GitHub mirrors it and the two
+were verified branch-for-branch identical, so the links here resolve for anyone.
 
-Gitea is authoritative for this repository and GitHub is at best a mirror.
+`Docs/Investigations/2026-08-07-watch-cartography/README.md` on `main`. **The prior-art review
+in § 4 above declares the hardware facts and this project's empirical findings out of scope and
+does not say where they are. They are here.** The panel is a Sharp LS012B7DD06A and its
+datasheet settles what had been guesswork: the display is reflective memory LCD, so ABGR2222 is
+the panel's **native** format rather than a software compromise and quantising to 64 colours is
+exact; the four levels per channel are spatial area modulation, so output is linear in
+reflectance and **not** sRGB gamma; contrast is about 25:1, so there is no deep black; and panel
+white reflects 8.4% against paper's 90%, with an NTSC ratio of 18%, so saturated colours land as
+pastels. Eight experiments, two of the author's own hypotheses falsified, both kept.
+`MAP_COMPLIANCE_APPENDIX.md` beside it carries the tile-source licence evaluation, which is what
+decides whether a source may be packed offline at all.
+
+Two more investigations sit alongside it. `2026-08-14-x4-browser-render` measures browser render
+throughput, the experiment the delivery workflow had cut and then needed once the hosting
+question was answered "static page, no hosting". `2026-08-16-pack-size`, on
+`investigation/pack-size-and-vector`, measures what a region actually costs: 18,169 tiles over
+z11 to z16 across roughly 50 km of rural Ontario builds to 65 MB. It contradicts three of the
+format's own spec decisions on measurement, one of them by the renderer that already shipped,
+and it is explicit that the spec is what moves when that happens.
 
 ### `rawtiles`
 
-The pack format's spec repository. Not cloned on this machine; it lives on the same Gitea. The
-`2026-08-07` bundle above read it at spec v0.6, wire `(1,0)`, Status: Provisional.
+[github.com/tobymurray/rawtiles](https://github.com/tobymurray/rawtiles), same Gitea-to-GitHub
+arrangement. The pack format's specification, currently **v0.6**, wire `(1,0)`, with a reference
+reader and a conformance suite. Both investigations above read it at that version, and the
+pack-size measurements are the standing argument for changing parts of it.
 
 ## Apps live there too, and one migration is unfinished
 
