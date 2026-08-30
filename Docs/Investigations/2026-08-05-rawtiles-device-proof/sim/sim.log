@@ -1,0 +1,42 @@
+ 161648149 -I- Model::Model::28                    : Application is running through simulator! 
+ 161648151 -I- Model::Model::31                    : Path to files created by app:
+       [/src/Docs/Tutorials/HelloWorld/Software/Apps/TouchGFX-GUI/build/bin/../../../../../Output/]
+ 161648151 -I- Model::Model::34                    : 
+---------------------------------------------------
+|   For Simulation Button use keybaord Keys.      |
+|       Keys Keybaord:                            |
+|       1   L1,                                   |
+|       2   L2,                                   |
+|       3   R1,                                   |
+|       4   R2                                    |
+|                  /---------\                    |
+|                 /           \                   |
+| BUTTON UP   L1 |             | R1 BUTTON SELECT |
+|                |     UNA     |                  |
+|                |    WATCH    |                  |
+| BUTTON DOWN L2 |             | R2 BUTTON BACK   |
+|                 \           /                   |
+|                  \---------/                    |
+---------------------------------------------------
+ 161648425 -I- Service::run::17                    : thread started
+ 161648426 -I- App.Core::run::52                   : Application core is running...
+ 161648429 -I- Service::run::33                    : GUI is now running
+ 161648429 -I- Service::onStartGUI::55             : GUI started
+ 161648711 -I- Model::onStart::108                 : called
+ 161648711 -I- Model::onResume::113                : called
+ 161654578 -I- RawTilesProbe::run::71              : exist 2:/maps/stanley.rawtiles -> 1
+ 161654578 -I- RawTilesProbe::run::71              : exist 1:/maps/stanley.rawtiles -> 0
+ 161654578 -I- RawTilesProbe::run::71              : exist 0:/maps/stanley.rawtiles -> 0
+ 161654578 -I- RawTilesProbe::run::71              : exist 2:/Apps/HelloWorld/stanley.rawtiles -> 0
+ 161654579 -I- RawTilesProbe::run::96              : open 2:/maps/stanley.rawtiles ok, 787008 bytes, 1ms
+ 161654580 -I- RawTilesProbe::run::130             : header ok: z12..14, 12 tiles, 1ms
+ 161654580 -I- RawTilesProbe::run::159             : first z14 tile: x2587 y5604 at 393748
+ 161654583 -I- RawTilesProbe::run::183             : tile 64K: cold 2ms, warm 0ms, crc 0x26E5979B (stanley OK)
+ 161656675 -I- RawTilesProbe::run::71              : exist 2:/maps/stanley.rawtiles -> 1
+ 161656675 -I- RawTilesProbe::run::71              : exist 1:/maps/stanley.rawtiles -> 0
+ 161656675 -I- RawTilesProbe::run::71              : exist 0:/maps/stanley.rawtiles -> 0
+ 161656675 -I- RawTilesProbe::run::71              : exist 2:/Apps/HelloWorld/stanley.rawtiles -> 0
+ 161656675 -I- RawTilesProbe::run::96              : open 2:/maps/stanley.rawtiles ok, 787008 bytes, 0ms
+ 161656675 -I- RawTilesProbe::run::130             : header ok: z12..14, 12 tiles, 0ms
+ 161656675 -I- RawTilesProbe::run::159             : first z14 tile: x2587 y5604 at 393748
+ 161656677 -I- RawTilesProbe::run::183             : tile 64K: cold 0ms, warm 0ms, crc 0x26E5979B (stanley OK)

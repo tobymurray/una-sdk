@@ -1,0 +1,23 @@
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /src/Docs/Tutorials/HelloWorld/Software/Apps/HelloWorld-CMake/build
+INFO:root:Normal icon    : /src/Docs/Tutorials/HelloWorld/Software/Apps/HelloWorld-CMake/../../../Resources/icon_60x60.png
+INFO:root:Small icon     : /src/Docs/Tutorials/HelloWorld/Software/Apps/HelloWorld-CMake/../../../Resources/icon_30x30.png
+INFO:root:Merge          : complete
+INFO:root:Service file   : /src/Docs/Tutorials/HelloWorld/Software/Apps/HelloWorld-CMake/build/Tmp/HelloWorldService.srv
+INFO:root:GUI file       : /src/Docs/Tutorials/HelloWorld/Software/Apps/HelloWorld-CMake/build/Tmp/HelloWorldGUI.gui
+INFO:root:Name           : HelloWorld
+INFO:root:ID             : F1E2D3C448669781
+INFO:root:App Version    : 0.0.0
+INFO:root:LibC Version   : 0.0.3
+INFO:root:Flags          : 0x00000020
+INFO:root:Glance-capable : yes
+INFO:root:CRC            : 0x2FC8586A
+INFO:root:Image          : /src/Docs/Tutorials/HelloWorld/Software/Apps/HelloWorld-CMake/build/HelloWorld_0.0.0-dev.uapp (231740 bytes)
+
+[100%] Built target HelloWorldApp
+-rw-r--r-- 1 root root 231740 Aug  5 19:10 /src/Docs/Tutorials/HelloWorld/Output/HelloWorld_0.0.0-dev.uapp
+-rw-r--r-- 1 root root 231740 Aug  5 19:10 /src/Docs/Tutorials/HelloWorld/Software/Apps/HelloWorld-CMake/build/HelloWorld_0.0.0-dev.uapp
+   text	   data	    bss	    dec	    hex	filename
+ 217320	   2712	 137348	 357380	  57404	HelloWorldGUI.elf
+   2140	   1176	  10304	  13620	   3534	HelloWorldService.elf
