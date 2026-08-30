@@ -48,6 +48,9 @@ GATT table.
 | `CANS-LIVE-PROBE-2026-08-21.md` | Firmware 1.4.0, phone-free. FTS protocol 5 confirmed and its windowing measured. The CCS event channel decoded: `0x01 0x00 <appId u64LE>` announces a saved activity, checked one-for-one against the files it produced. **And the answer to silent notifications: `phone.notifications` in `/settings.json` gates the whole of CANS, and a watch with it false discards every event without a reply of any kind.** Capability statements in the spec above describe 1.3.0; this describes 1.4.0. |
 | `prototype/` | Working, validated Linux/BlueZ clients, no phone involved. `una_ble_client.py` pulls `.fit` files off the watch with matching CRC-16, which is the proof the spec is right. `una_gatt_dump.py` reads BlueZ's resolved cache, so it dumps the GATT table without putting anything on the air. `una_fts_walk.py`, `una_read_probe.py`, `una_hr_probe.py`, `una_cans_*`, `una_ccs_event_probe.py`, `una_v5_probe.py` each recovered a named section of the spec. `transcripts/` holds the frames the numbers came from. |
 | `SEAM-HUNT-disassembly-prompt.md`, `NEXT-SESSION-disassembly-prompt.md` | Two self-contained handoffs, both still live work: find injectable seams in the closed kernel for per-peripheral Rust replacement, and disassemble the rest of the kernel dump. The BLE companion handoff that sat beside them is deleted, its five deliverables all met, four of them twice over now that upstream publishes the same protocol. |
+| `../2026-08-07-ble-write-path/` | The **write** half, measured on 1.3.0: the `WRITE`/`WRITE_PACING`/`WRITE_DATA` framing exercised for real, a chunk sweep, the HCI connection interval, and the failure modes that matter to a companion, including out-of-order and partial writes. It is also where the read-path `real_chunklen` bug was found and filed as #272. |
+| `../2026-08-18-fts-read-chunklen-fix/` | #272 confirmed fixed on 1.4.0 against real hardware, with the boundary sweep and a 177 kB CRC-checked read behind it. Roughly doubles usable read throughput, 2.1 kB/s to 4.2 kB/s. This is the evidence the CANS probe's claim rests on. |
+| `GADGETBRIDGE-scoping.md` | What supporting this watch in Gadgetbridge would actually take. |
 | `reassemble_dump.py`, `service-cpp-instrumentation-sweep7.cpp` | The chunked flash-dump reassembler, and the instrumented `Service.cpp` that was the read primitive. |
 
 Established, with the ledger holding the confidence tag on each: the MCU is an **STM32U5A5**,
@@ -114,6 +117,18 @@ A 64 KiB read off watch storage costs **7 to 9 ms cold**, which makes read-on-pa
 app file access is sandbox-relative. The watch photographs and the probe code stay on
 `spike/rawtiles-device-proof`.
 
+`Docs/Investigations/2026-08-05-rawtiles-map-evaluation/` is the evaluation the device proof was
+built to feed, `EVALUATION.md` with its evidence bundle: a conformance matrix against the
+reference reader, a fuzz run, the arithmetic behind the size numbers, and audits of the spec, the
+SDK and the ecosystem.
+
+`Docs/Investigations/2026-08-07-athensrun-map-verification/` is what happened when an offline map
+met real hardware. `Container::openFromFile()` did a mandatory synchronous whole-file CRC-32
+before returning, which is spec-conformant eager verify and also a ten-second GUI freeze on a
+45 MB pack, then a watchdog crash. The fix, the on-device validation, a legibility problem
+resolved empirically, and a tile-sourcing compliance finding are all here, with the crash dump.
+The 1.2 MB verify log stays on `archive/poc/athensrun`.
+
 `Docs/Research/2026-08-13-watch-cartography-prior-art.md` covers what the cartographic, human-factors
 and standards literature already settles about map design for small, colour-limited, round,
 reflective displays, so that measuring effort goes where it is actually needed. Every source is
@@ -146,6 +161,12 @@ The strap route is PR #220, `feat/rr-interval-contract`, whose description on Gi
 live rationale. One hazard worth carrying: in the Bluetooth Heart Rate Service `0x2A37`
 notification the RR array is the last field and its offset moves, because flags bit 3 inserts a
 two-byte energy-expended field ahead of it. Misread values still look like plausible intervals.
+
+`Docs/Investigations/2026-08-04-rr-interval-contract-review/` is the adversarial review of that
+PR's contract, and the reason to read it is the method: three experiments against a mutated
+header and a saturated queue, two of which changed the review's conclusion and one of which
+refuted something the reviewer had already written down as fact. `REVIEW.md` beside it is the
+full review.
 
 `BeatProbe.hpp` and its usage guide and integration patch are kept here, still runnable: the
 answer has a "not today" shape, so re-run the probe once the firmware moves.

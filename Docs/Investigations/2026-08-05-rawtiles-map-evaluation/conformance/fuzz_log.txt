@@ -1,0 +1,69 @@
+
+=== Phase 1 targeted: stanley (787008 bytes) ===
+stanley-trunc-0                    reject (file shorter than 296 bytes (§ 11 #1))          truncate to 0 bytes
+stanley-trunc-3                    reject (file shorter than 296 bytes (§ 11 #1))          truncate to 3 bytes
+stanley-trunc-100                  reject (file shorter than 296 bytes (§ 11 #1))          truncate to 100 bytes
+stanley-trunc-291                  reject (file shorter than 296 bytes (§ 11 #1))          truncate to 291 bytes
+stanley-trunc-292                  reject (file shorter than 296 bytes (§ 11 #1))          truncate to 292 bytes
+stanley-trunc-296                  reject (tile_count exceeds file bounds)                 truncate to 296 bytes
+stanley-trunc-302                  reject (tile_count exceeds file bounds)                 truncate to 302 bytes
+stanley-trunc-531                  reject (tile_count exceeds file bounds)                 truncate to 531 bytes
+stanley-trunc-532                  reject (tile_count exceeds file bounds)                 truncate to 532 bytes
+stanley-trunc-393770               reject (extensions_offset misaligned or wrong (§ 11 #18)) truncate to 393770 bytes
+stanley-trunc-787003               reject (extension-section framing violates § 7.1 (§ 11 #19)) truncate to 787003 bytes
+stanley-trunc-787004               reject (extension-section framing violates § 7.1 (§ 11 #19)) truncate to 787004 bytes
+stanley-trunc-787007               reject (extension-section framing violates § 7.1 (§ 11 #19)) truncate to 787007 bytes
+stanley-crcflip-0                  reject (CRC-32 footer mismatch (§ 11 #24))              flip footer CRC byte 0
+stanley-crcflip-1                  reject (CRC-32 footer mismatch (§ 11 #24))              flip footer CRC byte 1
+stanley-crcflip-2                  reject (CRC-32 footer mismatch (§ 11 #24))              flip footer CRC byte 2
+stanley-crcflip-3                  reject (CRC-32 footer mismatch (§ 11 #24))              flip footer CRC byte 3
+stanley-idxswap-stalecrc           reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) swap index entries 0/1, stale CRC
+stanley-idxswap-fixcrc             reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) swap index entries 0/1, CRC refixed
+stanley-zoomleak                   reject (zoom_offsets[z] inconsistent with index (§ 11 #17)) zoom_offsets[12].count += 1
+stanley-zoomoff-wild               reject (zoom_offsets[z] inconsistent with index (§ 11 #17)) zoom_offsets[12].offset = 0xFFFFFFF0
+stanley-extoff-eof                 reject (index_offset ≠ 292 (§ 11 #25))                  extensions_offset = EOF+4096
+stanley-extoff-max                 reject (index_offset ≠ 292 (§ 11 #25))                  extensions_offset = 0xFFFFFFFC
+stanley-len-footer                 reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) entry0 length runs into footer
+stanley-len-wild                   reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) entry0 length = 0xFFFFFFF0
+stanley-off-wild                   reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) entry0 offset = 0xFFFFFFF0
+
+=== Phase 1 targeted: pyramid (2060 bytes) ===
+pyramid-trunc-0                    reject (file shorter than 296 bytes (§ 11 #1))          truncate to 0 bytes
+pyramid-trunc-3                    reject (file shorter than 296 bytes (§ 11 #1))          truncate to 3 bytes
+pyramid-trunc-100                  reject (file shorter than 296 bytes (§ 11 #1))          truncate to 100 bytes
+pyramid-trunc-291                  reject (file shorter than 296 bytes (§ 11 #1))          truncate to 291 bytes
+pyramid-trunc-292                  reject (file shorter than 296 bytes (§ 11 #1))          truncate to 292 bytes
+pyramid-trunc-296                  reject (tile_count exceeds file bounds)                 truncate to 296 bytes
+pyramid-trunc-302                  reject (tile_count exceeds file bounds)                 truncate to 302 bytes
+pyramid-trunc-711                  reject (tile_count exceeds file bounds)                 truncate to 711 bytes
+pyramid-trunc-712                  reject (tile_count exceeds file bounds)                 truncate to 712 bytes
+pyramid-trunc-1386                 reject (extensions_offset misaligned or wrong (§ 11 #18)) truncate to 1386 bytes
+pyramid-trunc-2055                 reject (extensions_offset misaligned or wrong (§ 11 #18)) truncate to 2055 bytes
+pyramid-trunc-2056                 reject (extensions_offset misaligned or wrong (§ 11 #18)) truncate to 2056 bytes
+pyramid-trunc-2059                 reject (extensions_offset misaligned or wrong (§ 11 #18)) truncate to 2059 bytes
+pyramid-crcflip-0                  reject (CRC-32 footer mismatch (§ 11 #24))              flip footer CRC byte 0
+pyramid-crcflip-1                  reject (CRC-32 footer mismatch (§ 11 #24))              flip footer CRC byte 1
+pyramid-crcflip-2                  reject (CRC-32 footer mismatch (§ 11 #24))              flip footer CRC byte 2
+pyramid-crcflip-3                  reject (CRC-32 footer mismatch (§ 11 #24))              flip footer CRC byte 3
+pyramid-idxswap-stalecrc           reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) swap index entries 0/1, stale CRC
+pyramid-idxswap-fixcrc             reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) swap index entries 0/1, CRC refixed
+pyramid-zoomleak                   reject (zoom_offsets[z] inconsistent with index (§ 11 #17)) zoom_offsets[0].count += 1
+pyramid-zoomoff-wild               reject (zoom_offsets[z] inconsistent with index (§ 11 #17)) zoom_offsets[0].offset = 0xFFFFFFF0
+pyramid-extoff-eof                 reject (index_offset ≠ 292 (§ 11 #25))                  extensions_offset = EOF+4096
+pyramid-extoff-max                 reject (index_offset ≠ 292 (§ 11 #25))                  extensions_offset = 0xFFFFFFFC
+pyramid-len-footer                 reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) entry0 length runs into footer
+pyramid-len-wild                   reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) entry0 length = 0xFFFFFFF0
+pyramid-off-wild                   reject (tile-index entry violates § 11 #12/#14/#16/#31/#32) entry0 offset = 0xFFFFFFF0
+
+=== Phase 2 random: 2000 iters over 17 goldens (seed 20260805) ===
+  ...250/2000  {'accept': 20, 'reject': 230, 'crash': 0}
+  ...500/2000  {'accept': 41, 'reject': 459, 'crash': 0}
+  ...750/2000  {'accept': 67, 'reject': 683, 'crash': 0}
+  ...1000/2000  {'accept': 87, 'reject': 913, 'crash': 0}
+  ...1250/2000  {'accept': 108, 'reject': 1142, 'crash': 0}
+  ...1500/2000  {'accept': 136, 'reject': 1364, 'crash': 0}
+  ...1750/2000  {'accept': 153, 'reject': 1597, 'crash': 0}
+  ...2000/2000  {'accept': 181, 'reject': 1819, 'crash': 0}
+phase2 tallies: {'accept': 181, 'reject': 1819, 'crash': 0}
+
+TOTAL CRASHES: 0

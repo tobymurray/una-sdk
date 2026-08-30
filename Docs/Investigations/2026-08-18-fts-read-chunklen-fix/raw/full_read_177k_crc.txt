@@ -1,0 +1,13 @@
+# Full 177,756-byte file read at chunk_len=4096 (44 requests), with FIT CRC-16 integrity check.
+# Captured 2026-08-18T21:28:30-04:00 on fw 1.4.0.
+
+mtu=220  chunk_len=4096
+
+declared total : 177756
+received bytes : 177756
+notifications  : 912   elapsed 41.7s  (4.2 kB/s)
+sha256         : c69a1bb590fd41df148f2f227f934bee76a74a5a0e7772394e337b931f542592
+
+[1] header-accounting mismatches (real_chunklen != payload): 0  PASS
+[2] requests delivering fewer bytes than requested: 0  PASS
+[3] FIT CRC-16: stored=0xFEB6 computed=0xFEB6  PASS

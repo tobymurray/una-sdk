@@ -1,0 +1,99 @@
+OK        golden-smallest                    exp=accept got=accept rc=0  ok
+OK        golden-grid                        exp=accept got=accept rc=0  ok
+OK        golden-empty-quadtree              exp=accept got=accept rc=0  ok
+OK        golden-singleimage-affn            exp=accept got=accept rc=0  ok
+OK        golden-attr                        exp=accept got=accept rc=0  ok
+OK        golden-orientation                 exp=accept got=accept rc=0  ok
+OK        golden-orientation-mosaic          exp=accept got=accept rc=0  ok
+OK        golden-minor-1                     exp=accept got=accept rc=0  ok
+OK        golden-ancillary-tag               exp=accept got=accept rc=0  ok
+OK        golden-supersedes                  exp=accept got=accept rc=0  ok
+OK        golden-pyramid                     exp=accept got=accept rc=0  ok
+OK        golden-tms                         exp=accept got=accept rc=0  ok
+OK        golden-zmax                        exp=accept got=accept rc=0  ok
+OK        golden-names-multilocale           exp=accept got=accept rc=0  ok
+OK        golden-canonical-uuid              exp=accept got=accept rc=0  ok
+OK        golden-png-to-pack-1tile           exp=accept got=accept rc=0  ok
+OK        golden-png-to-pack-5tiles          exp=accept got=accept rc=0  ok
+OK        neg-01-short-file                  exp=reject got=reject rc=1  file shorter than 296 bytes (§ 11 #1)
+OK        neg-02-bad-magic                   exp=reject got=reject rc=1  magic ≠ 'RAWT' (§ 11 #2)
+OK        neg-03-major-2                     exp=reject got=reject rc=1  format_version_major ≠ 1 (§ 11 #3)
+OK        neg-05-uuid-zero                   exp=reject got=reject rc=1  pack_uuid == 0 or parent_uuid ≠ 0 (§ 11 #5/#6)
+OK        neg-06-parent-nonzero              exp=reject got=reject rc=1  pack_uuid == 0 or parent_uuid ≠ 0 (§ 11 #5/#6)
+OK        neg-07a-pixfmt-0                   exp=reject got=reject rc=1  unknown enum byte (§ 11 #7)
+OK        neg-07b-pixfmt-5                   exp=reject got=reject rc=1  unknown enum byte (§ 11 #7)
+OK        neg-07c-proj-0                     exp=reject got=reject rc=1  unknown enum byte (§ 11 #7)
+OK        neg-07d-proj-2                     exp=reject got=reject rc=1  unknown enum byte (§ 11 #7)
+OK        neg-07e-addr-0                     exp=reject got=reject rc=1  unknown enum byte (§ 11 #7)
+OK        neg-07f-axis-0                     exp=reject got=reject rc=1  unknown enum byte (§ 11 #7)
+OK        neg-07g-comp-3                     exp=reject got=reject rc=1  unknown enum byte (§ 11 #7)
+OK        neg-08a-webmerc-singleimage        exp=reject got=reject rc=1  illegal projection × addressing pair (§ 11 #8)
+OK        neg-08b-locallinear-quadtree       exp=reject got=reject rc=1  illegal projection × addressing pair (§ 11 #8)
+OK        neg-09-tiledim-zero                exp=reject got=reject rc=1  tile_dim_px == 0 (§ 11 #9)
+OK        neg-10a-zmax-24                    exp=reject got=reject rc=1  zoom_max ≥ 24 or zoom_min > zoom_max (§ 11 #10)
+OK        neg-10b-zmin-gt-zmax               exp=reject got=reject rc=1  zoom_max ≥ 24 or zoom_min > zoom_max (§ 11 #10)
+OK        neg-11a-lon-overflow               exp=reject got=reject rc=1  bbox out of range or inverted (§ 11 #11)
+OK        neg-11b-lat-overflow               exp=reject got=reject rc=1  bbox out of range or inverted (§ 11 #11)
+OK        neg-11c-lon-inverted               exp=reject got=reject rc=1  bbox out of range or inverted (§ 11 #11)
+OK        neg-11d-lat-inverted               exp=reject got=reject rc=1  bbox out of range or inverted (§ 11 #11)
+OK        neg-12a-flags-nonzero              exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-12b-reserved-nonzero           exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-13a-z-non-monotone             exp=reject got=reject rc=1  tile index not strictly ascending (§ 11 #13)
+OK        neg-13b-xy-not-strict              exp=reject got=reject rc=1  tile index not strictly ascending (§ 11 #13)
+OK        neg-13c-duplicate-zxy              exp=reject got=reject rc=1  tile index not strictly ascending (§ 11 #13)
+OK        neg-14a-offset-misaligned          exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-14b-offset-below-blob          exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-14c-offset-past-ext            exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-14d-length-overrun             exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-15a-z-above-zmax               exp=reject got=reject rc=1  tile z outside [zoom_min, zoom_max] (§ 11 #15)
+OK        neg-15b-z-below-zmin               exp=reject got=reject rc=1  tile z outside [zoom_min, zoom_max] (§ 11 #15)
+OK        neg-16-length-mismatch             exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-17a-count-mismatch             exp=reject got=reject rc=1  zoom_offsets[z] inconsistent with index (§ 11 #17)
+OK        neg-17b-offset-mismatch            exp=reject got=reject rc=1  zoom_offsets[z] inconsistent with index (§ 11 #17)
+OK        neg-17c-offset-nonzero-empty       exp=reject got=reject rc=1  zoom_offsets[z] inconsistent with index (§ 11 #17)
+OK        neg-18a-extoff-misaligned          exp=reject got=reject rc=1  extensions_offset misaligned or wrong (§ 11 #18)
+OK        neg-18b-extoff-past-crc            exp=reject got=reject rc=1  extensions_offset misaligned or wrong (§ 11 #18)
+OK        neg-18c-extoff-below-blob          exp=reject got=reject rc=1  extensions_offset misaligned or wrong (§ 11 #18)
+OK        neg-18d-extoff-wrong-sum           exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-19a-section-overruns           exp=reject got=reject rc=1  extension-section framing violates § 7.1 (§ 11 #19)
+OK        neg-19b-section-padding-nonzero    exp=reject got=reject rc=1  extension-section framing violates § 7.1 (§ 11 #19)
+OK        neg-19c-stranded-bytes             exp=reject got=reject rc=1  extension-section framing violates § 7.1 (§ 11 #19)
+OK        neg-20-unknown-uppercase-tag       exp=reject got=reject rc=1  unknown upper-case tag or invalid tag bytes (§ 11 #20/#27/#28)
+MISMATCH  neg-22-locallinear-no-affn         exp=reject got=accept rc=0  ok
+OK        neg-23b-singleimage-entry-nonzero  exp=reject got=reject rc=1  SingleImage structural rules violated (§ 11 #23)
+OK        neg-23c-singleimage-zmax-nonzero   exp=reject got=reject rc=1  SingleImage structural rules violated (§ 11 #23)
+OK        neg-23d-singleimage-axis-tms       exp=reject got=reject rc=1  SingleImage structural rules violated (§ 11 #23)
+OK        neg-23a-singleimage-tilecount      exp=reject got=reject rc=1  SingleImage structural rules violated (§ 11 #23)
+OK        neg-23e-singleimage-zoomoffsets-leak exp=reject got=reject rc=1  zoom_offsets[z] inconsistent with index (§ 11 #17)
+OK        neg-24-crc-flipped                 exp=reject got=reject rc=1  CRC-32 footer mismatch (§ 11 #24)
+OK        neg-25-index-offset-296            exp=reject got=reject rc=1  index_offset ≠ 292 (§ 11 #25)
+MISMATCH  neg-26a-name-payload-empty         exp=reject got=accept rc=0  ok
+MISMATCH  neg-26b-name-tag-overruns          exp=reject got=accept rc=0  ok
+OK        neg-27-tag-digit-first             exp=reject got=reject rc=1  unknown upper-case tag or invalid tag bytes (§ 11 #20/#27/#28)
+OK        neg-28-tag-nonprintable            exp=reject got=reject rc=1  unknown upper-case tag or invalid tag bytes (§ 11 #20/#27/#28)
+MISMATCH  neg-29a-duplicate-uppercase        exp=reject got=accept rc=0  ok
+MISMATCH  neg-29b-duplicate-name-locale      exp=reject got=accept rc=0  ok
+OK        neg-31a-x-overflow                 exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-31b-y-overflow                 exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-32a-tile-gap                   exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+OK        neg-32b-tile-overlap               exp=reject got=reject rc=1  tile-index entry violates § 11 #12/#14/#16/#31/#32
+MISMATCH  neg-33-padding-nonzero             exp=reject got=accept rc=0  ok
+MISMATCH  neg-34-affn-length                 exp=reject got=accept rc=0  ok
+MISMATCH  neg-35a-affn-nan                   exp=reject got=accept rc=0  ok
+MISMATCH  neg-35b-affn-inf                   exp=reject got=accept rc=0  ok
+MISMATCH  neg-36-affn-with-webmercator       exp=reject got=accept rc=0  ok
+MISMATCH  neg-37a-name-bad-utf8              exp=reject got=accept rc=0  ok
+MISMATCH  neg-37b-name-bcp47-bad-case        exp=reject got=accept rc=0  ok
+MISMATCH  neg-37c-name-bcp47-3-letter        exp=reject got=accept rc=0  ok
+MISMATCH  neg-38a-srcd-bad-utf8              exp=reject got=accept rc=0  ok
+MISMATCH  neg-38b-attr-bad-utf8              exp=reject got=accept rc=0  ok
+MISMATCH  neg-38c-attr-crlf                  exp=reject got=accept rc=0  ok
+MISMATCH  neg-38d-attr-bare-cr               exp=reject got=accept rc=0  ok
+MISMATCH  neg-38e-attr-c0-control            exp=reject got=accept rc=0  ok
+MISMATCH  neg-38f-attr-nel                   exp=reject got=accept rc=0  ok
+MISMATCH  neg-38g-attr-ls                    exp=reject got=accept rc=0  ok
+MISMATCH  neg-38h-attr-trailing-lf           exp=reject got=accept rc=0  ok
+MISMATCH  neg-38i-attr-empty                 exp=reject got=accept rc=0  ok
+
+golden:   17/17 accepted (and hash-verified)
+negative: 57/79 correctly rejected

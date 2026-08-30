@@ -1,0 +1,7 @@
+# Regression check of the UPDATED read_file() across chunk sizes, fw 1.4.0.
+# Captured 2026-08-18T21:30:17-04:00. All four must agree byte-for-byte.
+
+chunk_len=128   ->   1981 bytes  sha=023ae4b10e43bf6d  match
+chunk_len=201   ->   1981 bytes  sha=023ae4b10e43bf6d  match
+chunk_len=512   ->   1981 bytes  sha=023ae4b10e43bf6d  match
+chunk_len=4096  ->   1981 bytes  sha=023ae4b10e43bf6d  match

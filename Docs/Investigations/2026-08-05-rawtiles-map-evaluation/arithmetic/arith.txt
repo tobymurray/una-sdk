@@ -1,0 +1,20 @@
+== RAM budget ==
+one 256px ABGR2222 tile = 65536 B = 64 KiB
+3x3 mosaic = 589824 B = 576 KiB vs app RAM 256 KiB -> 2.25x over
+stanley pack = 787008 B = 768.6 KiB -> 3.00x app RAM
+RLE @27% of raw: tile ~17.3 KiB, 3x3 compressed-resident ~156 KiB (fits 256 KiB w/ row-streaming decode)
+one raw tile (64 KiB) + framebuffer 57600 B + code/stack: 1-tile cache feasible, 2 tiles = 128 KiB tight
+
+== float lat/lon resolution (Stanley Park lat 49.30, lon -123.14) ==
+float ULP(lat 49.3)=3.815e-06 deg = 0.42 m; ULP(lon -123.14)=7.629e-06 deg = 0.55 m
+z14: ground res 6.23 m/px; lon-ULP = 0.09 px, lat-ULP = 0.07 px
+z15: ground res 3.12 m/px; lon-ULP = 0.18 px, lat-ULP = 0.14 px
+z16: ground res 1.56 m/px; lon-ULP = 0.36 px, lat-ULP = 0.27 px
+z17: ground res 0.78 m/px; lon-ULP = 0.71 px, lat-ULP = 0.55 px
+z18: ground res 0.39 m/px; lon-ULP = 1.42 px, lat-ULP = 1.09 px
+global-pixel framing: world width at z in px = 2^z*256 = 2^(z+8); float32 mantissa 24 bits -> integer pixel exact only to 2^24 -> z16 is the last zoom where a float global pixel coord resolves 1px at map edge
+
+== flash budget ==
+10x10 km @ z15: tile covers 798 m -> 13x13=169 tiles; raw 10.6 MiB; RLE@27% 2.9 MiB (NOR=2 MiB)
+10x10 km @ z16: tile covers 399 m -> 26x26=676 tiles; raw 42.2 MiB; RLE@27% 11.4 MiB (NOR=2 MiB)
+z12..z16 pyramid 10x10km: ~914 tiles, RLE ~15.4 MiB

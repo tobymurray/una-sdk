@@ -1,0 +1,6 @@
+# Device Information Service, captured 2026-08-18T21:27:32-04:00
+Manufacturer        : UNA
+Model Number        : UNA Watch
+Serial Number       : 1F0030001650415653313120
+Firmware Revision   : 1.4.0
+Hardware Revision   : 3.1

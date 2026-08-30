@@ -1,0 +1,2 @@
+{"measurement": "M5-verify", "size": 1048576, "path": "/Apps/HelloWorld/ble_bench_m5_1MiB.bin", "read_elapsed_s": 480.4251973819919, "readback_len": 1048576, "read_bytes_per_sec": 2182.5999254703215, "ok": true}
+{"measurement": "M5-verify", "size": 3145728, "path": "/Apps/HelloWorld/ble_bench_m5_3MiB.bin", "read_elapsed_s": 1479.1517379540019, "readback_len": 3145728, "read_bytes_per_sec": 2126.7108162623304, "ok": true}

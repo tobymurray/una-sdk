@@ -1,0 +1,4 @@
+{"measurement": "M1", "run": 0, "file": "/Apps/Running/Activity/202608/activity_20260804T161810.fit", "mtu": 220, "chunk_len": 128, "bytes": 63456, "elapsed_s": 46.08266451302916, "bytes_per_sec": 1377.003709975555}
+{"measurement": "M1", "run": 0, "file": "/Apps/Running/Activity/202608/activity_20260804T161810.fit", "mtu": 220, "chunk_len": 128, "bytes": 63456, "elapsed_s": 45.49691444518976, "bytes_per_sec": 1394.7319455354625}
+{"measurement": "M1", "run": 1, "file": "/Apps/Running/Activity/202608/activity_20260804T161810.fit", "mtu": 220, "chunk_len": 128, "bytes": 63456, "elapsed_s": 45.485671060858294, "bytes_per_sec": 1395.0767026191174}
+{"measurement": "M1", "run": 2, "file": "/Apps/Running/Activity/202608/activity_20260804T161810.fit", "mtu": 220, "chunk_len": 128, "bytes": 63456, "elapsed_s": 44.89928179909475, "bytes_per_sec": 1413.296548571505}

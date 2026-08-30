@@ -2,7 +2,7 @@
 
 Branch: `spike/rawtiles-device-proof` (off `upstream/main` @ `59210889`). Never meant to
 merge — the deliverable is this bundle's numbers, which shape the streaming Container API
-(`RAWTILES_MAP_EVALUATION.md` §5, step 1).
+(`../2026-08-05-rawtiles-map-evaluation/EVALUATION.md` §5, step 1).
 
 The five `device/*.png` photographs of the watch, and the probe code the numbers below
 came from, stay on that branch; they are several megabytes of phone photos. The tile

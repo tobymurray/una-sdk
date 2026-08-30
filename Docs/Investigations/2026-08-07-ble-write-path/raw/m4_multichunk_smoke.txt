@@ -1,0 +1,23 @@
+M4 -- first successful single-chunk write/readback (smoke_write.py, before the multi-chunk
+device_offset bug above was found):
+
+writing 126 bytes to /Apps/HelloWorld/ble_bench_smoke2.bin ...
+write_file() returned final_offset=126 in 0.588s
+reading back ...
+read back 126 bytes
+MATCH: byte-exact round trip
+
+Single-chunk 47-byte write (debug_write_step.py), the exact exchange documented in
+raw/m4_write_framing_probes.txt's "current_offset always reads 0" section:
+
+--> 0x20 start: 200024000000000000000000000000002f0000002f417070732f48656c6c6f576f726c642f626c655f62656e63685f73746570312e62696e
+<-- response: 210100000000000000b393e0835806002f000000
+    status=0x01 current_offset=0 free_space=47
+--> 0x22 data (47 bytes payload): 22010000000000002f00000068656c6c6f20776f726c642c2074686973206973206120626c652077726974652074657374207061796c6f61642121
+<-- response: 210100000000000000b393e08358060000000000
+    cmd=0x21 status=0x01 current_offset=0 free_space=0
+
+Readback of that file:
+wrote 47 bytes to step1_readback.bin
+hello world, this is a ble write test payload!!
+(47 bytes, byte-exact)

@@ -1,0 +1,89 @@
+M6 -- what happens when a write goes wrong. All three sub-questions tested against a real
+watch with m6_partial_write.py / m6_out_of_order.py.
+
+=== Q1: Can a transfer resume? ===
+Started a 3000-byte write, deliberately stopped after 3 chunks (closed the notify session
+without finishing -- simulates a client crash / connection loss):
+
+$ python3 m6_partial_write.py start <addr> 3000 3
+start: status=0x01 free_space=3000
+  chunk 0: sent 205 bytes, bytes_sent=205, status=0x01
+  chunk 1: sent 205 bytes, bytes_sent=410, status=0x01
+  chunk 2: sent 205 bytes, bytes_sent=615, status=0x01
+STOPPING deliberately after 615/3000 bytes -- closing notify session without finishing the
+write, no further 0x22 sent.
+
+Resuming with the TRUE offset (615, matching what was actually written) on a fresh connection:
+$ python3 m6_partial_write.py resume <addr> 3000 615
+sending 0x20 start with offset=615 (attempting resume)
+response: 20 bytes: 2101000067020000006fc4168958060051090000
+  status=0x01 offset=615 free_space=2385   (2385 == 3000-615, exactly right)
+
+Note this differs from the 0x22 data-ack behavior (raw/m4_write_framing_probes.txt): the 0x20
+START response DOES report a meaningful current_offset/free_space when resuming an existing
+partial file (0 for a brand-new file, the true byte count for an existing partial one) -- only
+the per-chunk 0x22 acks always read back 0.
+
+Completing the resume (sending the remaining 2385 bytes from offset 615) and reading back:
+$ python3 m6_partial_write.py finish_resume <addr> 3000 615
+resume start: status=0x01 device_offset=615 free_space=2385
+  ... 12 more chunks ...
+  sent up to 3000/3000, status=0x01
+resume complete, final bytes_sent=3000
+MATCH: byte-exact 3000-byte file after resume
+
+CONFIRMED: resume works correctly when the client supplies the file's true current size.
+
+=== Q2: What does a partial file look like on the device? ===
+Read back the 615-byte partial file (before resuming):
+$ python3 m6_partial_write.py readback <addr>
+read back 615 bytes
+first 32 bytes: f5774127e00368f64e215064b17c68f0a68f5aa4b3cee3a8a53f54cc0ce3b0af
+last 32 bytes:  f64e215064b17c68f0a68f5aa4b3cee3a8a53f54cc0ce3b0aff5774127e00368
+trailing bytes nonzero: True
+
+CONFIRMED: a partial file is truncated exactly at the last successfully-written offset (615,
+not padded to the declared total_length of 3000), with correct content throughout -- not
+zero-filled, not absent, not garbage.
+
+=== Q3: Does the watch validate anything? ===
+(a) A resume with a WRONG offset (500, when only 410 bytes were actually written) on a fresh
+    connection to an EXISTING partial file:
+$ python3 m6_partial_write.py resume <addr> 3000 500
+sending 0x20 start with offset=500 (attempting resume)
+response: 20 bytes: 21010000f401000000f6571a89580600c4090000
+  status=0x01 offset=500 free_space=2500   -- ACCEPTED, no validation against true size (410)
+
+Completing this mismatched resume and reading back the full file:
+$ python3 m6_partial_write.py finish_resume <addr> 3000 500
+resume complete, final bytes_sent=3000
+MISMATCH: readback 3000 bytes, expected 3000
+  first differing byte at offset 410: got 0x00 expected 0x54
+
+CONFIRMED: bytes 410-499 (the gap between the true written extent and the claimed resume
+offset) were silently zero-filled, not rejected, not left as garbage/uninitialized flash.
+
+(b) Within a SINGLE still-open session (no reconnect, no fresh 0x20), one valid chunk at
+    offset 0 followed directly by a 0x22 claiming offset=1000 (skipping 205..1000 entirely):
+$ python3 m6_out_of_order.py <addr>
+start: status=0x01 free_space=3000
+chunk@0: response 2101000000000000006b711d89580600eb0a0000
+sending out-of-order chunk claiming offset=1000 (session only saw 0..205 so far)
+response: 20 bytes: 21010000e8030000006b711d8958060003070000
+  status=0x01 offset=1000 free_space=1795   -- ACCEPTED, no intra-session continuity check
+
+CONFIRMED: the firmware performs no offset/order validation beyond the one coarse check
+already documented in M4 (a nonzero 0x20 start offset is rejected with ERROR_PROTOCOL only
+when the target path does not exist as a file yet). Once any file exists at a path, the device
+accepts a 0x20 resume or 0x22 chunk at ANY offset, in any order, and silently zero-fills gaps.
+There is no integrity or ordering guarantee at the firmware level -- any resume/integrity
+guarantee for a real companion has to come entirely from the client (or an outer container
+format's own checksums).
+
+=== Bonus: cleanup, and closing the "0x30" open item ===
+0x30/0x31 confirmed as DELETE/DELETE_STATUS -- see raw/m4_write_framing_probes.txt for the
+probe. Batch-cleaned all 23 scratch files this investigation created (cleanup.py): 22/23
+deleted successfully (including all four M5 files, reclaiming ~41 MiB), the sole failure being
+ble_bench_m6_outoforder.bin -- the file from test (b) above, whose write session was
+deliberately left open and never completed. Consistent with the hypothesis that delete refuses
+a file with an open write session (status=0x02 ERROR vs. 0x01 OK for a cleanly-completed file).
