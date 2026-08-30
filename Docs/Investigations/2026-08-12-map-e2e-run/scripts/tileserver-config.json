@@ -1,0 +1,20 @@
+{
+  "options": {
+    "paths": {
+      "root": "/data",
+      "fonts": "fonts",
+      "styles": "styles",
+      "pmtiles": ""
+    }
+  },
+  "styles": {
+    "watch": {
+      "style": "watch/style.json"
+    }
+  },
+  "data": {
+    "pmtiles": {
+      "pmtiles": "athens.pmtiles"
+    }
+  }
+}

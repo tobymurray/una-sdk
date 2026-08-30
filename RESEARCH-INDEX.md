@@ -129,6 +129,13 @@ before returning, which is spec-conformant eager verify and also a ten-second GU
 resolved empirically, and a tile-sourcing compliance finding are all here, with the crash dump.
 The 1.2 MB verify log stays on `archive/poc/athensrun`.
 
+`Docs/Investigations/2026-08-12-map-e2e-run/` is the whole workflow run end to end, and the part
+worth keeping is photographic: the reflective panel shot at z12 through z16, stock style against
+watch style, and style v3 against v4, so the colorimetry in slippypack can be checked against
+what the glass actually does. `2026-08-06-rawtiles-spec-adequacy/` sits behind it with
+`ADEQUACY.md` and three encodings of the same pack, uncompressed against RGB565 against RLE, and
+`2026-08-06-athens-pack/` records how the basemap was built.
+
 `Docs/Research/2026-08-13-watch-cartography-prior-art.md` covers what the cartographic, human-factors
 and standards literature already settles about map design for small, colour-limited, round,
 reflective displays, so that measuring effort goes where it is actually needed. Every source is
