@@ -12,8 +12,9 @@ true. Anything owned elsewhere, such as whether a pull request is open, what a b
 holds, or what upstream now documents, gets named and pointed at, never restated. If you find a
 restatement, it has probably already rotted; correct it or delete it.
 
-Rebase onto `upstream/main` regularly. On macOS use `git replay --onto upstream/main
-<merge-base>..research`, which needs no working tree.
+Rebase onto `upstream/main` regularly; the diff is documentation, so it should not conflict.
+`git replay --onto upstream/main $(git merge-base research upstream/main)..research` does it
+without a working tree, which is useful when a checkout of this branch is inconvenient.
 
 ---
 
