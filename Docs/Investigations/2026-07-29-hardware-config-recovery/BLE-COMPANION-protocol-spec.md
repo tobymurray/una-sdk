@@ -4,10 +4,12 @@ Goal, guardrails, and full method are defined in `BLE-COMPANION-disassembly-prom
 same folder — this doc is the running **output** of that plan, not a restatement of it.
 
 **Status of the two evidence streams:**
-- **Static / disassembly:** Ghidra is now installed but no disassembly pass has been run yet.
-  Everything static comes from a *lower-effort substream* that needed no disassembler: `strings -n 6`
-  over `flash_real.bin` (`flash_strings.txt`, 6539 lines), mined for BLE/GATT/FTS/CCS log strings,
-  class names, and literal UUID constants.
+- **Static / disassembly:** a targeted Ghidra pass has been run, decompiling the service
+  constructors (§1.1) and the bonding and FTS handler bodies (§4). It settled what the strings
+  could only suggest. The bulk of the image is still undisassembled; see
+  `NEXT-SESSION-disassembly-prompt.md`. Alongside it runs a *lower-effort substream* that needed
+  no disassembler: `strings -n 6` over `flash_real.bin` (`flash_strings.txt`, 6539 lines), mined
+  for BLE/GATT/FTS/CCS log strings, class names, and literal UUID constants.
 - **Dynamic / HCI capture: DONE — a real capture of the Una app performing a full sync (including
   two separate GPS-track `.fit` activity syncs) was captured live from the user's own phone
   (GrapheneOS, `adb bugreport`) and watch, and decoded with `tshark` (Wireshark's CLI). This is a
@@ -271,7 +273,7 @@ exactly as described below.**
 ### 2.2 The wire protocol (all fields below are live-capture-confirmed, not guessed)
 
 All FTS traffic in this capture rode over a single ATT characteristic, **attribute handle
-`0x0027`** in this bonded session (handle-to-UUID binding is still open — see §2.4). Everything
+`0x0027`** in this bonded session (bound to its UUID in §6a). Everything
 below is an **application-layer protocol carried inside plain ATT Write Command / Handle Value
 Notification payloads** — there is no visible additional wrapping.
 
@@ -539,19 +541,19 @@ Corroborating context: `0:/ble.ota` (a filesystem path string, line 3358) confir
 images transit onto the device filesystem at a specific path, and CCS's `firmwareUpdateHandler`
 (§3) is very likely the command that kicks off (or completes) an OTA staged there.
 
-### 2.4 What's still open for Phase C
+### 2.4 Phase C's open questions, all since closed
 
-- **Bind handle `0x0027` to its actual UUID.** This capture reused an Android GATT cache (no fresh
-  service discovery occurred), so the UUID↔handle mapping wasn't directly observed. Two ways to
-  close this: (a) force a fresh pairing + discovery capture, or (b) now that Ghidra is installed,
-  statically correlate the `aci_gatt_add_char` call order in `initServices()` against the known
-  handle numbers (handles are assigned in a fixed, boot-deterministic order on BlueNRG). Handle
-  `0x0027`'s exact UUID doesn't block a same-firmware companion (which can hardcode the handle),
-  but does matter for cross-firmware-version portability and for confirming which of the
-  §1 UUID candidates it actually is.
-- Whether `total_size`'s 16-bit width is a real ceiling on file size (see above).
-- The `0x30` secondary command's exact purpose.
-- The `0x20/0x21/0x22` upload framing (secondary to the read-path goal).
+Recorded because the order they fell in is the useful part, not because any remain:
+
+- **Handle `0x0027`'s UUID.** Closed in §6a by a live discovery pass during standalone-prototype
+  pairing: `adaf0002-4669-6c65-5472-616e73666572`, declaration handle `0x0026`, value handle
+  `0x0027`, matching the original phone capture exactly.
+- **Whether `total_size`'s 16-bit width caps file size.** It is not 16-bit. The field is `uint32`
+  and there is no ceiling (§0.2).
+- **The `0x30` command's purpose.** `DELETE`, with `0x31` as its status reply (§0.2). The
+  standing instinct never to fire it speculatively was the right one.
+- **The `0x20`/`0x21`/`0x22` upload framing.** `WRITE`, `WRITE_PACING` and `WRITE_DATA`, now
+  documented in full in upstream's `Docs/BLE-File-Transfer-Service.md`.
 
 ---
 
@@ -869,7 +871,7 @@ a live exchange with a real watch.
 
 ---
 
-## 4. Authentication / pairing model — the pivotal question (still open, but a real lead)
+## 4. Authentication / pairing model: the pivotal question, and it is answered
 
 A full keyword sweep of all 6539 lines of `flash_strings.txt` for
 `nonce|hmac|challenge|session.?key|token|signature|\baes\b|encrypt|decrypt|passkey|secret|handshake`

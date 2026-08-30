@@ -1,13 +1,13 @@
 # Handoff prompt: disassemble the UNA Watch kernel dump
 
-Paste everything below into a fresh session (this repo's directory: `/home/toby/git/cpp/una-sdk`).
+Paste everything below into a fresh session, from a checkout of this repository.
 
 ---
 
 ## Context
 
 I own a UNA Watch (STM32U5A5 fitness watch) and I'm doing hardware/firmware research on my own
-device — legitimate ownership, not cloning or key theft. A prior session already: got a full
+device — legitimate ownership, not cloning or key theft. Prior sessions already: got a full
 read/write primitive from a sideloaded `.uapp` (apps run unsandboxed — MPU disabled, CPU
 privileged, no TrustZone), dumped and verified all 4 MB of flash, and used `strings` on the dump
 to identify most of the onboard hardware. That work is fully written up — **read it first**:
@@ -15,11 +15,8 @@ to identify most of the onboard hardware. That work is fully written up — **re
 - **`Docs/Investigations/2026-07-29-hardware-config-recovery/README.md`** — the living
   investigation doc: full verification ledger (every claim tagged CONFIRMED/LIKELY/REFUTED/
   UNVERIFIED with its method), the hardware inventory table, round-by-round history.
-- **Memory index** at `/home/toby/.claude/projects/-home-toby-git-cpp-una-sdk/memory/MEMORY.md`
-  — look up `project_una_hw_config_recovery`, `reference_una_kernel_ota_encrypted`, and
-  `project_una_teardown_hardware` for cross-session context. This memory system persists
-  across sessions in this project directory, so it should already be loaded for you — use it,
-  don't re-derive facts it already has.
+- **`REPRODUCTION-GUIDE.md`**, alongside it: how the read primitive was built and deployed,
+  command by command.
 
 **Adversarial-verification discipline carries forward**: don't trust a decompiled string or a
 guessed calling convention on one read. Corroborate. The investigation doc's ledger is full of
@@ -51,6 +48,11 @@ keep that same skepticism here.
     peripheral blocks — genuinely unexplained anomaly, flagged in the ledger) — find what code
     actually talks to these addresses, if any.
   - The OTA decrypt path — **locate only, do not extract or reproduce the key/algorithm.**
+- A targeted Ghidra pass has since been run on the BLE side and is written up in
+  `BLE-COMPANION-protocol-spec.md`: the service constructors (its §1.1), and
+  `isBondedAtLeastOne` plus the FTS read/write/listdir handler bodies (its §4), which together
+  settled that FTS is gated by nothing beyond standard BLE bonding. That project is finished;
+  none of the hardware items above were touched by it, and the rest of the image is untouched.
 
 ## Where the data is
 
