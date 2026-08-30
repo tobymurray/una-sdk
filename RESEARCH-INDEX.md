@@ -167,13 +167,33 @@ the logger's own implementation has to build at `LOG_LEVEL=0`.
 
 ## 8. Linux simulator
 
-`Docs/Simulator-Linux.md` holds the Arch packages, the screenshot recipe, and the 64-bit
-struct-layout caveat. Everything else this page carried has been merged into upstream `Docs/Simulator.md`
-§ "Linux (GCC)", which is now the instruction set.
+`Docs/Simulator-Linux.md` is gone. Upstream `Docs/Simulator.md` § "Linux (GCC)" is the
+instruction set now, and everything that page carried is either in it or made obsolete by it.
+Two things are worth knowing that it does not spell out. Arch's package names for the
+Debian list it gives are `base-devel ruby sdl2 sdl2_image libjpeg-turbo`, plus the `nokogiri`
+gem; `roo` and `rubyXL` are not needed, being reachable only through the `.xlsx` text parser,
+and every app here keeps its strings in `texts.xml`. And guarding the message `static_assert`s
+to 32-bit builds, which that page does describe, means they do not run on an x86-64 host: a
+pointer-carrying struct really is larger under the simulator, so a `sizeof` compared against
+the firmware's will not match.
 
-`Docs/assets/screenshots/` shows the simulator running on Linux across HelloWorld, Sensors, Buttons,
-ScrollMenu, Files and GpsTrack, plus a FIT track rendered on a map. These existed only on
-branches that have been retired.
+`Docs/assets/screenshots/` shows the simulator running on Linux across HelloWorld, Sensors,
+Buttons, ScrollMenu, Files and GpsTrack, plus a FIT track rendered on a map. These existed only
+on branches that have been retired. Upstream documents the headless run
+(`SDL_VIDEODRIVER=dummy`) but not how to capture a window, which is how these and the
+experiment bundles' screenshots were taken:
+
+```bash
+DISPLAY=:0.0 ./build/bin/simulator.out &
+sleep 1
+WID=$(DISPLAY=:0.0 xdotool search --name "<AppName>" | head -1)
+# if the app folder name does not match the window title:
+# WID=$(DISPLAY=:0.0 xdotool search --pid $(pgrep -f simulator.out) | head -1)
+DISPLAY=:0.0 import -window "$WID" /tmp/sim.png
+```
+
+Needs `xdotool` and ImageMagick. `xdotool getwindowgeometry "$WID"` reports the window size,
+which comes from the app's own `SimConstants.hpp`.
 
 ---
 
