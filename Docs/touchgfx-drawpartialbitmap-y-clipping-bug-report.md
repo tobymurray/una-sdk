@@ -1,37 +1,16 @@
-# ST Community bug report: drawPartialBitmap Y-clipping
+# drawPartialBitmap Y-clipping: the defect as reported to ST
 
-**Posted.** The report went to the ST Community as
-[rawPartialBitmap draws Y-overhang rows at dirty-rect top instead of screen
-Y](https://community.st.com/stm32-mcus-touchgfx-and-gui-33/rawpartialbitmap-draws-y-overhang-rows-at-dirty-rect-top-instead-of-screeny-abgr2222-external-bitmap-touchgfx-4-26-1-166187),
-against TouchGFX 4.26.1. That thread, not this file, is where any ST reply
-will appear.
+Reported to the ST Community as [rawPartialBitmap draws Y-overhang rows at dirty-rect top
+instead of screen Y](https://community.st.com/stm32-mcus-touchgfx-and-gui-33/rawpartialbitmap-draws-y-overhang-rows-at-dirty-rect-top-instead-of-screeny-abgr2222-external-bitmap-touchgfx-4-26-1-166187).
+That thread is where any reply from ST will appear.
 
-What is kept here is the drafting record: the reasoning behind the wording,
-and the notes on which forum board and which framing get a framework defect
-read. The reproduction case is `bug/drawpartialbitmap-y-clipping-repro`.
+The characterisation is kept here because it is the durable part and it is not derivable from
+this SDK: the trigger conditions were narrowed experimentally, and the non-trigger below is as
+useful as the triggers when deciding whether a rendering artifact you are looking at is this
+one. `bug/drawpartialbitmap-y-clipping-repro` holds the running reproduction, and the fix to
+use instead is in
+`Docs/Tutorials/RawTilesMap/Investigations/2026-05-16-cell-render-bug/experiment-C2-blitCopy-corrected/`.
 
-## Product forum
-
-**STM32 MCUs TouchGFX and GUI** is the right board. ST has no separate bug
-tracker, so the community forum is where framework defects get raised.
-
-Board: https://community.st.com/t5/stm32-mcus-touchgfx-and-gui/bd-p/mcu-touch-gfx-gui-forum
-
-Add labels/tags like `TouchGFX`, `drawPartialBitmap`, `ABGR2222` if the post
-form offers them.
-
-## Title
-
-Recommended:
-
-> drawPartialBitmap draws Y-overhang rows at dirty-rect top instead of screenY (ABGR2222 external bitmap, TouchGFX 4.26.1)
-
-Shorter alternatives:
-
-- TouchGFX 4.26.1: vertical clipping defect in LCD8bpp_ABGR2222 drawPartialBitmap
-- Bitmap duplicated vertically when it overhangs the dirty rect (drawPartialBitmap, ABGR2222, 4.26.1)
-
-## Description (post body)
 
 **Environment**
 
@@ -95,8 +74,3 @@ bottom-overhang rows are written at `y = 0` (`dirtyRect.y`) instead of
 
 Any widget that scrolls a bitmap into or out of view, anchors one near a screen
 edge, or otherwise clips it vertically will show this artifact.
-
-## Posting notes
-
-- Attach the expected-vs-bug screenshots from the repro branch; they make the report land instantly.
-- Keep the post self-contained rather than leaning on a link to the branch, which ST staff may not be able to open. A link at the bottom as "full repro branch" is a nice-to-have, not a substitute.

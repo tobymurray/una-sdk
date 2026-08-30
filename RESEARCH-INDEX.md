@@ -7,10 +7,16 @@ branches that get retired. It carries documentation and evidence only, so
 
 Not upstream policy and not official SDK documentation. A contributor's working record.
 
-**The rule this branch is maintained by:** a claim lives here only if this branch can keep it
-true. Anything owned elsewhere, such as whether a pull request is open, what a branch currently
-holds, or what upstream now documents, gets named and pointed at, never restated. If you find a
-restatement, it has probably already rotted; correct it or delete it.
+**The two rules this branch is maintained by.** First, a claim lives here only if this branch
+can keep it true. Anything owned elsewhere, such as whether a pull request is open, what a
+branch currently holds, or what upstream now documents, gets named and pointed at, never
+restated. If you find a restatement, it has probably already rotted; correct it or delete it.
+
+Second, nothing here should be derivable from the SDK by reading it. An inventory of what
+upstream contains is the form rot takes: it reads as useful, it is re-derivable at any moment
+by anyone, and it goes wrong silently. What earns its place is what a checkout cannot tell you:
+a measurement off real hardware, a wire format off real traffic, an answer from a maintainer,
+a defect in a vendored binary, prior art from outside this project.
 
 Rebase onto `upstream/main` regularly; the diff is documentation, so it should not conflict.
 `git replay --onto upstream/main $(git merge-base research upstream/main)..research` does it
@@ -93,9 +99,11 @@ pointer count" theory was a red herring, and that is worth knowing before derivi
 The tile fixture these runs load is on `feat/rawtilesmap-tutorial`, at
 `Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles`.
 
-`Docs/touchgfx-drawpartialbitmap-y-clipping-bug-report.md` is the drafting record for the ST
-Community report, which was posted; the file links the thread. `bug/drawpartialbitmap-y-clipping-repro`
-holds the reproduction.
+`Docs/touchgfx-drawpartialbitmap-y-clipping-bug-report.md` characterises the defect: the exact
+trigger conditions, the non-trigger that tells you when you are looking at something else, and
+a minimal reproduction. It was posted to the ST Community and the file links that thread, which
+is where a reply would arrive. `bug/drawpartialbitmap-y-clipping-repro` holds the running
+reproduction.
 
 ## 4. Map rendering on the watch
 
@@ -116,8 +124,9 @@ document that could not be fetched is flagged as unverified against its primary 
 
 `Docs/Investigations/2026-06-15-heart-beat-vs-ppg/`
 
-**Read this before designing anything HRV-shaped.** It is UNA's own authoritative answer, given
-in PR #167:
+**Read this before designing anything HRV-shaped**, and read it in preference to the SDK,
+because upstream `Docs/SensorsLayer.md` still lists `HEART_BEAT 0x40` as "Beat peak event" and
+that is the one thing it does not do. This is UNA's own authoritative answer, given in PR #167:
 
 - `HEART_BEAT` (0x40) emits **no events**. HR detection is frequency-domain, not per-beat, so
   RR intervals cannot be read off beat timestamps.
@@ -144,11 +153,15 @@ measured flash cost and why the drawing functions are `SDK_GUI_NO_INLINE`. The c
 `feat/sdk-units-core` → `feat/sdk-units-touchgfx` → `refactor/running-adopt-units` →
 `perf/unit-label-repaint-skip` stack.
 
-`Docs/companion-data-channel-analysis.md` is an RFC arguing third-party apps had no supported way
-to receive data from off the watch. **Largely answered since** by `SDK::AppConfig`
-(`Docs/app-config-fields.md`). Its own status header records the three things that are still
-open: nothing reaches a *running* app, nothing may be secret, and `SettingsSerializer` is still
-copied per app.
+`Docs/companion-data-channel-analysis.md` asked for a way to get data onto the watch from off
+it, and `SDK::AppConfig` (`Docs/app-config-fields.md`) has since answered most of it. What is
+left is the three residues, which upstream's own § 1.1 confirms are constraints rather than
+gaps: nothing reaches a *running* app, nothing may be secret, and `SettingsSerializer` is still
+copied per app. Plus the reason the phone has to be the transport at all, and how Garmin
+Connect IQ and Apple Wallet each landed on the same shape from the same constraints. The SDK
+inventory that made up most of the original is deleted: it was derivable by reading the tree,
+which is exactly why it rotted without anyone noticing, and it had come to recommend reusing
+the `Sender` idiom that upstream has since retired.
 
 ## 7. Verification harness, and why it is not here
 

@@ -44,16 +44,14 @@ commands, §3/§3.1), the **CANS** notification service (`554E4100-28E7-4811-…
 
 ### 0.1 Where the published spec confirms this investigation
 
-Independently derived here, and matching the official document exactly:
-
-| Finding | Where derived | Official |
-|---|---|---|
-| `READ`/`READ_DATA` fields are `uint32`, not `uint16`+padding | §2.2 | confirmed — `chunkOffset`, `totalLength`, `chunkLength` all `uint32` |
-| No 64 KiB size ceiling | §2.2 | confirmed by the field widths |
-| `0x51` trailing bytes are a timestamp then a `uint32` size | §2.2.1 | confirmed — `modificationTime` at 16, `fileSize` at 24 |
-| `flags` bit 0 = directory | §2.2.1 | confirmed |
-| Chunk size is bounded by `MTU − 3 − 16` | §2.2 | confirmed — the spec states `≤ 201` at MTU 220 |
-| Bonded, encrypted link is the whole gate | §4 | confirmed |
+Six findings derived here independently were later stated by the official document exactly as
+derived: the `uint32` width of the `READ`/`READ_DATA` length fields, the absence of a 64 KiB
+size ceiling that follows from it, the `0x51` entry's trailing timestamp and `uint32` size,
+`flags` bit 0 meaning directory, the `MTU - 3 - 16` chunk bound, and the bonded encrypted link
+being the whole access gate. The table that used to enumerate them is gone: every row is now
+readable in `Docs/BLE-File-Transfer-Service.md`, which owns those facts. What the agreement is
+worth is the confidence it lends to the sections below that the official document does *not*
+cover.
 
 ### 0.2 Where it corrects or extends this investigation
 
@@ -940,34 +938,27 @@ way.
 
 ---
 
-## 5. CTS / DIS / BAS — standard-service mapping
+## 5. CTS / DIS / BAS: handles observed on this device
 
-- **CTS**: **CONFIRMED by live capture.** The capture shows the phone writing handle `0x001B` with
-  bytes `EA 07 07 1E 16 2B 02 04 00 F0` — decoded as Year=2026 (`0x07EA` LE), Month=7, Day=30,
-  Hour=22, Minute=43, Second=2, Weekday=4 (Thursday), Fractions256=0, Adjust Reason bitmask=0xF0 —
-  an **exact 10-byte field match** to the standard Bluetooth SIG Current Time characteristic
-  layout, on the exact date/time this session ran. A second write to handle `0x001E` with bytes
-  `F0 04` decodes as Time Zone=`0xF0` (int8 = −16 → −4:00 in 15-min units) and DST Offset=`0x04`
-  ("+1h DST"), matching the standard **Local Time Information** characteristic 2-byte layout
-  exactly. This is about as strong a confirmation as is possible without also capturing the raw
-  service-discovery response — **CTS is the standard SIG Current Time Service.**
-- **DIS**: `Ble::DeviceInformationService::DeviceInformationService(...)` (5 `const char*` params:
-  Manufacturer/Model/Serial/FirmwareRevision/HardwareRevision) plus the capture's own repeated
-  reads of handle `0x0016` returning ASCII `"1.3.0"` and handle `0x0018` returning ASCII `"3.1"`
-  (firmware/hardware revision strings, read multiple times as if by different app components) —
-  **LIKELY standard SIG DIS (`0x180A`)**; the exact characteristic UUIDs (`0x2A26`/`0x2A27`) weren't
-  independently re-derived from a discovery response this pass, but the plaintext version strings
-  returned are exactly what those characteristics are defined to hold.
-- **BAS**: `BLE.SRV.Battery`, `Battery level %u%%` plus the capture's handle `0x0021`, read/notified
-  repeatedly returning the single byte `0x64` (100%) — **LIKELY standard SIG BAS (`0x180F`)**,
-  single-byte percentage value matches the standard Battery Level characteristic exactly.
+`Docs/BLE-Services-Overview.md` now names these services and their characteristic UUIDs, so the
+identification work this section used to argue for is settled and deleted. What it does not
+give, and what this capture does, is the handle each one answered on in a bonded session with
+this watch:
 
-The remaining gap for all three (and for FTS/CCS/CANS, §1/§2.4) is the same one: this capture
-reused a cached GATT table, so no `Read By Group Type`/`Read By Type` service-discovery exchange
-was captured to pin exact UUIDs to these handles. The handle-level *behavior* now matches the
-standard specs closely enough to be practically actionable for a companion regardless.
+| Handle | Held | Observed value |
+|---|---|---|
+| `0x0016` | Firmware Revision | ASCII `1.3.0` |
+| `0x0018` | Hardware Revision | ASCII `3.1` |
+| `0x001B` | Current Time | `EA 07 07 1E 16 2B 02 04 00 F0`, decoding to the exact wall-clock second the session ran |
+| `0x001E` | Local Time Information | `F0 04`, timezone -4:00 in 15-minute units, DST +1h |
+| `0x0021` | Battery Level | `0x64` |
 
----
+Both time writes matched the standard SIG field layouts byte for byte, which is what originally
+established that CTS was not a vendor service.
+
+Handles are per-session and not a substitute for discovery. This capture reused a cached GATT
+table, so no service-discovery exchange was recorded to bind these handles to UUIDs directly;
+the binding above is by behaviour and value, not by a captured `Read By Type` response.
 
 ## 5a. Verified through an independent Android client
 
