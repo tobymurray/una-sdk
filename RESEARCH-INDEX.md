@@ -136,6 +136,11 @@ that is the one thing it does not do. This is UNA's own authoritative answer, gi
 - **Optical HRV will only ever work at rest.** Mid-exercise "can't be done optically, it has
   to be an electrical measurement." Physics, not a roadmap gap.
 
+Independently corroborated since, on the 1.4 line and without asking anyone: SleepLab's ledger
+rows S4 and S5 (in `tobymurray/watch-apps`) found that `HEART_BEAT` does not resolve a driver at
+all, so `connect()` returns false. It is not that the type emits nothing; there is nothing there
+to subscribe to. `SPO2` behaves the same way, which retires it as a foundation for anything.
+
 That last point is why a chest strap is structurally necessary rather than merely convenient.
 The strap route is PR #220, `feat/rr-interval-contract`, whose description on GitHub is the
 live rationale. One hazard worth carrying: in the Bluetooth Heart Rate Service `0x2A37`
@@ -222,9 +227,52 @@ both the probe and the answer are in § 5 above and GitHub keeps the discussion 
 **Feature documentation that ships with unmerged work**, such as tutorial `ARCHITECTURE.md`
 files and the GpsLab README, stays with the branch it documents.
 
-## Apps live in `tobymurray/watch-apps`
+## Research that lives in the other repositories
 
-Apps were subtree-split out of this SDK into their own repo and build against a released SDK
+This branch is not the whole record and should stop pretending to be. Three sibling
+repositories carry hardware findings about this watch that no checkout of the SDK could give
+you, and several of them already cite this branch's ledger convention while nothing here
+pointed back. Named rather than copied: they are maintained where they are, and a second copy
+would drift the way everything else in this file's history did.
+
+### `tobymurray/watch-apps`
+
+Instrument apps, and the measurements they produced. The app documentation stays with the app;
+what is worth knowing from here is which question each one answers.
+
+| Where | What it establishes |
+|---|---|
+| `SensorLab/Profiles/1.4.0-2026-08-28/REPORT.md` | A measured sensor profile of firmware 1.4.0, claim by claim with the method and sample count behind each figure. Six sensor types are declared in `SensorTypes.hpp` and absent from upstream `Docs/SensorsLayer.md` entirely; five ship no parser at all, so the frame descriptions there are the only ones that exist anywhere; and twenty-eight of twenty-nine shipped parsers test the delivered field count for *exact* equality, so one appended field would silently invalidate every sample they read. `HeartRateEx` is the sole exception and uses `>=` deliberately. It also finds a real defect: `GpsLocation::isDataValid()` reads a field before checking the field count, which is an out-of-bounds read on a short frame once the bounds assert is compiled out at `-Os`. |
+| `SensorLab/Docs/LEDGER.md`, `FINDINGS.md` | The ledger behind that profile, and why the simulator cannot answer any of it: it resolves no sensor drivers for a service. |
+| `SleepLab/Docs/FEASIBILITY-LEDGER.md` | Rows S4 and S5, measured on hardware 2026-08-18. `HEART_BEAT` (0x40) and `SPO2` (0xF1) do not resolve a driver at all, so `connect()` returns false and the question is not whether they emit but that there is nothing to subscribe to. That is § 5's answer reached independently, on the 1.4 line, without asking anyone. |
+| `RustGuiPoc/Docs/FINDINGS.md` | The display platform, measured over five hardware runs: 240x240 8bpp ABGR2222 at four levels per channel, one app-owned 57,600-byte framebuffer, whole frames only because `RequestDisplayUpdate`'s rectangle fields are reserved, 600 KiB of GUI RAM that code also executes from, and software rendering only since the port's `STM32DMA` is a stub. |
+| `MagProbe/README.md` | The one hardware-inventory row still unconfirmed. The magnetometer is `BMM350` on a firmware string alone, a `CHIP_ID` read did not match, and this is the app built to settle whether the watch can be a compass at all. Unrun as of writing. |
+| `MapLab/Docs/Investigations/2026-08-19-*`, `MapLab/Docs/GATES.md` | Vector map rendering measured on the glass: 24.0 ms rural, 70.2 ms suburban, 160.5 ms city centre against a 100 ms budget, two independent passes agreeing to 0.3%. And the finding that kills a tempting line of work: decode and transform are 3.4% of a render, the rest is rasterising, so a better wire format cannot touch the budget that fails. |
+| `BacklightProbe/Output/`, `BacklightPwm/DMA-NOTES.md` | The raw register sweeps behind § 2, and the DMA route notes. |
+
+### `slippypack` (Gitea, `nas:3000/toby/slippypack`, not GitHub)
+
+`Docs/Investigations/2026-08-07-watch-cartography/README.md` on `map-delivery-workflow`. **The
+prior-art review in § 4 above declares the hardware facts and this project's empirical findings
+out of scope and does not say where they are. They are here.** The panel is a Sharp
+LS012B7DD06A and its datasheet settles what was guesswork: the display is reflective memory
+LCD, so ABGR2222 is the panel's **native** format rather than a software compromise and
+quantising to 64 colours is exact; the four levels per channel are spatial area modulation, so
+output is linear in reflectance and **not** sRGB gamma; contrast is about 25:1, so there is no
+deep black; and panel white reflects 8.4% against paper's 90%, with an NTSC ratio of 18%, so
+saturated colours land as pastels. Two of the author's own hypotheses were falsified and both
+are kept. `MAP_COMPLIANCE_APPENDIX.md` beside it carries the tile-source licence evaluation.
+
+Gitea is authoritative for this repository and GitHub is at best a mirror.
+
+### `rawtiles`
+
+The pack format's spec repository. Not cloned on this machine; it lives on the same Gitea. The
+`2026-08-07` bundle above read it at spec v0.6, wire `(1,0)`, Status: Provisional.
+
+## Apps live there too, and one migration is unfinished
+
+Apps were subtree-split out of this SDK into `tobymurray/watch-apps` and build against a released SDK
 found through `$UNA_SDK`. Do not re-add one here.
 
 **One migration is still incomplete.** `feat/gps-quality-logging` stays on this fork because it

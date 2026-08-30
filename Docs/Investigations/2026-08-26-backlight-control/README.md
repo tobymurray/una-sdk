@@ -21,8 +21,9 @@ raw output is committed alongside the app in
 comes from `UNAWatch/una-hardware`, which publishes the schematics for all six
 boards under CC BY 4.0.
 
-The objective, the question list and the phase plan live in
-`BACKLIGHT_INVESTIGATION_PROMPT.md`.
+The handoff prompt that set the objective and the phase plan is not kept: its Q1 to Q12 are
+restated with their verdicts in the table below, and the rest of it was SDK facts anyone can
+read out of the tree. Q8 is the only one still open and nothing depends on it.
 
 ---
 
