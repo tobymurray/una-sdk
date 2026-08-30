@@ -8,8 +8,8 @@ branches that get retired. It carries documentation and evidence only, so
 Not upstream policy and not official SDK documentation. A contributor's working record.
 
 **The rule this branch is maintained by:** a claim lives here only if this branch can keep it
-true. Anything owned elsewhere — whether a pull request is open, what a branch currently
-holds, what upstream now documents — gets named and pointed at, never restated. If you find a
+true. Anything owned elsewhere, such as whether a pull request is open, what a branch currently
+holds, or what upstream now documents, gets named and pointed at, never restated. If you find a
 restatement, it has probably already rotted; correct it or delete it.
 
 Rebase onto `upstream/main` regularly. On macOS use `git replay --onto upstream/main
@@ -44,8 +44,8 @@ GATT table.
 | `reassemble_dump.py`, `service-cpp-instrumentation-sweep7.cpp` | The chunked flash-dump reassembler, and the instrumented `Service.cpp` that was the read primitive. |
 
 Established, with the ledger holding the confidence tag on each: the MCU is an **STM32U5A5**,
-agreed by three independent methods; apps run with **no isolation at all** — MPU disabled, CPU
-privileged, TrustZone off; the full 4 MB flash is dumped and CRC-verified two ways, the real
+agreed by three independent methods; apps run with **no isolation at all**, MPU disabled, CPU
+privileged and TrustZone off; the full 4 MB flash is dumped and CRC-verified two ways, the real
 image ending at `0x0820A140`; a dual vector table places a bootloader at `0x08000000` and the
 kernel at `0x08060000`; the IMU is a **BMI270** by exact CHIP_ID match.
 
@@ -58,7 +58,7 @@ enable, so `RequestBacklightSet::brightness` is inert; the hardware dims perfect
 ordinary `.uapp` can dim it. The gap is firmware, not silicon.
 
 The evidence is a register diff across six brightness levels showing `GPIOF ODR` bit 3
-byte-identical at every one, which also excludes software PWM — six lit sweeps all read the pin
+byte-identical at every one, which also excludes software PWM: six lit sweeps all read the pin
 low, and at brightness 1 that is a one-in-a-hundred coincidence. `PF3` has no timer output, so
 the working route is DMA-driven, and it costs no thread. The raw sweeps are in `pwm-run/` and
 `dma-run/`.
@@ -78,11 +78,11 @@ fixes are on their own branches on the fork.
 Two investigations of the same framework defect, found from different directions and kept
 apart for that reason.
 
-`Docs/Investigations/2026-05-16-touchgfx-drawpartialbitmap-negative-x/` — how to test whether
+`Docs/Investigations/2026-05-16-touchgfx-drawpartialbitmap-negative-x/` covers how to test whether
 *your* platform is affected, plus `DynamicBitmapDraw.hpp`, the workaround itself, active only
 under `SIMULATOR && __linux__`. It belongs at `Libs/Header/SDK/GUI/` if you adopt it.
 
-`Docs/Tutorials/RawTilesMap/Investigations/2026-05-16-cell-render-bug/` — **resolved.** The
+`Docs/Tutorials/RawTilesMap/Investigations/2026-05-16-cell-render-bug/` is **resolved.** The
 full experimental record across experiments A, B, C and C2.
 `LCD8bpp_ABGR2222::drawPartialBitmap` in the prebuilt Linux `libtouchgfx.a` silently drops
 external dynamic bitmaps at a negative target X, and stretches source across widget width at a
@@ -92,20 +92,20 @@ pointer count" theory was a red herring, and that is worth knowing before derivi
 The tile fixture these runs load is on `feat/rawtilesmap-tutorial`, at
 `Docs/Tutorials/RawTilesMap/Resources/stanley.rawtiles`.
 
-`Docs/touchgfx-drawpartialbitmap-y-clipping-bug-report.md` — the drafting record for the ST
+`Docs/touchgfx-drawpartialbitmap-y-clipping-bug-report.md` is the drafting record for the ST
 Community report, which was posted; the file links the thread. `bug/drawpartialbitmap-y-clipping-repro`
 holds the reproduction.
 
 ## 4. Map rendering on the watch
 
-`Docs/Investigations/2026-08-05-rawtiles-device-proof/` — one tile drawn on the physical watch.
+`Docs/Investigations/2026-08-05-rawtiles-device-proof/` draws one tile on the physical watch.
 A 64 KiB read off watch storage costs **7 to 9 ms cold**, which makes read-on-pan affordable;
 `blitCopy` renders overhanging ABGR2222 buffers correctly on hardware where
 `drawPartialBitmap` does not; and **no absolute `N:/` volume path resolves on the device**, so
 app file access is sandbox-relative. The watch photographs and the probe code stay on
 `spike/rawtiles-device-proof`.
 
-`Docs/Research/2026-08-13-watch-cartography-prior-art.md` — what the cartographic, human-factors
+`Docs/Research/2026-08-13-watch-cartography-prior-art.md` covers what the cartographic, human-factors
 and standards literature already settles about map design for small, colour-limited, round,
 reflective displays, so that measuring effort goes where it is actually needed. Every source is
 marked by read depth, from *full text* down to *not retrieved*, and any figure taken from a
@@ -123,7 +123,7 @@ in PR #167:
 - The PPG waveform is **20 Hz, single channel**, which UNA called "the low end for HRV
   extraction". A higher-rate mode and on-chip HRV are both being explored, so expect these
   numbers to move.
-- **Optical HRV will only ever work at rest.** Mid-exercise "can't be done optically — it has
+- **Optical HRV will only ever work at rest.** Mid-exercise "can't be done optically, it has
   to be an electrical measurement." Physics, not a roadmap gap.
 
 That last point is why a chest strap is structurally necessary rather than merely convenient.
@@ -137,13 +137,13 @@ answer has a "not today" shape, so re-run the probe once the firmware moves.
 
 ## 6. Design notes
 
-`Docs/units-and-display.md` — why `SDK::Units` exists: measurements stay SI internally, and
+`Docs/units-and-display.md` is why `SDK::Units` exists: measurements stay SI internally, and
 metric/imperial is applied exactly once, at the moment a value becomes text. Includes the
 measured flash cost and why the drawing functions are `SDK_GUI_NO_INLINE`. The code is the
 `feat/sdk-units-core` → `feat/sdk-units-touchgfx` → `refactor/running-adopt-units` →
 `perf/unit-label-repaint-skip` stack.
 
-`Docs/companion-data-channel-analysis.md` — an RFC arguing third-party apps had no supported way
+`Docs/companion-data-channel-analysis.md` is an RFC arguing third-party apps had no supported way
 to receive data from off the watch. **Largely answered since** by `SDK::AppConfig`
 (`Docs/app-config-fields.md`). Its own status header records the three things that are still
 open: nothing reaches a *running* app, nothing may be secret, and `SettingsSerializer` is still
@@ -166,11 +166,11 @@ the logger's own implementation has to build at `LOG_LEVEL=0`.
 
 ## 8. Linux simulator
 
-`Docs/Simulator-Linux.md` — Arch packages, the screenshot recipe, and the 64-bit struct-layout
-caveat. Everything else this page carried has been merged into upstream `Docs/Simulator.md`
+`Docs/Simulator-Linux.md` holds the Arch packages, the screenshot recipe, and the 64-bit
+struct-layout caveat. Everything else this page carried has been merged into upstream `Docs/Simulator.md`
 § "Linux (GCC)", which is now the instruction set.
 
-`Docs/assets/screenshots/` — the simulator running on Linux across HelloWorld, Sensors, Buttons,
+`Docs/assets/screenshots/` shows the simulator running on Linux across HelloWorld, Sensors, Buttons,
 ScrollMenu, Files and GpsTrack, plus a FIT track rendered on a map. These existed only on
 branches that have been retired.
 
@@ -185,8 +185,8 @@ still carries its own copy. This branch is for reading, not for building or merg
 The one exception was `feat/beat-event-probe`, a declined PR that existed to ask a question;
 both the probe and the answer are in § 5 above and GitHub keeps the discussion regardless.
 
-**Feature documentation that ships with unmerged work** — tutorial `ARCHITECTURE.md` files, the
-GpsLab README — stays with the branch it documents.
+**Feature documentation that ships with unmerged work**, such as tutorial `ARCHITECTURE.md`
+files and the GpsLab README, stays with the branch it documents.
 
 ## Apps live in `tobymurray/watch-apps`
 

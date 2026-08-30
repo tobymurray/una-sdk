@@ -4,7 +4,7 @@
 (`Docs/app-config-fields.md`): an app declares configuration fields in its
 `app-manifest.json`, the companion app prompts the user and writes the answers
 to a JSON file beside the `.uapp` over FTS, and the app reads them at launch.
-That is §5's proposals 1 and 3 delivered, in a better shape than proposed —
+That is §5's proposals 1 and 3 delivered, in a better shape than proposed:
 declared fields carried in a file the existing File Transfer Service already
 writes, so it needed no new kernel channel, no envelope, and no chunking.
 

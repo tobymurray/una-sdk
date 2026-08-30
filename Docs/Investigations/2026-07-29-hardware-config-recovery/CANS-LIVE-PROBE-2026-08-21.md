@@ -11,10 +11,10 @@ figures below are extracted from those files, not retyped from the terminal.
 activities. CANS is solved: it was switched off in a settings file on the watch, and once enabled
 the format recovered in §3c is byte-for-byte correct.**
 
-The silence that took most of this session to explain was total: thirteen notification events
-across five runs — every action, every category, seven UID encodings, idle and occupied screen —
-drew zero replies of any kind, no error and no status, after 100 seconds of waiting each. None of
-it was a protocol fault. See §CANS.
+The silence that took most of this session to explain was total. Thirteen notification events
+across five runs, covering every action, every category, seven UID encodings, and both an idle
+and an occupied screen, drew zero replies of any kind, no error and no status, after 100 seconds
+of waiting each. None of it was a protocol fault. See §CANS.
 
 ## FTS protocol 5 — confirmed, with one surprise
 

@@ -1094,7 +1094,7 @@ Remaining work, roughly in priority order:
    companion should reason about.
 7c. ~~**Report the read-chunk clamp as a spec conformance gap.**~~ **Done and fixed.** Filed as
    issue #272, closed, and the fix re-measured on 1.4.0 across the whole size range rather than
-   only at the size it was reported at — see `CANS-LIVE-PROBE-2026-08-21.md`.
+   only at the size it was reported at. See `CANS-LIVE-PROBE-2026-08-21.md`.
 8. Decode `/DailyHealth/dh.tmp`'s binary layout (§2.2.3), if the current day is ever wanted
    without CCS. Header is `<year:u16LE> <month:u8> <day:u8>`; the rest looks like a 1440-byte
    per-minute array with `0x5f` for no-reading and `0x00` for not-yet-reached. Unverified.
