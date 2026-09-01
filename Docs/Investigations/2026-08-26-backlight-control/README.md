@@ -690,6 +690,31 @@ wrong as a description of the technique. The honest summary is now:
 - Every earlier claim in this file about spinning applies to the software PWM
   only.
 
+### Open: whether a dimmed backlight actually saves power
+
+Not measured, and it does not follow from anything above.
+
+The saving is real but small. The front-light draws roughly 4 to 7 mA, so half
+duty saves two or three of them while the light is lit. Against that, the
+constraint this phase established has a cost of its own: a long blocking wait is
+what stops the waveform, so the driving thread cannot let the core idle deeply for
+as long as the light is dimmed, and that can easily be worth more than a few
+milliamps.
+
+The two probably do not overlap much. The backlight is on for a few seconds at a
+time, and during those seconds the watch is being looked at and is unlikely to be
+idling deeply in any case, which would make the marginal cost near zero and
+dimming a straight win. That is an argument, not a measurement, and the opposite
+case is equally coherent: if the kernel does drop into a deep idle between screen
+refreshes with the light on, dimming is a straight loss.
+
+What would settle it is a soak against `REQUEST_BATTERY_STATUS`, holding one duty
+for ten minutes and another for ten more, run twice with the order swapped so a
+drifting discharge curve cannot be read as a difference between the two.
+
+Nothing else in this phase depends on the answer. The waveform, the ladder and the
+contest are all established independently of it.
+
 ## SDK defects established so far
 
 All four are independent of what the hardware turns out to do, and each is its own
