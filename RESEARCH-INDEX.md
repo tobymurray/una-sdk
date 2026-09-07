@@ -141,6 +141,8 @@ and standards literature already settles about map design for small, colour-limi
 reflective displays, so that measuring effort goes where it is actually needed. Every source is
 marked by read depth, from *full text* down to *not retrieved*, and any figure taken from a
 document that could not be fetched is flagged as unverified against its primary source.
+Its § 1.8–1.9 text rules are priced against real typefaces in § 9 below, which also
+corrects its § 1.6.
 
 ## 5. Can the watch produce HRV?
 
@@ -242,6 +244,39 @@ Needs `xdotool` and ImageMagick. `xdotool getwindowgeometry "$WID"` reports the 
 which comes from the app's own `SimConstants.hpp`.
 
 ---
+
+## 9. Typefaces on the panel
+
+`Docs/Investigations/2026-09-07-typeface-metrics-on-the-panel/`
+
+Sixteen OFL/Apache text faces run through the same glyph pipeline the watch's apps ship —
+FreeType 2.13.2's light autohinter, coverage rounded to the nearest third — and measured at
+rendered cap heights rather than nominal em sizes, so that § 4's prior-art review has real
+typefaces behind its FAA numbers instead of a nominal 0.7 em. `tools/verify.py` is the reason
+to trust the rest: it rebuilds four faces the watch ships and matches their glyph-byte totals.
+
+Host measurements only; no watch was involved, and the document says so before it says anything
+else. What it establishes: **the FAA height/width rule does not discriminate between text faces**
+(all sixteen inside the 6–12 px band at a 13 px capital, one reaching the preferred 9), while
+**the stroke-width rule does and it selects the bold weight** (fifteen of sixteen Regulars land
+under 2 px at a 13 px capital; every SemiBold at cap 12–14 is in band) — which corroborates, from
+a US aviation display standard, a conclusion watch-apps had reached from counting stem columns.
+Also: digit width is a separate axis from capital width and Poppins is the outlier on it;
+**confusable-pair separation is a trade rather than a ranking**, so which face reads best depends
+on whether the string is uppercase-and-digits or arbitrary mixed case; four faces close the `4`'s
+counter at a 9 px capital; and `FT_LOAD_TARGET_LIGHT` uses FreeType's autohinter whatever the font
+ships in `fpgm`, so a generator's thresholds transfer to a new typeface unchanged.
+
+**One correction to § 4's prior-art document.** Its § 1.6 says this panel has no antialiasing.
+The framebuffer format is readable in the SDK and gives more than two levels a channel, and the
+shipped text pipeline leans on them: between a third and two thirds of the ink pixels in every
+glyph on the watch today sit at an intermediate level. Whether those greys help is the open
+question, and it is unchanged.
+
+The typeface *decision* for the apps is not here. It belongs to `tobymurray/watch-apps`, whose
+`Docs/TEXT.md` and `TextKit/README.md` own the crate, its parity result and its footprints;
+this bundle deliberately points at them rather than restating them, and Poppins is not vendored
+here for the same reason.
 
 ## What is deliberately not here
 

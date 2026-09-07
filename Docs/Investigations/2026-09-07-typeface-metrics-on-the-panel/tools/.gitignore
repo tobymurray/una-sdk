@@ -1,0 +1,7 @@
+# What download.sh fetches and instance.py cuts, and what the sheet scripts emit.
+# The two sheets worth keeping are committed in ../sheets/.
+fonts/
+static/
+*.png
+table.json
+__pycache__/
