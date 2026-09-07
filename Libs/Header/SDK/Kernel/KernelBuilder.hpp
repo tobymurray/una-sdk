@@ -45,12 +45,26 @@ public:
 
     template <class T>
     static T& require(const SDK::Interface::IKernel* k, SDK::Interface::IKIP::IntfID id) {
-        void* p = k->kip.queryInterface(id);
-        assert(p && "Kernel::require: requested interface is not available");
-        return *static_cast<T*>(p);
+        return *static_cast<T*>(queryOrAssert(k, id));
     }
 
 private:
+    /**
+     * @brief   Query one interface and assert it exists.
+     * @param   k: A pointer to the @ref SDK::Interface::IKernel.
+     * @param   id: Which interface to fetch.
+     * @return  The interface pointer, never null once the assert is enabled.
+     * @note    Deliberately not a template, though @ref require is: the check
+     *          does not depend on @c T, and @c assert expands
+     *          @c __PRETTY_FUNCTION__, so holding it here emits one signature
+     *          string instead of one per interface type. The five interfaces
+     *          @ref make asks for carried 683 bytes of signature between them
+     *          against 109 for this one, and every blob measured shed about
+     *          692 bytes. To re-measure, count @c SDK::KernelBuilder strings
+     *          in a linked app's @c .rodata.
+     */
+    static void* queryOrAssert(const SDK::Interface::IKernel* k, SDK::Interface::IKIP::IntfID id);
+
     KernelBuilder()  = delete;
     ~KernelBuilder() = delete;
 };
