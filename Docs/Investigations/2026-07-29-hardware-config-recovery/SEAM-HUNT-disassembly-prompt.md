@@ -47,6 +47,20 @@ downstream work that this catalog makes possible.
   or hang the watch; **RDP=0 + SWD means you can always re-flash to recover**, but
   expect crashes during bring-up. Design every hook to **default to native** on
   fault.
+- **A second, independent recovery path exists and needs no debugger.** UNA's
+  documented recovery bootloader (power off; from the watch face, Up, Up, Select,
+  Select; hold Select ~6s for the bootloader menu) enumerates as a USB-MSC drive
+  that takes an official `.ota` file and reflashes the kernel/app region on
+  reboot. This is a **different, presumably better-protected partition** from the
+  kernel at `0x08060000` this investigation targets — so a hook that corrupts the
+  kernel image (rather than merely crashing the running RTOS) is *still*
+  recoverable this way even without reaching for SWD. It does **not** cover every
+  failure mode: a hook or experiment that does a full-chip mass-erase over SWD, or
+  writes into the bootloader's own flash region (not yet mapped — treat
+  `0x08000000`–`0x08060000` as off-limits for any write experiment until it is),
+  can still take out the one thing this recovery path depends on. Prefer this
+  path for validating that a kernel-image write "took" over reaching for SWD every
+  time, and keep the recovery `.ota` on hand before any write-capable experiment.
 
 ---
 
@@ -286,7 +300,10 @@ The watch is an STM32U5A5 running a closed FreeRTOS kernel (verified ~2.04 MB du
 `flash_real.bin`, CRC32 `0xBCD2F8E0`, kernel vector table at `0x08060000`). Apps run
 privileged with the MPU off and TrustZone off, and SWD is open (RDP=0), so injected
 code can rewrite live vtable pointers, relocate `VTOR`, and program the `FPB` — and any
-crash is recoverable by re-flashing over SWD. The kernel's drivers are C++ vtable
+crash is recoverable by re-flashing over SWD, or, for a corrupted kernel image
+specifically, over USB via UNA's own recovery bootloader (§1) without a debugger at
+all — as long as the bootloader partition below `0x08060000` is never itself a write
+target. The kernel's drivers are C++ vtable
 objects (`Hardware::LS012B7DD06A`, `Hardware::BMI270`, `Hardware::PCA9420`,
 `Ble::PeripheralBlueNRG`, …) built over a polymorphic HAL (`Interface::ISpi/II2c/…`),
 so the dispatch boundaries are ready-made seams. The goal is to catalog those seams —
