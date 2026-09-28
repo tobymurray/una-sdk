@@ -9,7 +9,7 @@
   <title>Hiking - Hiking Activity Tracking &mdash; UNA Watch SDK 1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=0d76e731" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=bf225e5d" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
@@ -60,6 +60,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../Tutorials/Files/ARCHITECTURE.html">Files - Data Persistence and File Operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Tutorials/FitFiles/ARCHITECTURE.html">FitFiles - FIT File Creation and Sensor Logging Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Tutorials/Waypoint/ARCHITECTURE.html">Waypoint - Configuration from the Companion App</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/RunLVGL/ARCHITECTURE.html">RunLVGL - Building a Watch App GUI with LVGL</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">📱 Example Apps</span></p>
 <ul class="current">
@@ -149,18 +150,26 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="HRMonitor-Architecture.html">HRMonitor - Heart Rate Monitor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Stopwatch-Architecture.html">Stopwatch - Interval Timer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ClockfaceAnalogue-Architecture.html">ClockfaceAnalogue - Analogue Clockface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ClockfacePeak-Architecture.html">ClockfacePeak - Peak Clockface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ClockfaceSmile-Architecture.html">ClockfaceSmile - Smile Clockface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ClockfaceConsole-Architecture.html">ClockfaceConsole - Console Clockface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ClockfaceRetro-Architecture.html">ClockfaceRetro - Retro Clockface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="GlanceHR-Architecture.html">GlanceHR - Heart Rate Glance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="GlanceSteps-Architecture.html">GlanceSteps - Step Counter Glance</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">🏗️ Architecture</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../sdk-overview.html">SDK Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../service-lifecycle.html">Service Lifecycle</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../SensorsLayer.html">Sensor Layer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture-deep-dive.html">Platform Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../development-workflow.html">Development Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Scripts.html">Scripts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../TouchGFX-Port-Architecture.html">TouchGFX Port Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../touchgfx-widgets.html">TouchGFX Widgets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../writing-a-clockface.html">Writing a Watch Face</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../figma-ui-kit.html">Figma UI Resource Pack</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FitFiles-Structure.html">FIT Files Structure</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">📡 BLE Interface</span></p>
@@ -773,7 +782,8 @@
 <p>The app uses two categories of containers: ready-made <strong>SDK widgets</strong> from <code class="docutils literal notranslate"><span class="pre">Templates/TouchGFX-Widgets</span></code> (imported as <code class="docutils literal notranslate"><span class="pre">.tpkg</span></code> packages) and <strong>app-specific containers</strong> built for this app’s data and layout.</p>
 <section id="sdk-widget-containers">
 <h4>SDK Widget Containers<a class="headerlink" href="#sdk-widget-containers" title="Link to this heading"></a></h4>
-<p>Imported from <code class="docutils literal notranslate"><span class="pre">Templates/TouchGFX-Widgets</span></code> and used without modification:</p>
+<p>Imported from <code class="docutils literal notranslate"><span class="pre">Templates/TouchGFX-Widgets</span></code> and used without modification, plus
+header-only widgets included straight from the SDK:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">Battery</span></code> — 4-segment battery level indicator</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Buttons</span></code> — button arc indicators (L1/L2/R1/R2)</p></li>
@@ -785,6 +795,8 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">PauseIndicator</span></code> — full-width pause overlay with elapsed pause time</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Title</span></code> — screen title with underline</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">InfoCarousel</span></code> — auto-cycling multi-value info panel</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SDK::GUI::CountdownTimer</span></code> — self-registering countdown that fires a callback at
+zero. Header-only, from <code class="docutils literal notranslate"><span class="pre">SDK/GUI/CountdownTimer.hpp</span></code>; not a <code class="docutils literal notranslate"><span class="pre">.tpkg</span></code>.</p></li>
 </ul>
 </section>
 <section id="app-specific-containers">
@@ -819,10 +831,6 @@
 <span class="kt">void</span><span class="w"> </span><span class="nf">SummaryFaceHeartRate::setAvgHR</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">hr</span><span class="p">);</span>
 </pre></div>
 </div>
-<p><strong>Utility</strong>:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">CountdownTimer</span></code> — self-registering countdown used by auto-dismiss screens (<code class="docutils literal notranslate"><span class="pre">TrackLapView</span></code>, <code class="docutils literal notranslate"><span class="pre">TrackSavedView</span></code>, <code class="docutils literal notranslate"><span class="pre">TrackDiscardedView</span></code>, <code class="docutils literal notranslate"><span class="pre">MenuDistanceSavedView</span></code>, <code class="docutils literal notranslate"><span class="pre">MenuTimeSavedView</span></code>)</p></li>
-</ul>
 </section>
 </section>
 <section id="input-handling">

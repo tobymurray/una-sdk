@@ -9,7 +9,7 @@
   <title>SDK Setup and Build Overview &mdash; UNA Watch SDK 1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=0d76e731" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=bf225e5d" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -96,6 +96,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Tutorials/Files/ARCHITECTURE.html">Files - Data Persistence and File Operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tutorials/FitFiles/ARCHITECTURE.html">FitFiles - FIT File Creation and Sensor Logging Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tutorials/Waypoint/ARCHITECTURE.html">Waypoint - Configuration from the Companion App</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorials/RunLVGL/ARCHITECTURE.html">RunLVGL - Building a Watch App GUI with LVGL</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">📱 Example Apps</span></p>
 <ul>
@@ -106,18 +107,26 @@
 <li class="toctree-l1"><a class="reference internal" href="Examples/Hiking-Architecture.html">Hiking - Hiking Activity Tracking</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Examples/HRMonitor-Architecture.html">HRMonitor - Heart Rate Monitor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Examples/Stopwatch-Architecture.html">Stopwatch - Interval Timer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Examples/ClockfaceAnalogue-Architecture.html">ClockfaceAnalogue - Analogue Clockface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Examples/ClockfacePeak-Architecture.html">ClockfacePeak - Peak Clockface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Examples/ClockfaceSmile-Architecture.html">ClockfaceSmile - Smile Clockface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Examples/ClockfaceConsole-Architecture.html">ClockfaceConsole - Console Clockface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Examples/ClockfaceRetro-Architecture.html">ClockfaceRetro - Retro Clockface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Examples/GlanceHR-Architecture.html">GlanceHR - Heart Rate Glance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Examples/GlanceSteps-Architecture.html">GlanceSteps - Step Counter Glance</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">🏗️ Architecture</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="sdk-overview.html">SDK Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service-lifecycle.html">Service Lifecycle</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SensorsLayer.html">Sensor Layer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture-deep-dive.html">Platform Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development-workflow.html">Development Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Scripts.html">Scripts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TouchGFX-Port-Architecture.html">TouchGFX Port Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="touchgfx-widgets.html">TouchGFX Widgets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="writing-a-clockface.html">Writing a Watch Face</a></li>
+<li class="toctree-l1"><a class="reference internal" href="figma-ui-kit.html">Figma UI Resource Pack</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FitFiles-Structure.html">FIT Files Structure</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">📡 BLE Interface</span></p>
@@ -244,6 +253,9 @@ Download/install from: https://www.st.com/en/development-tools/stm32cubeide.html
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/UNAWatch/una-sdk.git
 <span class="nb">cd</span><span class="w"> </span>una-sdk
 
+<span class="c1"># The LVGL GUI toolkit is a git submodule; only apps with an LVGL GUI need it</span>
+git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>ThirdParty/lvgl
+
 <span class="c1"># Export environment for the current shell</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">UNA_SDK</span><span class="o">=</span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">"</span>
 
@@ -251,6 +263,8 @@ git<span class="w"> </span>clone<span class="w"> </span>https://github.com/UNAWa
 python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span><span class="s2">"</span><span class="nv">$UNA_SDK</span><span class="s2">/Utilities/Scripts/app_packer/requirements.txt"</span>
 </pre></div>
 </div>
+<p>GitHub’s release “Source code” archives do not contain submodules, so an SDK taken
+from one builds the TouchGFX apps but not the LVGL ones; clone the repository for those.</p>
 </section>
 <section id="verify-your-environment">
 <h5>Verify your environment<a class="headerlink" href="#verify-your-environment" title="Link to this heading"></a></h5>
@@ -274,6 +288,7 @@ make<span class="w"> </span>--version<span class="w"> </span><span class="o">||<
 <p>This section demonstrates how to copy an existing app example (Alarm) and build it without modifications to verify your setup. For creating and customizing a new app by modifying a copy, see “Creating New Apps” below.</p>
 <p>This uses the same <strong>Alarm CMake</strong> example flow as Windows: <strong>copy project → create build dir → configure → build</strong>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Copy entire project for simplicity</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>MyAlarm
 cp<span class="w"> </span>-r<span class="w"> </span><span class="s2">"</span><span class="nv">$UNA_SDK</span><span class="s2">/Examples/Apps/Alarm/"</span>*<span class="w"> </span>MyAlarm
 
 <span class="c1"># Create build dir</span>
@@ -336,6 +351,9 @@ cmake<span class="w"> </span>--build<span class="w"> </span>MyAlarm/build
 <span class="c"># Or use HTTPS</span>
 <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">://</span><span class="n">github</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">UNAWatch</span><span class="p">/</span><span class="n">una-sdk</span><span class="p">.</span><span class="n">git</span>
 
+<span class="c"># The LVGL GUI toolkit is a git submodule; only apps with an LVGL GUI need it</span>
+<span class="n">git</span> <span class="n">-C</span> <span class="n">una-sdk</span> <span class="n">submodule</span> <span class="n">update</span> <span class="p">-</span><span class="n">-init</span> <span class="n">ThirdParty</span><span class="p">/</span><span class="n">lvgl</span>
+
 <span class="c"># Export environment (persistent)</span>
 <span class="c"># If you encounter a security error (e.g., running scripts is disabled), run this first:</span>
 <span class="nb">Set-ExecutionPolicy</span> <span class="n">-ExecutionPolicy</span> <span class="n">RemoteSigned</span> <span class="n">-Scope</span> <span class="k">Process</span>
@@ -354,7 +372,7 @@ cmake<span class="w"> </span>--build<span class="w"> </span>MyAlarm/build
 <p>This section demonstrates how to copy an existing app example (Alarm) and build it without modifications to verify your setup. For creating and customizing a new app by modifying a copy, see “Creating New Apps” below.</p>
 <div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="c"># Copy entire project for simplicity</span>
 <span class="c"># Note: The copied folder will retain original names like Alarm-CMake. Use the original name in commands below (e.g., Alarm-CMake instead of MyAlarm-CMake).</span>
-<span class="c"># If you get "Container cannot be copied onto existing leaf item" error, restart PowerShell and try again.</span>
+<span class="n">mkdir</span> <span class="n">MyAlarm</span> <span class="n">-Force</span>
 <span class="nb">cp </span><span class="s2">"${env:UNA_SDK}\Examples\Apps\Alarm\*"</span> <span class="n">MyAlarm</span> <span class="n">-Recurse</span> <span class="n">-Force</span>
 
 <span class="c"># Create build dir</span>
@@ -472,9 +490,15 @@ references — CMake targets, the ELFs, and the linker scripts. It does <strong>
 Replace “MyApp” with your app name. See <a class="reference internal" href="api-reference.html"><span class="std std-doc">API reference</span></a> for details.</p></li>
 </ul>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">DEV_ID</span></code>: Device identifier, typically “UNAWatch”.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">APP_TYPE</span></code>: App type, e.g., “app”.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">APP_AUTOSTART</span></code>: “On” or “Off” (default “Off”) to enable autostart.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DEV_ID</span></code>: developer identifier, passed to the app as a compile definition of the same name,
+which the app may use as it sees fit. Every example and tutorial sets <code class="docutils literal notranslate"><span class="pre">&quot;UNA&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">APP_TYPE</span></code>: one of <code class="docutils literal notranslate"><span class="pre">Activity</span></code>, <code class="docutils literal notranslate"><span class="pre">Utility</span></code>, <code class="docutils literal notranslate"><span class="pre">Glance</span></code> or <code class="docutils literal notranslate"><span class="pre">Clockface</span></code>, spelled exactly. It sets
+the type in the packed header.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">APP_AUTOSTART</span></code>: enable autostart, default <code class="docutils literal notranslate"><span class="pre">Off</span></code>. Accepted values are <code class="docutils literal notranslate"><span class="pre">On</span></code>, <code class="docutils literal notranslate"><span class="pre">Off</span></code>, <code class="docutils literal notranslate"><span class="pre">True</span></code>,
+<code class="docutils literal notranslate"><span class="pre">False</span></code>, <code class="docutils literal notranslate"><span class="pre">Yes</span></code>, <code class="docutils literal notranslate"><span class="pre">No</span></code>, <code class="docutils literal notranslate"><span class="pre">Y</span></code>, <code class="docutils literal notranslate"><span class="pre">N</span></code>, <code class="docutils literal notranslate"><span class="pre">1</span></code> and <code class="docutils literal notranslate"><span class="pre">0</span></code>, in any case; anything else stops the build
+rather than being read as one or the other.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">APP_USE_ICONS</span></code>: whether the app ships launcher icons from <code class="docutils literal notranslate"><span class="pre">RESOURCES_PATH</span></code>, default <code class="docutils literal notranslate"><span class="pre">On</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">Glance*</span></code> examples set it <code class="docutils literal notranslate"><span class="pre">Off</span></code>. Accepted values as for <code class="docutils literal notranslate"><span class="pre">APP_AUTOSTART</span></code>.</p></li>
 <li><p>Paths (adjust if reorganizing file structure):</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">LIBS_PATH</span></code>: Path to libraries, default “../../Libs”.</p></li>

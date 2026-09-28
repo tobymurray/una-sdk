@@ -1,17 +1,13 @@
 /**
  ******************************************************************************
- * @file    TouchGFXCommandProcessor.cpp
- * @date    11-12-2025
- * @author  Denys Saienko <denys.saienko@droid-technologies.com>
- * @brief   Central TouchGFX command processor.
- ******************************************************************************
- *
+ * @file    GuiCommandProcessor.cpp
+ * @brief   The GUI process's kernel message pump (see GuiCommandProcessor.hpp).
  ******************************************************************************
  */
 
-#include "SDK/Port/TouchGFX/TouchGFXCommandProcessor.hpp"
+#include "SDK/Port/GuiCommandProcessor.hpp"
 
-#define LOG_MODULE_PRX      "TouchGFXCommandProcessor"
+#define LOG_MODULE_PRX      "GuiCommandProcessor"
 #define LOG_MODULE_LEVEL    LOG_LEVEL_DEBUG
 #include "SDK/UnaLogger/Logger.h"
 
@@ -19,11 +15,10 @@
 #include "SDK/Messages/MessageTypes.hpp"
 #include "SDK/GUI/Button.hpp"
 
-
 namespace SDK
 {
 
-TouchGFXCommandProcessor::TouchGFXCommandProcessor()
+GuiCommandProcessor::GuiCommandProcessor()
           : mKernel(SDK::KernelProviderGUI::GetInstance().getKernel())
           , mStartCallbackCalled(false)
           , mIsGuiResumed(false)
@@ -32,11 +27,11 @@ TouchGFXCommandProcessor::TouchGFXCommandProcessor()
 {
 }
 
-TouchGFXCommandProcessor::~TouchGFXCommandProcessor()
+GuiCommandProcessor::~GuiCommandProcessor()
 {
 }
 
-bool TouchGFXCommandProcessor::waitForFrameTick()
+bool GuiCommandProcessor::waitForFrameTick()
 {
     // Called once
     if (mAppLifeCycleCallback && !mStartCallbackCalled) {
@@ -48,12 +43,13 @@ bool TouchGFXCommandProcessor::waitForFrameTick()
         SDK::MessageBase *msg = nullptr;
         bool messageQueued = false;
 
-
 #if defined(SIMULATOR)
+        // The simulator has no kernel tick of its own: wake regularly so the
+        // toolkit's host loop keeps running.
         if(!mKernel.comm.getMessage(msg,50)) {
             return false;
 #else
-         // Wait for command (blocks until available)
+        // Wait for command (blocks until available)
         if(!mKernel.comm.getMessage(msg)) {
             continue;
 #endif
@@ -66,6 +62,46 @@ bool TouchGFXCommandProcessor::waitForFrameTick()
                 // We must release the message here because we are exiting this app.
                 mKernel.comm.releaseMessage(msg);
 
+                // And everything still waiting for the custom handler, for the
+                // same reason. These are the kernel's own pool blocks: it hands
+                // the pointer over and gets them back only when we release
+                // them, and no kernel-side queue drain can see this queue.
+                //
+                // This is the cooperative half of the fix. Kernels that sweep a
+                // dead process's blocks reclaim these anyway, so on a current
+                // kernel parking them here costs latency rather than the block
+                // itself; on an older one it loses them for the life of the
+                // boot. Returning them here is still worth doing for what the
+                // sweep cannot do: the sweep drops the reference without
+                // answering, so a sender blocked in waitCompletion is freed
+                // only by its own timeout, whereas sendResponse below wakes it
+                // immediately.
+                //
+                // Answered rather than dropped, as the eviction path below does,
+                // so a sender waiting on a response is not left hanging. Before
+                // onStop() so the app's own cleanup has the pool back if it
+                // needs to send anything on the way out.
+                uint32_t returned = 0;
+                while (!mUserQueue.empty()) {
+                    auto pending = mUserQueue.pop();
+                    if (pending) {
+                        auto queued = *pending;
+                        queued->setResult(SDK::MessageResult::FAIL);
+                        mKernel.comm.sendResponse(queued);
+                        mKernel.comm.releaseMessage(queued);
+                        ++returned;
+                    }
+                }
+
+                // Only when there was something, so the ordinary stop stays
+                // quiet. This bug went unnoticed precisely because nothing
+                // reported blocks going missing; if it ever recurs, the count
+                // is the first thing anyone will want.
+                if (returned > 0) {
+                    LOG_INFO("Returned %u queued message(s) on stop\n",
+                            static_cast<unsigned>(returned));
+                }
+
                 if (mAppLifeCycleCallback) {
                     // Cleanup recourses
                     mAppLifeCycleCallback->onStop();
@@ -76,14 +112,16 @@ bool TouchGFXCommandProcessor::waitForFrameTick()
             } break;
 
             case SDK::MessageType::EVENT_GUI_TICK: {
+                mLastFrameNumber = static_cast<SDK::Message::EventGuiTick*>(msg)->frameNumber;
                 msg->setResult(SDK::MessageResult::SUCCESS);
                 // We must release the message here because we are exiting this method.
                 mKernel.comm.releaseMessage(msg);
+                mFrameTickPending = true;
 
                 if (mAppLifeCycleCallback) {
                     mAppLifeCycleCallback->onFrame();
                 }
-                return false; // Allow TouchGFX make frame
+                return false; // Let the toolkit render a frame
             } break;
 
             case SDK::MessageType::EVENT_BUTTON: {
@@ -111,7 +149,6 @@ bool TouchGFXCommandProcessor::waitForFrameTick()
                 }
             } break;
 
-
             default:
                 if (SDK::isApplicationSpecificMessage(msg->getType()) && mCustomMessageHandler) {
 
@@ -128,6 +165,17 @@ bool TouchGFXCommandProcessor::waitForFrameTick()
                     }
                     // Try to save message
                     messageQueued = mUserQueue.push(msg);
+
+                    if (!messageQueued) {
+                        // Answer it here. The shared tail below releases
+                        // without responding, so a sender blocked on this
+                        // would wait out its whole timeout instead of being
+                        // woken. Unreachable today -- the eviction above
+                        // guarantees a slot -- but it is the one path left in
+                        // this function that drops a caller silently.
+                        msg->setResult(SDK::MessageResult::FAIL);
+                        mKernel.comm.sendResponse(msg);
+                    }
 
                 } else {
                     msg->setResult(SDK::MessageResult::FAIL);
@@ -148,12 +196,18 @@ bool TouchGFXCommandProcessor::waitForFrameTick()
         // Release message after processing
         mKernel.comm.releaseMessage(msg);
     }
-
 }
 
-bool TouchGFXCommandProcessor::getKeySample(uint8_t &key)
+bool GuiCommandProcessor::consumeFrameTick()
 {
-    // TouchGFX samples one key per frame; drain the queue one code at a time.
+    const bool pending = mFrameTickPending;
+    mFrameTickPending = false;
+    return pending;
+}
+
+bool GuiCommandProcessor::getKeySample(uint8_t &key)
+{
+    // Toolkits sample one key per frame; drain the queue one code at a time.
     auto code = mButtonCodes.pop();
     if (!code) {
         return false;
@@ -162,7 +216,7 @@ bool TouchGFXCommandProcessor::getKeySample(uint8_t &key)
     return true;
 }
 
-void TouchGFXCommandProcessor::writeDisplayFrameBuffer(const uint8_t* data)
+void GuiCommandProcessor::writeDisplayFrameBuffer(const uint8_t* data)
 {
     if (!data || !mIsGuiResumed) {
         return;
@@ -176,7 +230,7 @@ void TouchGFXCommandProcessor::writeDisplayFrameBuffer(const uint8_t* data)
     }
 }
 
-void TouchGFXCommandProcessor::callCustomMessageHandler()
+void GuiCommandProcessor::callCustomMessageHandler()
 {
     while (!mUserQueue.empty()) {
         auto v = mUserQueue.pop();
@@ -222,7 +276,7 @@ bool getButtonCodes(SDK::Message::EventButton::Id id, ButtonCodes &out)
 
 } // namespace
 
-void TouchGFXCommandProcessor::handleEvent(SDK::Message::EventButton* msg)
+void GuiCommandProcessor::handleEvent(SDK::Message::EventButton* msg)
 {
     if (!mIsGuiResumed) {
         return;

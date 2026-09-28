@@ -79,12 +79,18 @@ If `arm-none-eabi-gcc` is still not found and you installed **CubeIDE**, add the
 git clone https://github.com/UNAWatch/una-sdk.git
 cd una-sdk
 
+# The LVGL GUI toolkit is a git submodule; only apps with an LVGL GUI need it
+git submodule update --init ThirdParty/lvgl
+
 # Export environment for the current shell
 export UNA_SDK="$PWD"
 
 # Satisfy python dependencies
 python3 -m pip install -r "$UNA_SDK/Utilities/Scripts/app_packer/requirements.txt"
 ```
+
+GitHub's release "Source code" archives do not contain submodules, so an SDK taken
+from one builds the TouchGFX apps but not the LVGL ones; clone the repository for those.
 
 ##### Verify your environment
 
@@ -112,6 +118,7 @@ This uses the same **Alarm CMake** example flow as Windows: **copy project → c
 
 ```bash
 # Copy entire project for simplicity
+mkdir -p MyAlarm
 cp -r "$UNA_SDK/Examples/Apps/Alarm/"* MyAlarm
 
 # Create build dir
@@ -171,6 +178,9 @@ git clone git@github.com:UNAWatch/una-sdk.git
 # Or use HTTPS
 git clone https://github.com/UNAWatch/una-sdk.git
 
+# The LVGL GUI toolkit is a git submodule; only apps with an LVGL GUI need it
+git -C una-sdk submodule update --init ThirdParty/lvgl
+
 # Export environment (persistent)
 # If you encounter a security error (e.g., running scripts is disabled), run this first:
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
@@ -190,7 +200,7 @@ This section demonstrates how to copy an existing app example (Alarm) and build 
 ```powershell
 # Copy entire project for simplicity
 # Note: The copied folder will retain original names like Alarm-CMake. Use the original name in commands below (e.g., Alarm-CMake instead of MyAlarm-CMake).
-# If you get "Container cannot be copied onto existing leaf item" error, restart PowerShell and try again.
+mkdir MyAlarm -Force
 cp "${env:UNA_SDK}\Examples\Apps\Alarm\*" MyAlarm -Recurse -Force
 
 # Create build dir
@@ -307,9 +317,15 @@ If build files are generated in the wrong directory (e.g., root instead of build
         - PowerShell/Windows: python -c "import hashlib; print(hashlib.md5(b'MyApp').hexdigest().upper()[:16])"
       - Alternatively, acquire from the developer portal for published apps as described in [deploy.md](deploy.md).
       Replace "MyApp" with your app name. See [API reference](api-reference.rst) for details.
-    - `DEV_ID`: Device identifier, typically "UNAWatch".
-    - `APP_TYPE`: App type, e.g., "app".
-    - `APP_AUTOSTART`: "On" or "Off" (default "Off") to enable autostart.
+    - `DEV_ID`: developer identifier, passed to the app as a compile definition of the same name,
+      which the app may use as it sees fit. Every example and tutorial sets `"UNA"`.
+    - `APP_TYPE`: one of `Activity`, `Utility`, `Glance` or `Clockface`, spelled exactly. It sets
+      the type in the packed header.
+    - `APP_AUTOSTART`: enable autostart, default `Off`. Accepted values are `On`, `Off`, `True`,
+      `False`, `Yes`, `No`, `Y`, `N`, `1` and `0`, in any case; anything else stops the build
+      rather than being read as one or the other.
+    - `APP_USE_ICONS`: whether the app ships launcher icons from `RESOURCES_PATH`, default `On`.
+      The `Glance*` examples set it `Off`. Accepted values as for `APP_AUTOSTART`.
     - Paths (adjust if reorganizing file structure):
       - `LIBS_PATH`: Path to libraries, default "../../Libs".
       - `OUTPUT_PATH`: Path for built files, default "../../../Output".

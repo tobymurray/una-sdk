@@ -81,6 +81,12 @@ if(TOUCHGFX_PATH)
     get_filename_component(_una_abs "${TOUCHGFX_PATH}" ABSOLUTE)
     list(APPEND _una_app_prefix_maps "${_una_abs}=/una-app-gui")
 endif()
+# GUI_PATH is the toolkit-neutral name for the GUI process directory; apps not
+# built on TouchGFX (for example LVGL) set it instead of TOUCHGFX_PATH.
+if(GUI_PATH)
+    get_filename_component(_una_abs "${GUI_PATH}" ABSOLUTE)
+    list(APPEND _una_app_prefix_maps "${_una_abs}=/una-app-gui")
+endif()
 foreach(_una_map IN LISTS _una_app_prefix_maps)
     add_compile_options(
         $<$<COMPILE_LANGUAGE:C,CXX>:-fmacro-prefix-map=${_una_map}>
@@ -299,6 +305,11 @@ function(una_app_build_gui TARGET_NAME)
 
     target_include_directories(${TARGET_NAME} PRIVATE ${GUI_INCLUDE_DIRS})
 
+    # Optional toolkit defines (for example LV_CONF_PATH for an LVGL GUI).
+    if(DEFINED GUI_COMPILE_DEFINITIONS)
+        target_compile_definitions(${TARGET_NAME} PRIVATE ${GUI_COMPILE_DEFINITIONS})
+    endif()
+
     target_link_libraries(${TARGET_NAME} PRIVATE
         -Wl,--start-group
         -l:libstdc++.a
@@ -322,6 +333,33 @@ function(una_app_build_gui TARGET_NAME)
     )
 endfunction()
 
+# Read a boolean app option: apply the default when the caller left it unset,
+# and reject a value that is neither on nor off.
+#
+# CMake defines a short list of false values and treats everything else as
+# true, so an unrecognised value -- a typo, or a word like "disabled" -- reads
+# as ON. These options decide what goes into the packed header, so a value that
+# cannot be read as a boolean stops the build rather than picking a side.
+# The accepted set is narrower than CMake's: an empty value, NOTFOUND and
+# IGNORE all count as false to CMake, but here they mean a caller wrote the
+# option and got it wrong, so they are rejected rather than read as off.
+function(una_app_bool_option NAME DEFAULT)
+    if(NOT DEFINED ${NAME})
+        set(${NAME} ${DEFAULT} PARENT_SCOPE)
+        return()
+    endif()
+
+    # TOUPPER settles the case, so the list is one entry per value, not per
+    # spelling: On, on and ON all arrive here as ON.
+    string(TOUPPER "${${NAME}}" VALUE)
+    set(ACCEPTED ON OFF TRUE FALSE YES NO Y N 1 0)
+    if(NOT VALUE IN_LIST ACCEPTED)
+        list(JOIN ACCEPTED " " SPELLINGS)
+        message(FATAL_ERROR
+            "${NAME} is '${${NAME}}', which is not a boolean; accepted in any case: ${SPELLINGS}")
+    endif()
+endfunction()
+
 # Main function to build a complete watch app
 function(una_app_build_app)
     set(OUTPUT_COPY_COMMANDS "")
@@ -333,14 +371,12 @@ function(una_app_build_app)
 
     # Final app merging
     set(APP_DEPENDS ${APP_NAME}Service.elf)
-    if(DEFINED TOUCHGFX_PATH)
+    if(DEFINED TOUCHGFX_PATH OR DEFINED GUI_PATH)
         list(APPEND APP_DEPENDS ${APP_NAME}GUI.elf)
     endif()
     set(APP_AUTOSTART_FLAG "")
-    if(NOT DEFINED APP_AUTOSTART)
-        set(APP_AUTOSTART Off)
-    endif()
-    if(${APP_AUTOSTART} STREQUAL On)
+    una_app_bool_option(APP_AUTOSTART Off)
+    if(APP_AUTOSTART)
         set(APP_AUTOSTART_FLAG "-autostart")
         message("App autostart is ON")
     else()
@@ -348,6 +384,18 @@ function(una_app_build_app)
     endif()
     if(NOT DEFINED APP_USER_NAME)
         set(APP_USER_NAME ${APP_NAME})
+    endif()
+
+    # APP_GLANCE_INTF is withdrawn: an app states that it is a glance with
+    # APP_TYPE Glance alone. A project that still sets it On for another type
+    # stops here rather than building an app whose glance never appears.
+    una_app_bool_option(APP_GLANCE_INTF Off)
+    if(APP_GLANCE_INTF AND NOT APP_TYPE STREQUAL "Glance")
+        message(FATAL_ERROR
+            "APP_GLANCE_INTF has been withdrawn: only an app of APP_TYPE Glance is "
+            "started for the glances screen. Remove the option, and set APP_TYPE "
+            "Glance if this app should be one. If it was passed as -DAPP_GLANCE_INTF, "
+            "clear it from the CMake cache too (cmake -U APP_GLANCE_INTF).")
     endif()
 
     # APP_FILE_NAME pins the .uapp artifact name when the launcher name has to
@@ -361,11 +409,9 @@ function(una_app_build_app)
     endif()
 
     set(APP_ICON_ARGS "")
-    if(NOT DEFINED APP_USE_ICONS)
-        set(APP_USE_ICONS On)
-    endif()
+    una_app_bool_option(APP_USE_ICONS On)
 
-    if(${APP_USE_ICONS} STREQUAL On)
+    if(APP_USE_ICONS)
         list(APPEND APP_ICON_ARGS
             -normal_icon ${RESOURCES_PATH}/icon_60x60.png
             -small_icon ${RESOURCES_PATH}/icon_30x30.png
@@ -377,7 +423,7 @@ function(una_app_build_app)
 
     add_custom_target(${APP_NAME}App ALL
         DEPENDS ${APP_DEPENDS}
-        COMMAND ${UNA_PYTHON_EXECUTABLE} ${SCRIPTS_PATH}/app_merging/app_merging.py ${APP_AUTOSTART_FLAG} ${APP_ICON_ARGS} -name ${APP_USER_NAME} ${APP_FILE_NAME_ARGS} -type ${APP_TYPE} -glance_capable -out ${CMAKE_CURRENT_BINARY_DIR} -appid ${APP_ID} -appver ${BUILD_VERSION} -scripts $ENV{UNA_SDK}/Libs/Source/AppSystem
+        COMMAND ${UNA_PYTHON_EXECUTABLE} ${SCRIPTS_PATH}/app_merging/app_merging.py ${APP_AUTOSTART_FLAG} ${APP_ICON_ARGS} -name ${APP_USER_NAME} ${APP_FILE_NAME_ARGS} -type ${APP_TYPE} -out ${CMAKE_CURRENT_BINARY_DIR} -appid ${APP_ID} -appver ${BUILD_VERSION} -scripts $ENV{UNA_SDK}/Libs/Source/AppSystem
         ${OUTPUT_COPY_COMMANDS}
         COMMENT "Merging ${APP_NAME} application"
     )
